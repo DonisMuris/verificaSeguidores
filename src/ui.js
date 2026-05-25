@@ -53,18 +53,57 @@ export const UIService = {
             const card = document.createElement('div');
             card.className = 'user-card';
 
+            // Container para agrupar o link e o novo botão de copiar lado a lado
+            const userContainer = document.createElement('div');
+            userContainer.style.display = 'flex';
+            userContainer.style.alignItems = 'center';
+            userContainer.style.gap = '8px';
+
             const link = document.createElement('a');
             link.href = `https://instagram.com/${user}/`;
             link.target = '_blank';
             link.className = 'user-link';
             link.textContent = `@${user}`;
 
+            // NOVO: Botão Copiar com feedback visual dinâmico
+            const btnCopy = document.createElement('button');
+            btnCopy.className = 'btn-unfollow-action';
+            btnCopy.style.padding = '4px 8px';
+            btnCopy.style.fontSize = '11px';
+            btnCopy.textContent = 'Copiar';
+            btnCopy.title = 'Copiar nome de usuário';
+
+            btnCopy.addEventListener('click', async () => {
+                try {
+                    // Copia apenas o nome (sem o caractere '@') para facilitar a busca pura
+                    await navigator.clipboard.writeText(user);
+                    
+                    // Feedback visual temporário de sucesso
+                    btnCopy.textContent = 'Copiado!';
+                    btnCopy.style.backgroundColor = '#dcfce7';
+                    btnCopy.style.color = '#166534';
+                    btnCopy.style.borderColor = '#bbf7d0';
+
+                    setTimeout(() => {
+                        btnCopy.textContent = 'Copiar';
+                        btnCopy.style.backgroundColor = '';
+                        btnCopy.style.color = '';
+                        btnCopy.style.borderColor = '';
+                    }, 1200);
+                } catch (err) {
+                    console.error('Falha ao copiar texto: ', err);
+                }
+            });
+
+            userContainer.appendChild(link);
+            userContainer.appendChild(btnCopy);
+
             const btnAction = document.createElement('button');
             btnAction.className = 'btn-unfollow-action';
             btnAction.textContent = 'Parei de seguir';
             btnAction.addEventListener('click', () => onUnfollowAction(user));
 
-            card.appendChild(link);
+            card.appendChild(userContainer);
             card.appendChild(btnAction);
             dom.usersGrid.appendChild(card);
         });
