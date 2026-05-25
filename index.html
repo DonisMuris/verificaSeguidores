@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram Unfollow Checker - Inputs Separados</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 { font-size: 28px; margin-bottom: 20px; }
+        
+        .upload-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .file-label {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 1px dashed rgba(255, 255, 255, 0.4);
+            width: 80%;
+            max-width: 400px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .file-label span.status { font-size: 12px; opacity: 0.7; }
+        .file-label input { display: none; }
+        
+        .btn-processar {
+            background-color: #4cd137;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 10px;
+        }
+        .btn-processar:hover { background-color: #44bd32; }
+        .btn-processar:disabled { background-color: #7f8c8d; cursor: not-allowed; }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            gap: 20px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+        .stat { text-align: center; }
+        .stat-number { font-size: 24px; font-weight: bold; }
+        .stat-label { font-size: 12px; opacity: 0.9; }
+        .content { padding: 30px; }
+        .title { color: #333; font-size: 18px; margin-bottom: 20px; font-weight: 600; }
+        .users-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+        .user-card {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #333;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            text-align: center;
+            word-break: break-word;
+            font-weight: 500;
+        }
+        .user-card:hover {
+            background: #e9ecef;
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+        .empty { text-align: center; padding: 40px; color: #999; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Unfollow Checker Local</h1>
+            
+            <div class="upload-section">
+                <label class="file-label">
+                    <span>Selecionar Followers (followers_1.json)</span>
+                    <span id="status-followers" class="status">Pendente</span>
+                    <input type="file" id="followersInput" accept=".json">
+                </label>
+                
+                <label class="file-label">
+                    <span>Selecionar Following (following.json)</span>
+                    <span id="status-following" class="status">Pendente</span>
+                    <input type="file" id="followingInput" accept=".json">
+                </label>
+
+                <button id="btnVerificar" class="btn-processar" disabled>Analisar Seguidores</button>
+            </div>
+
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-number" id="count-followers">0</div>
+                    <div class="stat-label">Seguidores</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" id="count-following">0</div>
+                    <div class="stat-label">Seguindo</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" id="count-unfollow">0</div>
+                    <div class="stat-label">Não seguem de volta</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="title" id="list-title">Aguardando importação...</div>
+            <div class="users-list" id="users-list">
+                <div class="empty"><p>Insira os arquivos acima para cruzar os dados.</p></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="src/app.js"></script>
+</body>
+</html>

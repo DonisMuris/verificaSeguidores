@@ -1,0 +1,12 @@
+# Ignorar a pasta de dados confidenciais do Instagram
+data/
+
+# Ignorar ambientes virtuais do Python (caso use)
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Ignorar arquivos do sistema operacional ou do VS Code
+.DS_Store
+.vscode/
