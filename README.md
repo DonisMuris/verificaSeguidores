@@ -1,44 +1,47 @@
-# Instagram Unfollow Checker (Local e Offline)
+# Instagram Unfollow Checker (Full-Stack)
 
-Uma ferramenta web front-end desenvolvida para identificar quais perfis você segue no Instagram, mas que não te seguem de volta. 
-
-Diferente de aplicativos de terceiros que exigem login e violam as diretrizes de automação da Meta, este projeto funciona de forma 100% offline, processando os dados diretamente no navegador do usuário via FileReader API. Não há requisições externas, garantindo que não existam riscos de banimento ou de vazamento de credenciais.
+Uma ferramenta web local e privada desenvolvida para cruzar os dados de exportação do Instagram (Meta) e identificar perfis que não o seguem de volta. O projeto conta com um Front-End modular e um Back-End leve em Node.js para persistência de dados em disco.
 
 ## Funcionalidades
-- Analise Offline: Sem requisições de rede, cookies ou tráfego de credenciais.
-- Upload Separado: Interface assíncrona controlada por estado para evitar conflitos na leitura e processamento dos arquivos.
-- Links Diretos: Gera cards que redirecionam o usuário direto para o perfil correspondente na web para ação manual.
+
+- Deteção Automática e Cache Local: Os arquivos JSON da Meta são guardados de forma persistente no servidor após o primeiro carregamento, eliminando a necessidade de novos uploads ao atualizar a página.
+- Histórico Vitalício: Perfis marcados como "Parei de seguir" são gravados em um arquivo físico e removidos da sua vista de trabalho atual.
+- Arquitetura Modular: Divisão clara de responsabilidades no Front-End seguindo o Princípio da Responsabilidade Única (SRP).
+- Interface Otimizada: Paginação fluida, barra de pesquisa em tempo real e botão de cópia rápida para lidar com perfis desativados ou modificados.
 
 ## Tecnologias Utilizadas
-- HTML5 (Estruturação e manipulação nativa do DOM)
-- CSS3 (Interface responsiva com estilização moderna)
-- JavaScript ES6+ (FileReader, Promises, objetos Set e manipulação de arrays)
-- Live Server (Ambiente de desenvolvimento local)
 
-## Estrutura do Projeto
+- Front-End: HTML5, CSS3, JavaScript Nativo (ES6 Modules)
+- Back-End: Node.js (Módulos nativos http e fs, sem dependências externas)
 
-├── data/               # Pasta local contendo os arquivos JSON exportados (Ignorada no Git)
-├── src/
-│   └── app.js          # Lógica de extração, parsing e cálculo de intersecção
-├── index.html          # Interface do usuário e painel de controle
-└── .gitignore          # Proteção de arquivos locais confidenciais
+## Estrutura de Arquivos
 
-## Instruções de Uso
+├── index.html          # Interface estrutural do usuário
+├── server.js           # Servidor local em Node.js (API de sincronização)
+├── data/
+│   ├── cached_followers.json    # Cache de seguidores (gerado automaticamente)
+│   ├── cached_following.json    # Cache de perfis seguidos (gerado automaticamente)
+│   └── unfollowed_history.json  # Histórico persistente de unfollows concluídos
+└── src/
+    ├── app.js          # Orquestrador principal (Core do Ciclo de Vida)
+    ├── storage.js      # Camada de comunicação assíncrona com a API local
+    ├── parser.js       # Motor de tratamento de dados brutos da Meta
+    └── ui.js           # Gestão do DOM, renderização de tabelas e paginação
 
-### 1. Exportando seus dados do Instagram
-1. Acesse a Central de Contas da Meta pelo endereço accountscenter.instagram.com.
-2. Vá em "Suas informações e permissões", depois em "Baixar suas informações" e clique em "Solicitar download".
-3. Selecione apenas a sua conta do Instagram e marque a opção "Tipos específicos de informações".
-4. Selecione a caixa "Seguidores e seguindo".
-5. Configuração Obrigatória: Altere o intervalo de datas para "Desde o início" e mude o formato de exportação para JSON.
-6. Envie a solicitação. Quando o arquivo .zip estiver pronto, baixe e extraia o conteúdo em seu computador.
+## Como Executar o Projeto
 
-### 2. Rodando o Projeto Localmente
-1. Mova os arquivos extraídos (following.json e followers_1.json) para a pasta data/ localizada na raiz do projeto.
-2. Abra a pasta raiz do projeto no VS Code.
-3. Clique com o botão direito sobre o arquivo index.html e selecione a opção "Open with Live Server".
-4. Na interface aberta no navegador, selecione individualmente o arquivo de seguidores e o arquivo de seguindo nos respectivos campos.
-5. Clique no botão "Analisar Seguidores" para gerar a lista de perfis interativos.
+### 1. Requisitos Prévios
+- Node.js instalado no sistema.
+- Extensão de servidor local (como o Live Server do VS Code).
 
-## Seguranca e Privacidade
-Este projeto foi construído sob os princípios de privacidade desde a concepção (Privacy by Design). Ele apenas consome dados disponibilizados nativamente pelo direito de portabilidade do usuário (LGPD/GDPR). Nenhuma informação é coletada, enviada ou armazenada externamente.
+### 2. Passo a Passo
+
+1. Clone o repositório para a sua máquina local.
+2. Extraia os arquivos followers_1.json e following.json do seu backup do Instagram e coloque-os (opcionalmente) dentro da pasta /data.
+3. Abra o terminal na raiz do projeto e inicie o servidor de persistência:
+   node server.js
+4. Inicie o Front-End abrindo o arquivo index.html através do Live Server (geralmente executado em http://127.0.0.1:5500).
+5. Se for o primeiro acesso, faça o upload manual dos arquivos na interface para que o servidor gere o cache definitivo em disco.
+
+---
+Desenvolvido com foco em boas práticas de arquitetura de software, otimização de conjuntos (Set em JS) e privacidade de dados.
