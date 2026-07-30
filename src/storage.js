@@ -1,60 +1,61 @@
-const BASE_URL = 'http://localhost:3000/api';
+/**
+ * Comunicação com o servidor local.
+ * Agora usa caminho relativo (mesma origem) porque o front é servido pelo próprio
+ * Node — não há mais CORS nem porta cruzada. O token vem injetado no HTML.
+ */
+
+const BASE_URL = '/api';
+const TOKEN = document.querySelector('meta[name="app-token"]')?.content ?? '';
+
+const pedir = async (rota, opcoes = {}) => {
+    const res = await fetch(`${BASE_URL}${rota}`, {
+        ...opcoes,
+        headers: {
+            'Content-Type': 'application/json',
+            'X-App-Token': TOKEN,
+            ...opcoes.headers
+        }
+    });
+    if (!res.ok) {
+        const detalhe = await res.json().catch(() => ({}));
+        throw new Error(detalhe.error ?? `Erro ${res.status} em ${rota}`);
+    }
+    return res.json();
+};
 
 export const StorageService = {
-    async carregarHistorico() {
+    /** Todos os snapshots já salvos, do mais antigo ao mais recente. */
+    async carregarSnapshots() {
         try {
-            const res = await fetch(`${BASE_URL}/history`);
-            return new Set(await res.json());
-        } catch { return new Set(); }
-    },
-
-    async salvarHistorico(historicoSet) {
-        try {
-            await fetch(`${BASE_URL}/history`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify([...historicoSet])
-            });
-        } catch (e) { console.error("Falha ao salvar histórico", e); }
-    },
-
-    async limparHistorico() {
-        try {
-            await fetch(`${BASE_URL}/history`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify([])
-            });
-        } catch (e) { console.error(e); }
-    },
-
-    // NOVOS: Métodos para persistir o cache das listas da Meta no servidor
-    async carregarCacheMeta() {
-        try {
-            const resFollowers = await fetch(`${BASE_URL}/followers`);
-            const resFollowing = await fetch(`${BASE_URL}/following`);
-            
-            return {
-                followers: new Set(await resFollowers.json()),
-                following: new Set(await resFollowing.json())
-            };
-        } catch {
-            return { followers: new Set(), following: new Set() };
+            const lista = await pedir('/snapshots');
+            return Array.isArray(lista) ? lista : [];
+        } catch (e) {
+            console.warn('Servidor local indisponível:', e.message);
+            return [];
         }
     },
 
-    async salvarCacheMeta(followersSet, followingSet) {
+    salvarSnapshot(snapshot) {
+        return pedir('/snapshots', { method: 'POST', body: JSON.stringify(snapshot) });
+    },
+
+    apagarSnapshots() {
+        return pedir('/snapshots', { method: 'DELETE' });
+    },
+
+    async carregarHistorico() {
         try {
-            await fetch(`${BASE_URL}/followers`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify([...followersSet])
-            });
-            await fetch(`${BASE_URL}/following`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify([...followingSet])
-            });
-        } catch (e) { console.error("Erro ao sincronizar cache no servidor.", e); }
+            return new Set(await pedir('/history'));
+        } catch {
+            return new Set();
+        }
+    },
+
+    salvarHistorico(historicoSet) {
+        return pedir('/history', { method: 'POST', body: JSON.stringify([...historicoSet]) });
+    },
+
+    limparHistorico() {
+        return pedir('/history', { method: 'POST', body: JSON.stringify([]) });
     }
 };

@@ -3,79 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instagram Unfollow Checker</title>
+    <meta name="app-token" content="__TOKEN__">
+    <title>Verifica Seguidores — detector de follow-back bait</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 30px 15px; color: #1e293b; }
-        .container { max-width: 1000px; margin: 0 auto; }
-        .main-card { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; margin-bottom: 24px; overflow: hidden; }
-        .header { background: #1e293b; color: white; padding: 32px; }
-        .header h1 { font-size: 24px; font-weight: 700; margin-bottom: 20px; letter-spacing: -0.5px; }
-        .upload-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 20px; }
-        .file-label { background: rgba(255,255,255,0.05); padding: 14px; border-radius: 6px; cursor: pointer; border: 1px dashed rgba(255,255,255,0.2); display: flex; flex-direction: column; font-size: 13px; transition: all 0.2s; }
-        .file-label:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.5); }
-        .file-label span.status { font-size: 11px; margin-top: 4px; opacity: 0.7; font-weight: bold; }
+        body { background: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 28px 16px 60px; color: #1e293b; }
+        .container { max-width: 1100px; margin: 0 auto; }
+
+        .main-card { background: #fff; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,.05); border: 1px solid #e2e8f0; margin-bottom: 20px; overflow: hidden; }
+        .header { background: #0f172a; color: #fff; padding: 28px 32px; }
+        .header h1 { font-size: 22px; font-weight: 700; letter-spacing: -.4px; }
+        .header p { font-size: 13px; opacity: .65; margin: 6px 0 20px; max-width: 640px; line-height: 1.5; }
+        .upload-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap: 14px; margin-bottom: 16px; }
+        .file-label { background: rgba(255,255,255,.05); padding: 14px; border-radius: 8px; cursor: pointer; border: 1px dashed rgba(255,255,255,.2); display: flex; flex-direction: column; font-size: 13px; transition: .2s; }
+        .file-label:hover { background: rgba(255,255,255,.09); border-color: rgba(255,255,255,.45); }
+        .file-label small { font-size: 11px; opacity: .55; margin-top: 3px; }
+        .file-label .status { font-size: 11px; margin-top: 6px; font-weight: 700; opacity: .8; }
         .file-label input { display: none; }
-        .btn-processar { background-color: #0ea5e9; color: white; border: none; padding: 12px 30px; font-size: 14px; font-weight: 600; border-radius: 6px; cursor: pointer; transition: background 0.2s; width: 100%; }
-        .btn-processar:hover { background-color: #0284c7; }
-        .btn-processar:disabled { background-color: rgba(255,255,255,0.1); color: rgba(255,255,255,0.3); cursor: not-allowed; }
-        .stats-bar { display: flex; justify-content: space-around; background: #f8fafc; padding: 20px; border-bottom: 1px solid #e2e8f0; }
-        .stat-box { text-align: center; flex: 1; }
+        .btn-primario { background: #0ea5e9; color: #fff; border: 0; padding: 12px 24px; font-size: 14px; font-weight: 600; border-radius: 6px; cursor: pointer; width: 100%; transition: background .2s; }
+        .btn-primario:hover:not(:disabled) { background: #0284c7; }
+        .btn-primario:disabled { background: rgba(255,255,255,.08); color: rgba(255,255,255,.3); cursor: not-allowed; }
+
+        .stats-bar { display: flex; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+        .stat-box { text-align: center; flex: 1; padding: 18px 8px; }
         .stat-box:not(:last-child) { border-right: 1px solid #e2e8f0; }
-        .stat-box .number { font-size: 24px; font-weight: 700; color: #0f172a; }
-        .stat-box .label { font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; margin-top: 2px; }
-        .toolbar { padding: 24px 32px; background: white; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 24px; display: flex; gap: 16px; align-items: center; }
-        .search-input { flex: 1; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; outline: none; }
-        .search-input:focus { border-color: #0ea5e9; box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15); }
-        .btn-reset-history { background: #ef4444; color: white; border: none; padding: 10px 16px; font-size: 13px; font-weight: 500; border-radius: 6px; cursor: pointer; }
-        .btn-reset-history:hover { background: #dc2626; }
-        .list-section-title { font-size: 14px; font-weight: 700; color: #475569; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .users-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-bottom: 24px; }
-        .user-card { background: white; padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
-        .user-link { text-decoration: none; color: #0f172a; font-size: 14px; font-weight: 500; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .stat-box .number { font-size: 22px; font-weight: 700; color: #0f172a; }
+        .stat-box .label { font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; margin-top: 3px; }
+
+        .aviso { padding: 14px 18px; border-radius: 8px; font-size: 13px; line-height: 1.6; margin-bottom: 16px; border: 1px solid; }
+        .aviso-info { background: #fffbeb; border-color: #fde68a; color: #78350f; }
+        .aviso-ok { background: #f0fdf4; border-color: #bbf7d0; color: #14532d; }
+
+        .timeline-title { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+        .timeline { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+        .timeline-item { background: #fff; border: 1px solid #cbd5e1; color: #475569; font-size: 12px; padding: 5px 10px; border-radius: 20px; }
+        .timeline-item.atual { background: #0ea5e9; border-color: #0ea5e9; color: #fff; font-weight: 600; }
+
+        .abas { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+        .aba { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #e2e8f0; color: #475569; font-size: 13px; font-weight: 600; padding: 9px 14px; border-radius: 8px; cursor: pointer; transition: .15s; }
+        .aba:hover { border-color: #94a3b8; }
+        .aba.ativa { background: #0f172a; border-color: #0f172a; color: #fff; }
+        .aba-contagem { background: rgba(100,116,139,.15); border-radius: 10px; padding: 1px 7px; font-size: 11px; }
+        .aba.ativa .aba-contagem { background: rgba(255,255,255,.2); }
+
+        .toolbar { display: flex; gap: 12px; align-items: center; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; margin-bottom: 18px; flex-wrap: wrap; }
+        .search-input { flex: 1; min-width: 200px; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; outline: 0; }
+        .search-input:focus { border-color: #0ea5e9; box-shadow: 0 0 0 3px rgba(14,165,233,.15); }
+        select { padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; background: #fff; cursor: pointer; }
+        .btn-reset-history { background: #fff; color: #dc2626; border: 1px solid #fecaca; padding: 9px 14px; font-size: 13px; font-weight: 600; border-radius: 6px; cursor: pointer; }
+        .btn-reset-history:hover { background: #fef2f2; }
+
+        .list-section-title { font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 12px; text-transform: uppercase; letter-spacing: .5px; }
+        .users-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px,1fr)); gap: 12px; }
+        .user-card { background: #fff; padding: 14px 16px; border-radius: 10px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 10px; }
+        .card-topo { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .user-link { text-decoration: none; color: #0f172a; font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .user-link:hover { color: #0ea5e9; }
-        .btn-unfollow-action { background-color: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; padding: 6px 12px; font-size: 12px; font-weight: 600; border-radius: 4px; cursor: pointer; transition: all 0.15s; }
-        .btn-unfollow-action:hover { background-color: #fee2e2; color: #ef4444; border-color: #fca5a5; }
-        .pagination-container { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 20px; flex-wrap: wrap; }
-        .pagination-button { background: white; border: 1px solid #cbd5e1; color: #475569; padding: 8px 14px; font-size: 13px; font-weight: 600; border-radius: 6px; cursor: pointer; }
+
+        .badge { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; padding: 3px 8px; border-radius: 20px; white-space: nowrap; }
+        .badge-critico { background: #fee2e2; color: #b91c1c; }
+        .badge-alerta { background: #ffedd5; color: #c2410c; }
+        .badge-atencao { background: #fef9c3; color: #a16207; }
+        .badge-neutro { background: #f1f5f9; color: #64748b; }
+        .badge-ok { background: #dcfce7; color: #15803d; }
+
+        .card-meta { display: flex; flex-wrap: wrap; gap: 6px; font-size: 11px; color: #64748b; }
+        .card-meta span { background: #f8fafc; border: 1px solid #f1f5f9; padding: 2px 7px; border-radius: 4px; }
+        .card-meta .score { background: #0f172a; color: #fff; border-color: #0f172a; font-weight: 700; }
+        .card-motivos { list-style: none; font-size: 11px; color: #64748b; line-height: 1.5; }
+        .card-motivos li::before { content: "— "; }
+
+        .card-acoes { display: flex; gap: 8px; }
+        .btn-acao { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; padding: 6px 12px; font-size: 12px; font-weight: 600; border-radius: 5px; cursor: pointer; transition: .15s; }
+        .btn-acao:hover { background: #e2e8f0; }
+        .btn-acao.ok { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+        .btn-resolver:hover { background: #fee2e2; color: #dc2626; border-color: #fca5a5; }
+        .btn-acao:disabled { opacity: .5; cursor: wait; }
+
+        .pagination-container { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 24px; flex-wrap: wrap; }
+        .pagination-button { background: #fff; border: 1px solid #cbd5e1; color: #475569; padding: 7px 12px; font-size: 13px; font-weight: 600; border-radius: 6px; cursor: pointer; }
         .pagination-button:hover:not(:disabled) { border-color: #0ea5e9; color: #0ea5e9; }
-        .pagination-button.active { background-color: #0ea5e9; border-color: #0ea5e9; color: white; }
-        .pagination-button:disabled { opacity: 0.4; cursor: not-allowed; }
-        .status-message { text-align: center; padding: 40px; color: #94a3b8; font-size: 14px; width: 100%; grid-column: 1 / -1; }
+        .pagination-button.active { background: #0ea5e9; border-color: #0ea5e9; color: #fff; }
+        .pagination-button:disabled { opacity: .4; cursor: not-allowed; }
+        .reticencias { color: #94a3b8; padding: 0 2px; }
+        .status-message { text-align: center; padding: 48px; color: #94a3b8; font-size: 14px; grid-column: 1/-1; }
+
+        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #0f172a; color: #fff; padding: 12px 20px; border-radius: 8px; font-size: 13px; box-shadow: 0 10px 25px rgba(0,0,0,.2); transition: opacity .3s, transform .3s; z-index: 50; }
+        .toast-erro { background: #b91c1c; }
+        .toast-ok { background: #15803d; }
+        .toast.sai { opacity: 0; transform: translateX(-50%) translateY(10px); }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="main-card">
             <div class="header">
-                <h1>Instagram Unfollow Checker</h1>
+                <h1>Verifica Seguidores</h1>
+                <p>
+                    Detecta quem te seguiu, esperou o follow de volta e depois te largou.
+                    Roda 100% na sua máquina, a partir do seu próprio export da Meta —
+                    sem login, sem senha e sem acessar o Instagram.
+                </p>
                 <div class="upload-grid">
                     <label class="file-label">
-                        <strong>Seguidores (followers_1.json)</strong>
-                        <span id="status-followers" class="status">Checando pasta local...</span>
-                        <input type="file" id="followersInput" accept=".json">
+                        <strong>Seguidores</strong>
+                        <small>followers_1.json (pode selecionar _2, _3… juntos)</small>
+                        <span id="status-followers" class="status">Aguardando arquivo…</span>
+                        <input type="file" id="followersInput" accept=".json" multiple>
                     </label>
                     <label class="file-label">
-                        <strong>Seguindo (following.json)</strong>
-                        <span id="status-following" class="status">Checando pasta local...</span>
+                        <strong>Seguindo</strong>
+                        <small>following.json</small>
+                        <span id="status-following" class="status">Aguardando arquivo…</span>
                         <input type="file" id="followingInput" accept=".json">
                     </label>
                 </div>
-                <button id="btnVerificar" class="btn-processar" disabled>Analisar Relações</button>
+                <button id="btnSalvarSnapshot" class="btn-primario" disabled>
+                    Salvar como snapshot
+                </button>
             </div>
-            <div class="stats-bar">
-                <div class="stat-box"><div class="number" id="count-followers">0</div><div class="label">Seguidores</div></div>
-                <div class="stat-box"><div class="number" id="count-following">0</div><div class="label">Seguindo</div></div>
-                <div class="stat-box"><div class="number" id="count-unfollow">0</div><div class="label">Não Te Seguem</div></div>
-            </div>
+            <div class="stats-bar" id="stats-bar"></div>
         </div>
+
+        <div id="aviso-prova"></div>
+        <div id="linha-do-tempo"></div>
+        <div class="abas" id="abas"></div>
+
         <div class="toolbar">
-            <input type="text" id="searchInput" class="search-input" placeholder="Pesquisar usuário na lista..." disabled>
-            <button id="btnResetHistory" class="btn-reset-history" style="display: none;">Limpar Histórico Local</button>
+            <input type="text" id="searchInput" class="search-input" placeholder="Pesquisar usuário…" disabled>
+            <select id="ordenacao" title="Ordenar por">
+                <option value="score">Maior risco</option>
+                <option value="recente">Follow mais recente</option>
+                <option value="antigo">Follow mais antigo</option>
+                <option value="alfabetica">A–Z</option>
+            </select>
+            <button id="btnResetHistory" class="btn-reset-history" style="display:none;">Limpar histórico</button>
         </div>
-        <div class="list-section-title" id="list-title">Lista de Perfis</div>
+
+        <div class="list-section-title" id="list-title">Carregue os arquivos para começar</div>
         <div class="users-grid" id="users-grid">
-            <div class="status-message">Aguardando importação ou detecção automática dos arquivos JSON.</div>
+            <div class="status-message">Nenhum dado carregado ainda.</div>
         </div>
         <div class="pagination-container" id="pagination-controls"></div>
     </div>

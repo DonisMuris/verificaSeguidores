@@ -1,148 +1,206 @@
 import { StorageService } from './storage.js';
 import { ParserService } from './parser.js';
-import { dom, UIService } from './ui.js';
+import { dom, UIService, ABAS } from './ui.js';
+import { analisar, criarSnapshot } from './analysis.js';
 
 const AppState = {
-    followers: new Set(),
-    following: new Set(),
-    unfollowersFiltered: [],
-    historyUnfollowed: new Set(),
-    currentPage: 1
+    followers: new Map(),   // username -> quando ELE te seguiu
+    following: new Map(),   // username -> quando VOCÊ seguiu
+    snapshots: [],
+    historico: new Set(),
+    perfis: [],
+    resumo: null,
+    aba: 'RANKING',
+    pagina: 1
 };
 
-// Lógica Core de cálculo cruzado (Aritmética de Conjuntos)
-const processarAnaliseRelacoes = () => {
-    if (AppState.following.size === 0) return;
+const ORDENADORES = {
+    score: (a, b) => b.score - a.score,
+    recente: (a, b) => (b.voceSeguiuEm ?? 0) - (a.voceSeguiuEm ?? 0),
+    antigo: (a, b) => (a.voceSeguiuEm ?? Infinity) - (b.voceSeguiuEm ?? Infinity),
+    alfabetica: (a, b) => a.user.localeCompare(b.user)
+};
 
-    const rawUnfollowers = [...AppState.following]
-        .filter(user => !AppState.followers.has(user));
+const temDadosCarregados = () => AppState.followers.size > 0 && AppState.following.size > 0;
 
-    AppState.unfollowersFiltered = rawUnfollowers
-        .filter(user => !AppState.historyUnfollowed.has(user))
-        .sort();
+// -------------------------------------------------------------- análise e render
 
-    UIService.atualizarPainelContagem(
-        AppState.followers.size,
-        AppState.following.size,
-        AppState.unfollowersFiltered.length
+const reanalisar = () => {
+    // Inclui o estado carregado agora como snapshot provisório (ainda não salvo).
+    const provisorio = temDadosCarregados()
+        ? [criarSnapshot(AppState.followers, AppState.following)]
+        : [];
+    const salvosAnteriores = AppState.snapshots.filter(
+        (s) => !provisorio.length || Math.abs(s.takenAt - provisorio[0].takenAt) >= 86400
     );
 
-    dom.searchInput.disabled = false;
-    filtrarERenderizarVisualizacao();
+    const { perfis, resumo } = analisar([...salvosAnteriores, ...provisorio], AppState.historico);
+    AppState.perfis = perfis;
+    AppState.resumo = resumo;
+
+    UIService.renderizarResumo(resumo);
+    UIService.renderizarAvisoProva(resumo);
+    UIService.renderizarLinhaDoTempo(AppState.snapshots);
+    UIService.renderizarAbas(perfis, AppState.aba, trocarAba);
+    renderizarLista();
 };
 
-const filtrarERenderizarVisualizacao = () => {
-    const query = dom.searchInput.value.toLowerCase().trim();
-    const listaFiltrada = AppState.unfollowersFiltered.filter(user => 
-        user.toLowerCase().includes(query)
-    );
+const listaVisivel = () => {
+    const aba = ABAS.find((a) => a.id === AppState.aba) ?? ABAS[0];
+    const busca = dom.searchInput.value.trim().toLowerCase();
+    return AppState.perfis
+        .filter((p) => !p.resolvido && aba.filtro(p) && (!busca || p.user.includes(busca)))
+        .sort(ORDENADORES[dom.ordenacao.value] ?? ORDENADORES.score);
+};
 
-    dom.listTitle.textContent = `Perfis Pendentes (${listaFiltrada.length})`;
-    
-    UIService.renderizarGrade(listaFiltrada, AppState.currentPage, async (userMarcado) => {
-        // 1. Atualiza o estado visual na hora (UX Otimista)
-        AppState.historyUnfollowed.add(userMarcado);
-        UIService.atualizarBotaoReset(AppState.historyUnfollowed.size);
-        processarAnaliseRelacoes();
+const renderizarLista = () => {
+    const lista = listaVisivel();
+    const aba = ABAS.find((a) => a.id === AppState.aba) ?? ABAS[0];
+    dom.listTitle.textContent = `${aba.rotulo} — ${lista.length} perfis`;
+    dom.searchInput.disabled = !AppState.perfis.length;
 
-        // 2. Persiste em background no banco físico
-        await StorageService.salvarHistorico(AppState.historyUnfollowed);
-    });
-
-    UIService.renderizarControlesPaginacao(listaFiltrada.length, AppState.currentPage, (novaPagina) => {
-        AppState.currentPage = novaPagina;
-        filtrarERenderizarVisualizacao();
+    UIService.renderizarGrade(lista, AppState.pagina, resolverPerfil);
+    UIService.renderizarControlesPaginacao(lista.length, AppState.pagina, (novaPagina) => {
+        AppState.pagina = novaPagina;
+        renderizarLista();
     });
 };
 
-// --- LISTENERS DE UPLOAD (Sincronizam imediatamente com o Back-End) ---
+const trocarAba = (id) => {
+    AppState.aba = id;
+    AppState.pagina = 1;
+    UIService.renderizarAbas(AppState.perfis, AppState.aba, trocarAba);
+    renderizarLista();
+};
 
-dom.followersInput.addEventListener('change', async (e) => {
-    if (!e.target.files[0]) return;
+/**
+ * Marca um perfil como resolvido. Com rollback: se a gravação falhar, o perfil
+ * volta para a lista em vez de sumir da tela e continuar no disco.
+ */
+const resolverPerfil = async (user, botao) => {
+    if (botao) botao.disabled = true;
+    AppState.historico.add(user);
+    const alvo = AppState.perfis.find((p) => p.user === user);
+    if (alvo) alvo.resolvido = true;
+
+    UIService.renderizarAbas(AppState.perfis, AppState.aba, trocarAba);
+    renderizarLista();
+
     try {
-        const json = await ParserService.lerArquivoAsync(e.target.files[0]);
-        AppState.followers = ParserService.extrairSeguidores(json);
-        UIService.atualizarStatusUpload(dom.statusFollowers, AppState.followers.size);
-        
-        // Salva o novo estado no servidor
-        await StorageService.salvarCacheMeta(AppState.followers, AppState.following);
-        dom.btnVerificar.disabled = !(AppState.followers.size > 0 && AppState.following.size > 0);
-    } catch (err) { alert(err); }
-});
+        await StorageService.salvarHistorico(AppState.historico);
+        UIService.atualizarBotaoReset(AppState.historico.size);
+    } catch (erro) {
+        AppState.historico.delete(user);
+        if (alvo) alvo.resolvido = false;
+        UIService.toast(`Não deu para salvar: ${erro.message}`, 'erro');
+        UIService.renderizarAbas(AppState.perfis, AppState.aba, trocarAba);
+        renderizarLista();
+    }
+};
 
-dom.followingInput.addEventListener('change', async (e) => {
-    if (!e.target.files[0]) return;
+// -------------------------------------------------------------- entrada de arquivos
+
+const carregarArquivos = async (fileList, tipo) => {
+    if (!fileList?.length) return;
     try {
-        const json = await ParserService.lerArquivoAsync(e.target.files[0]);
-        AppState.following = ParserService.extrairSeguindo(json);
-        UIService.atualizarStatusUpload(dom.statusFollowing, AppState.following.size);
-        
-        // Salva o novo estado no servidor
-        await StorageService.salvarCacheMeta(AppState.followers, AppState.following);
-        dom.btnVerificar.disabled = !(AppState.followers.size > 0 && AppState.following.size > 0);
-    } catch (err) { alert(err); }
+        const jsons = await ParserService.lerArquivosAsync(fileList);
+        if (tipo === 'followers') {
+            AppState.followers = ParserService.extrairSeguidores(...jsons);
+            UIService.atualizarStatusUpload(
+                dom.statusFollowers,
+                AppState.followers.size,
+                fileList.length > 1 ? `${fileList.length} arquivos` : 'Carregado'
+            );
+        } else {
+            AppState.following = ParserService.extrairSeguindo(...jsons);
+            UIService.atualizarStatusUpload(dom.statusFollowing, AppState.following.size);
+        }
+        dom.btnSalvarSnapshot.disabled = !temDadosCarregados();
+        reanalisar();
+    } catch (erro) {
+        UIService.toast(erro.message, 'erro');
+    }
+};
+
+const salvarSnapshot = async () => {
+    if (!temDadosCarregados()) return;
+    dom.btnSalvarSnapshot.disabled = true;
+    try {
+        const snapshot = criarSnapshot(AppState.followers, AppState.following);
+        const r = await StorageService.salvarSnapshot(snapshot);
+        AppState.snapshots = await StorageService.carregarSnapshots();
+        UIService.toast(
+            r.substituido
+                ? 'Snapshot de hoje atualizado.'
+                : `Snapshot salvo. Total: ${r.total}.`,
+            'ok'
+        );
+        reanalisar();
+    } catch (erro) {
+        UIService.toast(`Falha ao salvar snapshot: ${erro.message}`, 'erro');
+    } finally {
+        dom.btnSalvarSnapshot.disabled = !temDadosCarregados();
+    }
+};
+
+// -------------------------------------------------------------- listeners
+
+dom.followersInput.addEventListener('change', (e) => carregarArquivos(e.target.files, 'followers'));
+dom.followingInput.addEventListener('change', (e) => carregarArquivos(e.target.files, 'following'));
+dom.btnSalvarSnapshot.addEventListener('click', salvarSnapshot);
+dom.ordenacao.addEventListener('change', () => {
+    AppState.pagina = 1;
+    renderizarLista();
 });
 
-dom.btnVerificar.addEventListener('click', () => {
-    AppState.currentPage = 1;
-    processarAnaliseRelacoes();
-});
-
+let debounce;
 dom.searchInput.addEventListener('input', () => {
-    AppState.currentPage = 1;
-    filtrarERenderizarVisualizacao();
+    clearTimeout(debounce);
+    debounce = setTimeout(() => {
+        AppState.pagina = 1;
+        renderizarLista();
+    }, 150);
 });
 
 dom.btnResetHistory.addEventListener('click', async () => {
-    if (confirm("Deseja limpar o histórico de unfollows?")) {
+    if (!confirm('Limpar o histórico de perfis que você já resolveu?')) return;
+    try {
         await StorageService.limparHistorico();
-        AppState.historyUnfollowed.clear();
+        AppState.historico.clear();
+        AppState.perfis.forEach((p) => (p.resolvido = false));
         UIService.atualizarBotaoReset(0);
-        processarAnaliseRelacoes();
+        reanalisar();
+    } catch (erro) {
+        UIService.toast(erro.message, 'erro');
     }
 });
 
-// --- FLUXO DE INICIALIZAÇÃO INTELIGENTE ---
-const inicializarAplicacao = async () => {
-    // 1. Carrega o histórico de unfollows do servidor
-    AppState.historyUnfollowed = await StorageService.carregarHistorico();
-    UIService.atualizarBotaoReset(AppState.historyUnfollowed.size);
+// -------------------------------------------------------------- inicialização
 
-    // 2. Tenta carregar o cache salvo das listas de seguidores/seguindo do servidor
-    const cache = await StorageService.carregarCacheMeta();
-    
-    if (cache.followers.size > 0 || cache.following.size > 0) {
-        AppState.followers = cache.followers;
-        AppState.following = cache.following;
-        
-        UIService.atualizarStatusUpload(dom.statusFollowers, AppState.followers.size, true);
-        UIService.atualizarStatusUpload(dom.statusFollowing, AppState.following.size, true);
-        
-        processarAnaliseRelacoes();
-        return;
+const inicializar = async () => {
+    const [historico, snapshots] = await Promise.all([
+        StorageService.carregarHistorico(),
+        StorageService.carregarSnapshots()
+    ]);
+
+    AppState.historico = historico;
+    AppState.snapshots = snapshots;
+    UIService.atualizarBotaoReset(historico.size);
+
+    // Reidrata o último snapshot salvo para a tela já abrir com dados.
+    const ultimo = snapshots.at(-1);
+    if (ultimo) {
+        AppState.followers = new Map(Object.entries(ultimo.followers ?? {}));
+        AppState.following = new Map(Object.entries(ultimo.following ?? {}));
+        UIService.atualizarStatusUpload(dom.statusFollowers, AppState.followers.size, 'Do snapshot');
+        UIService.atualizarStatusUpload(dom.statusFollowing, AppState.following.size, 'Do snapshot');
+        dom.btnSalvarSnapshot.disabled = false;
+    } else {
+        dom.statusFollowers.textContent = 'Aguardando arquivo…';
+        dom.statusFollowing.textContent = 'Aguardando arquivo…';
     }
 
-    // 3. Fallback: Se o servidor estiver zerado, tenta a varredura automática tradicional de arquivos raw na pasta /data
-    try {
-        const [resFollowers, resFollowing] = await Promise.all([
-            fetch('data/followers_1.json'),
-            fetch('data/following.json')
-        ]);
-        if (!resFollowers.ok || !resFollowing.ok) throw new Error();
-
-        AppState.followers = ParserService.extrairSeguidores(await resFollowers.json());
-        AppState.following = ParserService.extrairSeguindo(await resFollowing.json());
-
-        UIService.atualizarStatusUpload(dom.statusFollowers, AppState.followers.size, true);
-        UIService.atualizarStatusUpload(dom.statusFollowing, AppState.following.size, true);
-
-        // Deixa o cache salvo no servidor para os próximos carregamentos
-        await StorageService.salvarCacheMeta(AppState.followers, AppState.following);
-        processarAnaliseRelacoes();
-    } catch {
-        dom.statusFollowers.textContent = "Aguardando upload manual...";
-        dom.statusFollowing.textContent = "Aguardando upload manual...";
-    }
+    reanalisar();
 };
 
-document.addEventListener('DOMContentLoaded', inicializarAplicacao);
+document.addEventListener('DOMContentLoaded', inicializar);
