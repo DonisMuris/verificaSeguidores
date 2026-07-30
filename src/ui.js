@@ -7,6 +7,8 @@ export const dom = {
     searchInput: document.getElementById('searchInput'),
     ordenacao: document.getElementById('ordenacao'),
     btnResetHistory: document.getElementById('btnResetHistory'),
+    btnExportarBackup: document.getElementById('btnExportarBackup'),
+    inputImportarBackup: document.getElementById('inputImportarBackup'),
     usersGrid: document.getElementById('users-grid'),
     paginationControls: document.getElementById('pagination-controls'),
     statusFollowers: document.getElementById('status-followers'),

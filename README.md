@@ -8,73 +8,88 @@ Funciona a partir do **seu próprio arquivo de dados do Instagram**. Não pede l
 
 ## Início rápido
 
-**Você precisa de:** [Node.js 18+](https://nodejs.org) instalado e o seu arquivo de dados do Instagram (passo 1).
+**Não instala nada.** O projeto não tem dependências: nenhum `npm install`, nenhum ambiente virtual, nenhum resíduo para limpar depois.
 
-### 1. Baixe seus dados do Instagram
+1. Baixe seus dados do Instagram em **formato JSON** ([passo a passo detalhado abaixo](#como-baixar-seus-dados-no-instagram)).
+2. Descompacte o `.zip` e localize `connections/followers_and_following/`.
+3. Dê **duplo clique em `VerificaSeguidores.html`**.
+4. Carregue `followers_1.json` e `following.json` e clique em **Salvar como snapshot**.
+5. **Repita daqui a alguns dias** com um export novo — é aí que a ferramenta prova quem te largou.
 
-No app do Instagram ou no site:
+Só isso. Sem terminal, sem servidor, sem Node.
 
-**Perfil → Menu (☰) → Central de Contas → Suas informações e permissões → Baixar suas informações → Baixar ou transferir informações**
+> O arquivo ocupa ~55 KB e guarda os dados no armazenamento do próprio navegador.
+> Para apagar tudo: use **Limpar histórico** ou limpe os dados do site no navegador.
 
-Escolha:
+---
+
+## Como baixar seus dados no Instagram
+
+### 1. Peça o export para a Meta
+
+No app do Instagram, ou em [accountscenter.instagram.com](https://accountscenter.instagram.com):
+
+```
+Perfil → Menu (☰) → Central de Contas
+      → Suas informações e permissões
+      → Exportar suas informações        (nome antigo: "Baixar suas informações")
+      → Criar exportação → Exportar para o dispositivo
+```
+
+Escolha assim:
 
 | Opção | O que selecionar |
 |---|---|
 | Conta | Sua conta do Instagram |
 | Quais informações | **Selecionar tipos de informações** → marque só **Seguidores e seguindo** |
-| Onde entregar | Baixar no dispositivo |
-| Formato | **JSON** (não HTML) |
-| Intervalo | Todo o período |
+| Intervalo de datas | Todo o período |
+| **Formato** | **JSON** — obrigatório |
+| Qualidade de mídia | Irrelevante (não baixa fotos) |
 
-O Instagram envia um `.zip` por e-mail — normalmente em alguns minutos.
+> **Duas armadilhas comuns:**
+> Escolher **HTML** em vez de JSON — o app não consegue ler, e é preciso refazer o pedido.
+> Pedir a **cópia completa** — demora horas ou dias. Marcando só "Seguidores e seguindo", costuma sair em minutos.
 
-### 2. Descompacte e ache os dois arquivos
+O Instagram avisa quando ficar pronto. O download fica em **Downloads disponíveis**, dentro da mesma tela, e expira em poucos dias.
 
-Dentro do `.zip`, vá em `connections/followers_and_following/` e localize:
+### 2. Ache os dois arquivos dentro do .zip
 
-- `followers_1.json` (se houver `followers_2.json`, `followers_3.json`… guarde todos)
-- `following.json`
+Descompacte o arquivo baixado. A estrutura é esta:
 
-### 3. Rode o app
-
-Abra o terminal na pasta do projeto:
-
-```bash
-node server.js
+```
+seu-export/
+└── connections/
+    └── followers_and_following/
+        ├── followers_1.json      ← carregue no campo "Seguidores"
+        └── following.json        ← carregue no campo "Seguindo"
 ```
 
-Depois abra **http://127.0.0.1:3000** no navegador.
+Se existirem `followers_2.json`, `followers_3.json`… (contas com muitos seguidores), **selecione todos juntos** no campo "Seguidores" — segure `Ctrl` ao clicar. Carregar só o primeiro faz a conta sair errada, sem aviso.
 
-> Não use Live Server nem abra o `index.html` direto — o próprio comando acima entrega a interface.
+Os outros arquivos da pasta não são usados.
 
-### 4. Carregue e salve
+### 3. Onde colocar os arquivos?
 
-1. Clique em **Seguidores** e selecione o `followers_1.json` (se tiver `_2`, `_3`…, selecione todos de uma vez).
-2. Clique em **Seguindo** e selecione o `following.json`.
-3. Clique em **Salvar como snapshot**.
+**Em lugar nenhum.** Não existe pasta de destino. Você clica nos campos do app e seleciona os arquivos onde eles já estiverem — Downloads, Área de Trabalho, um pendrive, tanto faz.
 
-Pronto. O app já mostra quem não te segue de volta.
-
-### 5. Volte daqui a alguns dias
-
-Baixe um export novo, repita os passos 2 a 4. **É aqui que a ferramenta fica útil de verdade:** com dois arquivos em datas diferentes ela para de supor e passa a provar exatamente quem te largou, quando, e quanto tempo te manteve seguindo.
-
-Para parar o app: `Ctrl + C` no terminal.
+O app apenas lê o conteúdo na hora. Não copia, não move e não envia nada para lugar algum.
 
 ---
 
 ## Por que preciso baixar duas vezes?
 
-Quando alguém deixa de te seguir, o perfil simplesmente **desaparece** do seu arquivo de seguidores. Não fica registro. Com um arquivo só, é impossível saber se a pessoa nunca te seguiu ou se te seguiu e sumiu.
+Quando alguém deixa de te seguir, o perfil simplesmente **desaparece** do seu arquivo de seguidores. Não fica registro nenhum. Com um arquivo só, é impossível distinguir quem nunca te seguiu de quem te seguiu e sumiu.
 
-Comparando dois arquivos de datas diferentes, a diferença entre eles revela exatamente quem saiu.
+Comparando dois arquivos de datas diferentes, a diferença entre eles revela exatamente quem saiu — e os horários registrados provam quem seguiu primeiro.
 
 | Você tem | O app entrega |
 |---|---|
 | 1 export | Quem não te segue de volta, com **suspeitas** ranqueadas |
 | 2 ou mais | **Prova**: quem te largou, quando, quem seguiu primeiro e por quanto tempo te reteve |
 
-A tela avisa em qual dos dois modos você está. Quanto mais exports você acumular, mais completo fica o histórico.
+A tela avisa em qual dos dois modos você está. Quanto mais exports acumular, mais completo fica o histórico. Um a cada duas semanas já dá um bom retrato.
+
+---
 
 ## Entendendo a tela
 
@@ -102,29 +117,56 @@ A tela avisa em qual dos dois modos você está. Quanto mais exports você acumu
 - **Copiar** — copia o @ para colar na busca do Instagram (útil quando o perfil trocou de nome).
 - **Parei de seguir** — some o perfil da sua lista de trabalho, para você não revisitar. Não faz nada no Instagram; a ação lá é sua, manualmente.
 
+**Backup e Restaurar**
+
+Seus snapshots ficam no navegador. Limpar os dados de navegação apaga tudo. Use **Backup** de vez em quando para gerar um arquivo — e **Restaurar** para trazer o histórico de volta ou levá-lo para outro computador.
+
+---
+
 ## Privacidade
 
 - Roda inteiramente no seu computador. Não há conta, nuvem, telemetria ou envio de dados.
-- O servidor aceita conexões **somente do seu próprio computador** e exige uma chave gerada a cada execução, então nenhum site aberto em outra aba consegue acessar seus dados.
-- Seus arquivos ficam na pasta `data/`, que o Git ignora — não vão para o GitHub se você publicar o projeto.
-- Para apagar tudo: pare o app e delete a pasta `data/`.
+- O app nunca se conecta ao Instagram — só lê o arquivo que a própria Meta te entregou.
+- Seus arquivos de dados ficam onde você os deixou; o app não os copia.
 
-## Isso pode banir minha conta?
+### Isso pode banir minha conta?
 
-Não. O app nunca se conecta ao Instagram — ele apenas lê o arquivo que a própria Meta te entregou.
+Não, porque não há nenhum contato com o Instagram.
 
-Vale o alerta: aplicativos que mostram sua lista de seguidores **sem pedir esse arquivo** estão necessariamente raspando o Instagram ou usando seu login, prática proibida nos Termos de Uso e principal causa dos bloqueios associados a "apps de unfollowers". Não existe API oficial que forneça a lista de seguidores. Se um app mostra a lista sem pedir seu export, ele está te colocando em risco.
+Vale o alerta: aplicativos que mostram sua lista de seguidores **sem pedir esse arquivo** estão necessariamente raspando o Instagram ou usando seu login — prática proibida nos Termos de Uso e principal causa dos bloqueios associados a "apps de unfollowers". Não existe API oficial que forneça a lista de seguidores. Se um app mostra a lista sem pedir seu export, ele está te colocando em risco.
+
+---
 
 ## Problemas comuns
 
 | Sintoma | Solução |
 |---|---|
-| `node: command not found` | Instale o [Node.js](https://nodejs.org) e reabra o terminal. |
-| A página não abre | Confirme que o terminal está rodando e use `http://127.0.0.1:3000`. |
-| `EADDRINUSE` | A porta 3000 está ocupada. Rode `PORT=3001 node server.js` e abra na porta 3001. |
 | "não é um JSON válido" | Você baixou o export em HTML. Refaça o pedido escolhendo **JSON**. |
 | Números menores que o esperado | Você tem mais de um `followers_N.json` e carregou só o primeiro. Selecione todos juntos. |
 | A tela abre vazia | Carregue os dois arquivos e clique em **Salvar como snapshot**. |
+| "Seu navegador não permite salvar dados" | Raro, acontece no Safari abrindo o arquivo do disco. Use Chrome, Edge ou Firefox — ou clique em **Backup** antes de fechar. |
+| Perdi meus snapshots | Provavelmente limpou os dados de navegação. Restaure um backup, ou recarregue os exports. |
+| Não acho os arquivos no .zip | Eles ficam em `connections/followers_and_following/`. Se essa pasta não existe, o export foi pedido sem marcar "Seguidores e seguindo". |
+
+---
+
+## Modo servidor (opcional)
+
+Existe também uma versão que roda com Node e guarda os snapshots em arquivo, na pasta `data/`, em vez do navegador. Útil se você prefere os dados em disco.
+
+```bash
+node server.js     # depois abra http://127.0.0.1:3000
+```
+
+Requer [Node.js 18+](https://nodejs.org). Continua sem dependências externas.
+
+Para regenerar o `VerificaSeguidores.html` depois de alterar algo em `src/`:
+
+```bash
+node build.js
+```
+
+---
 
 ## Licença
 

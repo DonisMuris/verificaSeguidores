@@ -92,6 +92,21 @@
         .toast-erro { background: #b91c1c; }
         .toast-ok { background: #15803d; }
         .toast.sai { opacity: 0; transform: translateX(-50%) translateY(10px); }
+
+        .guia { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 18px; overflow: hidden; }
+        .guia > summary { padding: 14px 18px; font-size: 13px; font-weight: 700; color: #0f172a; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+        .guia > summary::after { content: "▾"; color: #94a3b8; }
+        .guia[open] > summary { border-bottom: 1px solid #e2e8f0; }
+        .guia[open] > summary::after { content: "▴"; }
+        .guia-corpo { padding: 18px; font-size: 13px; line-height: 1.7; color: #334155; }
+        .guia-corpo ol { padding-left: 20px; margin-bottom: 14px; }
+        .guia-corpo li { margin-bottom: 6px; }
+        .guia-corpo code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+        .guia-corpo table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 12.5px; }
+        .guia-corpo th, .guia-corpo td { text-align: left; padding: 7px 10px; border-bottom: 1px solid #f1f5f9; }
+        .guia-corpo th { color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; }
+        .guia-corpo .destaque { background: #fffbeb; border: 1px solid #fde68a; color: #78350f; padding: 10px 14px; border-radius: 6px; margin-top: 12px; }
+        .guia-corpo .caminho { background: #0f172a; color: #e2e8f0; padding: 10px 14px; border-radius: 6px; font-size: 12.5px; line-height: 1.8; margin: 10px 0; }
     </style>
 </head>
 <body>
@@ -125,6 +140,59 @@
             <div class="stats-bar" id="stats-bar"></div>
         </div>
 
+        <details class="guia" id="guia">
+            <summary>Onde baixar os arquivos no Instagram (passo a passo)</summary>
+            <div class="guia-corpo">
+                <p><strong>1. Peça o export para a Meta</strong></p>
+                <p>No app do Instagram ou em <code>accountscenter.instagram.com</code>:</p>
+                <div class="caminho">
+                    Perfil → Menu ☰ → <strong>Central de Contas</strong><br>
+                    → Suas informações e permissões<br>
+                    → <strong>Exportar suas informações</strong> (antigo "Baixar suas informações")<br>
+                    → Criar exportação → <strong>Exportar para o dispositivo</strong>
+                </div>
+                <table>
+                    <tr><th>Opção</th><th>O que escolher</th></tr>
+                    <tr><td>Quais informações</td><td>Selecionar tipos → marque só <strong>Seguidores e seguindo</strong></td></tr>
+                    <tr><td>Intervalo de datas</td><td>Todo o período</td></tr>
+                    <tr><td>Formato</td><td><strong>JSON</strong> — obrigatório</td></tr>
+                    <tr><td>Qualidade de mídia</td><td>Irrelevante (não baixa fotos)</td></tr>
+                </table>
+                <div class="destaque">
+                    Se escolher <strong>HTML</strong> em vez de JSON, o app não consegue ler.
+                    Marcando só "Seguidores e seguindo", o arquivo sai em minutos em vez de horas.
+                </div>
+
+                <p style="margin-top:16px"><strong>2. Descompacte o .zip e ache os arquivos</strong></p>
+                <p>O Instagram avisa quando ficar pronto. Baixe o <code>.zip</code> e descompacte. Dentro dele:</p>
+                <div class="caminho">
+                    seu-export/<br>
+                    └── connections/<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;└── followers_and_following/<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── <strong>followers_1.json</strong> ← carregue em "Seguidores"<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── <strong>following.json</strong> ← carregue em "Seguindo"
+                </div>
+
+                <p style="margin-top:16px"><strong>3. Carregue aqui</strong></p>
+                <p>
+                    <strong>Não precisa mover nada de pasta.</strong> Clique nos campos acima e
+                    selecione os arquivos onde eles estiverem — Downloads, Área de Trabalho, tanto faz.
+                    O app só lê o conteúdo; nada é copiado ou enviado para lugar nenhum.
+                </p>
+                <p>
+                    Se houver <code>followers_2.json</code>, <code>followers_3.json</code>…, selecione
+                    <strong>todos de uma vez</strong> no campo "Seguidores" (segure Ctrl ao clicar).
+                    Carregar só o primeiro faz a conta sair errada.
+                </p>
+
+                <div class="destaque" style="margin-top:16px">
+                    <strong>Repita daqui a alguns dias.</strong> Com um export só, o app apenas suspeita.
+                    Com dois em datas diferentes, ele prova quem te largou — porque quem some da lista
+                    não deixa rastro em um arquivo isolado.
+                </div>
+            </div>
+        </details>
+
         <div id="aviso-prova"></div>
         <div id="linha-do-tempo"></div>
         <div class="abas" id="abas"></div>
@@ -137,6 +205,11 @@
                 <option value="antigo">Follow mais antigo</option>
                 <option value="alfabetica">A–Z</option>
             </select>
+            <button id="btnExportarBackup" class="btn-acao" title="Salva seus snapshots num arquivo">Backup</button>
+            <label class="btn-acao" style="cursor:pointer" title="Restaura snapshots de um backup">
+                Restaurar
+                <input type="file" id="inputImportarBackup" accept=".json" style="display:none">
+            </label>
             <button id="btnResetHistory" class="btn-reset-history" style="display:none;">Limpar histórico</button>
         </div>
 

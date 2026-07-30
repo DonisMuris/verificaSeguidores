@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Arquivo gerado por build.js. Não edite aqui: edite src/ e rode "node build.js". -->
+    <title>Verifica Seguidores — detector de follow-back bait</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 28px 16px 60px; color: #1e293b; }
+        .container { max-width: 1100px; margin: 0 auto; }
+
+        .main-card { background: #fff; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,.05); border: 1px solid #e2e8f0; margin-bottom: 20px; overflow: hidden; }
+        .header { background: #0f172a; color: #fff; padding: 28px 32px; }
+        .header h1 { font-size: 22px; font-weight: 700; letter-spacing: -.4px; }
+        .header p { font-size: 13px; opacity: .65; margin: 6px 0 20px; max-width: 640px; line-height: 1.5; }
+        .upload-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap: 14px; margin-bottom: 16px; }
+        .file-label { background: rgba(255,255,255,.05); padding: 14px; border-radius: 8px; cursor: pointer; border: 1px dashed rgba(255,255,255,.2); display: flex; flex-direction: column; font-size: 13px; transition: .2s; }
+        .file-label:hover { background: rgba(255,255,255,.09); border-color: rgba(255,255,255,.45); }
+        .file-label small { font-size: 11px; opacity: .55; margin-top: 3px; }
+        .file-label .status { font-size: 11px; margin-top: 6px; font-weight: 700; opacity: .8; }
+        .file-label input { display: none; }
+        .btn-primario { background: #0ea5e9; color: #fff; border: 0; padding: 12px 24px; font-size: 14px; font-weight: 600; border-radius: 6px; cursor: pointer; width: 100%; transition: background .2s; }
+        .btn-primario:hover:not(:disabled) { background: #0284c7; }
+        .btn-primario:disabled { background: rgba(255,255,255,.08); color: rgba(255,255,255,.3); cursor: not-allowed; }
+
+        .stats-bar { display: flex; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+        .stat-box { text-align: center; flex: 1; padding: 18px 8px; }
+        .stat-box:not(:last-child) { border-right: 1px solid #e2e8f0; }
+        .stat-box .number { font-size: 22px; font-weight: 700; color: #0f172a; }
+        .stat-box .label { font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; margin-top: 3px; }
+
+        .aviso { padding: 14px 18px; border-radius: 8px; font-size: 13px; line-height: 1.6; margin-bottom: 16px; border: 1px solid; }
+        .aviso-info { background: #fffbeb; border-color: #fde68a; color: #78350f; }
+        .aviso-ok { background: #f0fdf4; border-color: #bbf7d0; color: #14532d; }
+
+        .timeline-title { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+        .timeline { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+        .timeline-item { background: #fff; border: 1px solid #cbd5e1; color: #475569; font-size: 12px; padding: 5px 10px; border-radius: 20px; }
+        .timeline-item.atual { background: #0ea5e9; border-color: #0ea5e9; color: #fff; font-weight: 600; }
+
+        .abas { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+        .aba { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #e2e8f0; color: #475569; font-size: 13px; font-weight: 600; padding: 9px 14px; border-radius: 8px; cursor: pointer; transition: .15s; }
+        .aba:hover { border-color: #94a3b8; }
+        .aba.ativa { background: #0f172a; border-color: #0f172a; color: #fff; }
+        .aba-contagem { background: rgba(100,116,139,.15); border-radius: 10px; padding: 1px 7px; font-size: 11px; }
+        .aba.ativa .aba-contagem { background: rgba(255,255,255,.2); }
+
+        .toolbar { display: flex; gap: 12px; align-items: center; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; margin-bottom: 18px; flex-wrap: wrap; }
+        .search-input { flex: 1; min-width: 200px; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; outline: 0; }
+        .search-input:focus { border-color: #0ea5e9; box-shadow: 0 0 0 3px rgba(14,165,233,.15); }
+        select { padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; background: #fff; cursor: pointer; }
+        .btn-reset-history { background: #fff; color: #dc2626; border: 1px solid #fecaca; padding: 9px 14px; font-size: 13px; font-weight: 600; border-radius: 6px; cursor: pointer; }
+        .btn-reset-history:hover { background: #fef2f2; }
+
+        .list-section-title { font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 12px; text-transform: uppercase; letter-spacing: .5px; }
+        .users-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px,1fr)); gap: 12px; }
+        .user-card { background: #fff; padding: 14px 16px; border-radius: 10px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 10px; }
+        .card-topo { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .user-link { text-decoration: none; color: #0f172a; font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .user-link:hover { color: #0ea5e9; }
+
+        .badge { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; padding: 3px 8px; border-radius: 20px; white-space: nowrap; }
+        .badge-critico { background: #fee2e2; color: #b91c1c; }
+        .badge-alerta { background: #ffedd5; color: #c2410c; }
+        .badge-atencao { background: #fef9c3; color: #a16207; }
+        .badge-neutro { background: #f1f5f9; color: #64748b; }
+        .badge-ok { background: #dcfce7; color: #15803d; }
+
+        .card-meta { display: flex; flex-wrap: wrap; gap: 6px; font-size: 11px; color: #64748b; }
+        .card-meta span { background: #f8fafc; border: 1px solid #f1f5f9; padding: 2px 7px; border-radius: 4px; }
+        .card-meta .score { background: #0f172a; color: #fff; border-color: #0f172a; font-weight: 700; }
+        .card-motivos { list-style: none; font-size: 11px; color: #64748b; line-height: 1.5; }
+        .card-motivos li::before { content: "— "; }
+
+        .card-acoes { display: flex; gap: 8px; }
+        .btn-acao { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; padding: 6px 12px; font-size: 12px; font-weight: 600; border-radius: 5px; cursor: pointer; transition: .15s; }
+        .btn-acao:hover { background: #e2e8f0; }
+        .btn-acao.ok { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+        .btn-resolver:hover { background: #fee2e2; color: #dc2626; border-color: #fca5a5; }
+        .btn-acao:disabled { opacity: .5; cursor: wait; }
+
+        .pagination-container { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 24px; flex-wrap: wrap; }
+        .pagination-button { background: #fff; border: 1px solid #cbd5e1; color: #475569; padding: 7px 12px; font-size: 13px; font-weight: 600; border-radius: 6px; cursor: pointer; }
+        .pagination-button:hover:not(:disabled) { border-color: #0ea5e9; color: #0ea5e9; }
+        .pagination-button.active { background: #0ea5e9; border-color: #0ea5e9; color: #fff; }
+        .pagination-button:disabled { opacity: .4; cursor: not-allowed; }
+        .reticencias { color: #94a3b8; padding: 0 2px; }
+        .status-message { text-align: center; padding: 48px; color: #94a3b8; font-size: 14px; grid-column: 1/-1; }
+
+        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #0f172a; color: #fff; padding: 12px 20px; border-radius: 8px; font-size: 13px; box-shadow: 0 10px 25px rgba(0,0,0,.2); transition: opacity .3s, transform .3s; z-index: 50; }
+        .toast-erro { background: #b91c1c; }
+        .toast-ok { background: #15803d; }
+        .toast.sai { opacity: 0; transform: translateX(-50%) translateY(10px); }
+
+        .guia { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 18px; overflow: hidden; }
+        .guia > summary { padding: 14px 18px; font-size: 13px; font-weight: 700; color: #0f172a; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+        .guia > summary::after { content: "▾"; color: #94a3b8; }
+        .guia[open] > summary { border-bottom: 1px solid #e2e8f0; }
+        .guia[open] > summary::after { content: "▴"; }
+        .guia-corpo { padding: 18px; font-size: 13px; line-height: 1.7; color: #334155; }
+        .guia-corpo ol { padding-left: 20px; margin-bottom: 14px; }
+        .guia-corpo li { margin-bottom: 6px; }
+        .guia-corpo code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+        .guia-corpo table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 12.5px; }
+        .guia-corpo th, .guia-corpo td { text-align: left; padding: 7px 10px; border-bottom: 1px solid #f1f5f9; }
+        .guia-corpo th { color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; }
+        .guia-corpo .destaque { background: #fffbeb; border: 1px solid #fde68a; color: #78350f; padding: 10px 14px; border-radius: 6px; margin-top: 12px; }
+        .guia-corpo .caminho { background: #0f172a; color: #e2e8f0; padding: 10px 14px; border-radius: 6px; font-size: 12.5px; line-height: 1.8; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-card">
+            <div class="header">
+                <h1>Verifica Seguidores</h1>
+                <p>
+                    Detecta quem te seguiu, esperou o follow de volta e depois te largou.
+                    Roda 100% na sua máquina, a partir do seu próprio export da Meta —
+                    sem login, sem senha e sem acessar o Instagram.
+                </p>
+                <div class="upload-grid">
+                    <label class="file-label">
+                        <strong>Seguidores</strong>
+                        <small>followers_1.json (pode selecionar _2, _3… juntos)</small>
+                        <span id="status-followers" class="status">Aguardando arquivo…</span>
+                        <input type="file" id="followersInput" accept=".json" multiple>
+                    </label>
+                    <label class="file-label">
+                        <strong>Seguindo</strong>
+                        <small>following.json</small>
+                        <span id="status-following" class="status">Aguardando arquivo…</span>
+                        <input type="file" id="followingInput" accept=".json">
+                    </label>
+                </div>
+                <button id="btnSalvarSnapshot" class="btn-primario" disabled>
+                    Salvar como snapshot
+                </button>
+            </div>
+            <div class="stats-bar" id="stats-bar"></div>
+        </div>
+
+        <details class="guia" id="guia">
+            <summary>Onde baixar os arquivos no Instagram (passo a passo)</summary>
+            <div class="guia-corpo">
+                <p><strong>1. Peça o export para a Meta</strong></p>
+                <p>No app do Instagram ou em <code>accountscenter.instagram.com</code>:</p>
+                <div class="caminho">
+                    Perfil → Menu ☰ → <strong>Central de Contas</strong><br>
+                    → Suas informações e permissões<br>
+                    → <strong>Exportar suas informações</strong> (antigo "Baixar suas informações")<br>
+                    → Criar exportação → <strong>Exportar para o dispositivo</strong>
+                </div>
+                <table>
+                    <tr><th>Opção</th><th>O que escolher</th></tr>
+                    <tr><td>Quais informações</td><td>Selecionar tipos → marque só <strong>Seguidores e seguindo</strong></td></tr>
+                    <tr><td>Intervalo de datas</td><td>Todo o período</td></tr>
+                    <tr><td>Formato</td><td><strong>JSON</strong> — obrigatório</td></tr>
+                    <tr><td>Qualidade de mídia</td><td>Irrelevante (não baixa fotos)</td></tr>
+                </table>
+                <div class="destaque">
+                    Se escolher <strong>HTML</strong> em vez de JSON, o app não consegue ler.
+                    Marcando só "Seguidores e seguindo", o arquivo sai em minutos em vez de horas.
+                </div>
+
+                <p style="margin-top:16px"><strong>2. Descompacte o .zip e ache os arquivos</strong></p>
+                <p>O Instagram avisa quando ficar pronto. Baixe o <code>.zip</code> e descompacte. Dentro dele:</p>
+                <div class="caminho">
+                    seu-export/<br>
+                    └── connections/<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;└── followers_and_following/<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── <strong>followers_1.json</strong> ← carregue em "Seguidores"<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── <strong>following.json</strong> ← carregue em "Seguindo"
+                </div>
+
+                <p style="margin-top:16px"><strong>3. Carregue aqui</strong></p>
+                <p>
+                    <strong>Não precisa mover nada de pasta.</strong> Clique nos campos acima e
+                    selecione os arquivos onde eles estiverem — Downloads, Área de Trabalho, tanto faz.
+                    O app só lê o conteúdo; nada é copiado ou enviado para lugar nenhum.
+                </p>
+                <p>
+                    Se houver <code>followers_2.json</code>, <code>followers_3.json</code>…, selecione
+                    <strong>todos de uma vez</strong> no campo "Seguidores" (segure Ctrl ao clicar).
+                    Carregar só o primeiro faz a conta sair errada.
+                </p>
+
+                <div class="destaque" style="margin-top:16px">
+                    <strong>Repita daqui a alguns dias.</strong> Com um export só, o app apenas suspeita.
+                    Com dois em datas diferentes, ele prova quem te largou — porque quem some da lista
+                    não deixa rastro em um arquivo isolado.
+                </div>
+            </div>
+        </details>
+
+        <div id="aviso-prova"></div>
+        <div id="linha-do-tempo"></div>
+        <div class="abas" id="abas"></div>
+
+        <div class="toolbar">
+            <input type="text" id="searchInput" class="search-input" placeholder="Pesquisar usuário…" disabled>
+            <select id="ordenacao" title="Ordenar por">
+                <option value="score">Maior risco</option>
+                <option value="recente">Follow mais recente</option>
+                <option value="antigo">Follow mais antigo</option>
+                <option value="alfabetica">A–Z</option>
+            </select>
+            <button id="btnExportarBackup" class="btn-acao" title="Salva seus snapshots num arquivo">Backup</button>
+            <label class="btn-acao" style="cursor:pointer" title="Restaura snapshots de um backup">
+                Restaurar
+                <input type="file" id="inputImportarBackup" accept=".json" style="display:none">
+            </label>
+            <button id="btnResetHistory" class="btn-reset-history" style="display:none;">Limpar histórico</button>
+        </div>
+
+        <div class="list-section-title" id="list-title">Carregue os arquivos para começar</div>
+        <div class="users-grid" id="users-grid">
+            <div class="status-message">Nenhum dado carregado ainda.</div>
+        </div>
+        <div class="pagination-container" id="pagination-controls"></div>
+    </div>
+
+    <script>
+(() => {
+"use strict";
+
+/* ================= src/parser.js ================= */
+/**
+ * Camada de leitura do export "Baixe suas informações" da Meta.
+ *
+ * Diferença crítica para a versão anterior: aqui NADA de timestamp é descartado.
+ * O campo `timestamp` de followers_N.json é o momento em que a pessoa te seguiu;
+ * o de following.json é o momento em que VOCÊ seguiu. A ordem entre os dois é o
+ * que permite provar quem iniciou a relação.
+ */
+
+const RE_USERNAME = /^[a-z0-9._]{1,30}$/;
+
+/** Normaliza username: minúsculo, sem espaços, sem @ e sem barra final de URL. */
+const normalizarUsername = (valor) => {
+    if (typeof valor !== 'string') return '';
+    const limpo = valor.trim().toLowerCase().replace(/^@/, '').replace(/\/+$/, '');
+    return RE_USERNAME.test(limpo) ? limpo : '';
+};
+
+/** Extrai o username de uma href do tipo https://www.instagram.com/_u/fulano */
+const usernameDeHref = (href) => {
+    if (typeof href !== 'string') return '';
+    const m = href.match(/instagram\.com\/(?:_u\/)?([^/?#]+)/i);
+    return m ? normalizarUsername(m[1]) : '';
+};
+
+/**
+ * Os arquivos de label_values vêm com mojibake ("Nome de usuÃ¡rio") porque a Meta
+ * grava UTF-8 relido como Latin-1. Comparamos por substring estável ("usu") após
+ * remover diacríticos, o que sobrevive tanto ao texto correto quanto ao corrompido.
+ */
+const rotuloEhUsername = (label) =>
+    String(label ?? '')
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
+        .toLowerCase()
+        .includes('usu');
+
+/** Desembrulha as várias formas que a Meta usa para o mesmo array. */
+const desembrulhar = (json, ...chaves) => {
+    if (Array.isArray(json)) return json;
+    if (json && typeof json === 'object') {
+        for (const chave of chaves) {
+            if (Array.isArray(json[chave])) return json[chave];
+        }
+        const primeiroArray = Object.values(json).find(Array.isArray);
+        if (primeiroArray) return primeiroArray;
+    }
+    return [];
+};
+
+/** Lê item no formato { title, string_list_data: [{ value, href, timestamp }] } */
+const lerItemRelacionamento = (item) => {
+    const dado = item?.string_list_data?.[0] ?? {};
+    const user =
+        normalizarUsername(dado.value) ||
+        normalizarUsername(item?.title) ||
+        usernameDeHref(dado.href);
+    if (!user) return null;
+    return { user, ts: Number.isFinite(dado.timestamp) ? dado.timestamp : null };
+};
+
+/** Lê item no formato { timestamp, label_values: [{ label, value }] } */
+const lerItemLabelValues = (item) => {
+    const rotulos = Array.isArray(item?.label_values) ? item.label_values : [];
+    const alvo = rotulos.find((l) => rotuloEhUsername(l?.label));
+    const user = normalizarUsername(alvo?.value);
+    if (!user) return null;
+    return { user, ts: Number.isFinite(item?.timestamp) ? item.timestamp : null };
+};
+
+/** Mescla entradas em um Map, mantendo o timestamp mais antigo (início da relação). */
+const paraMap = (entradas) => {
+    const mapa = new Map();
+    for (const entrada of entradas) {
+        if (!entrada) continue;
+        const anterior = mapa.get(entrada.user);
+        if (anterior == null || (entrada.ts != null && entrada.ts < anterior)) {
+            mapa.set(entrada.user, entrada.ts);
+        }
+    }
+    return mapa;
+};
+
+const ParserService = {
+    /**
+     * Seguidores. Aceita UM ou VÁRIOS arquivos: contas grandes recebem
+     * followers_1.json, followers_2.json, followers_3.json... A versão anterior
+     * lia só o _1 e errava em silêncio para quem tem muitos seguidores.
+     */
+    extrairSeguidores(...jsons) {
+        return paraMap(
+            jsons.flatMap((json) =>
+                desembrulhar(json, 'relationships_followers').map(lerItemRelacionamento)
+            )
+        );
+    },
+
+    /** Perfis que você segue. */
+    extrairSeguindo(...jsons) {
+        return paraMap(
+            jsons.flatMap((json) =>
+                desembrulhar(json, 'relationships_following').map(lerItemRelacionamento)
+            )
+        );
+    },
+
+    /**
+     * recently_unfollowed_profiles.json = perfis que VOCÊ deixou de seguir.
+     * (Verificado no seu export: 244 de 247 já não estão mais no seu following.)
+     * Serve para preencher o histórico automaticamente em vez de você marcar
+     * "parei de seguir" na mão.
+     */
+    extrairUnfollowsQueVoceFez(json) {
+        return paraMap(desembrulhar(json).map(lerItemLabelValues));
+    },
+
+    /** Solicitações de follow — recebidas (conta privada) ou enviadas por você. */
+    extrairSolicitacoes(json) {
+        return paraMap(desembrulhar(json).map(lerItemLabelValues));
+    },
+
+    /** Lê e faz o parse de um File do input, com mensagem de erro legível. */
+    async lerArquivoAsync(file) {
+        const texto = await file.text();
+        try {
+            return JSON.parse(texto);
+        } catch {
+            throw new Error(
+                `"${file.name}" não é um JSON válido. Confirme que baixou o export em formato JSON (não HTML).`
+            );
+        }
+    },
+
+    /** Lê vários arquivos de uma vez (ex.: followers_1..N). */
+    async lerArquivosAsync(fileList) {
+        return Promise.all(Array.from(fileList).map((f) => this.lerArquivoAsync(f)));
+    }
+};
+
+/* ================= src/analysis.js ================= */
+/**
+ * Motor de análise de relações e Bait Score.
+ *
+ * PREMISSA CENTRAL (validada contra um export real):
+ * Quando alguém te larga, o perfil some de followers_N.json e a prova de que ele
+ * já te seguiu é destruída. Por isso é IMPOSSÍVEL provar "follow-back bait" com
+ * um único export — testei a heurística de clusters e ela recupera menos de 8%
+ * dos casos. A prova exige comparar dois snapshots no tempo.
+ *
+ * O motor então opera em dois modos:
+ *   1 snapshot   -> veredito de SUSPEITA, com sinais e ranking de risco.
+ *   2+ snapshots -> veredito PROVADO, com ordem de iniciativa e janela de retenção.
+ */
+
+const VEREDITO = {
+    BAIT_PROVADO: 'BAIT_PROVADO',
+    SUMIU: 'SUMIU',
+    BAIT_SUSPEITO: 'BAIT_SUSPEITO',
+    NUNCA_RETRIBUIU: 'NUNCA_RETRIBUIU',
+    MUTUO: 'MUTUO',
+    SO_TE_SEGUE: 'SO_TE_SEGUE'
+};
+
+const ROTULO_VEREDITO = {
+    BAIT_PROVADO: 'Isca confirmada',
+    SUMIU: 'Te largou',
+    BAIT_SUSPEITO: 'Isca provável',
+    NUNCA_RETRIBUIU: 'Nunca retribuiu',
+    MUTUO: 'Mútuo',
+    SO_TE_SEGUE: 'Te segue'
+};
+
+const DIA = 86400;
+/** Diferença máxima para considerar que houve troca recíproca no mesmo ato. */
+const JANELA_TROCA_INSTANTANEA = 10;
+
+/** Cria um snapshot serializável a partir dos Maps do parser. */
+const criarSnapshot = (followers, following, takenAt = Math.floor(Date.now() / 1000)) => ({
+    takenAt,
+    followers: Object.fromEntries(followers),
+    following: Object.fromEntries(following)
+});
+
+const mapaDe = (obj) => new Map(Object.entries(obj ?? {}));
+
+/**
+ * Compara dois snapshots consecutivos e devolve os eventos de transição.
+ * É aqui que nasce a evidência que o export sozinho não tem.
+ */
+const diffSnapshots = (anterior, atual) => {
+    const fAnt = mapaDe(anterior.followers);
+    const fAtu = mapaDe(atual.followers);
+    const gAnt = mapaDe(anterior.following);
+    const gAtu = mapaDe(atual.following);
+
+    const eventos = [];
+    const push = (user, tipo) => eventos.push({ user, tipo, de: anterior.takenAt, ate: atual.takenAt });
+
+    for (const user of fAtu.keys()) if (!fAnt.has(user)) push(user, 'SEGUIU_VOCE');
+    for (const user of fAnt.keys()) if (!fAtu.has(user)) push(user, 'PAROU_DE_TE_SEGUIR');
+    for (const user of gAtu.keys()) if (!gAnt.has(user)) push(user, 'VOCE_SEGUIU');
+    for (const user of gAnt.keys()) if (!gAtu.has(user)) push(user, 'VOCE_PAROU');
+
+    return eventos;
+};
+
+/**
+ * Score 0–100. Pesa a prova, a intenção (troca instantânea = follow-back reflexo,
+ * o alvo exato do golpe) e a velocidade do descarte.
+ */
+const VEREDITOS_DE_RISCO = new Set([
+    VEREDITO.BAIT_PROVADO,
+    VEREDITO.SUMIU,
+    VEREDITO.BAIT_SUSPEITO,
+    VEREDITO.NUNCA_RETRIBUIU
+]);
+
+const calcularScore = (perfil) => {
+    let score = 0;
+    const motivos = [];
+
+    // Relação saudável (mútua ou só ele te segue) nunca pontua risco. Sem esta
+    // guarda, um mútuo com troca instantânea somava pontos e poluía o ranking.
+    if (!VEREDITOS_DE_RISCO.has(perfil.veredito)) {
+        return { score: 0, motivos: [] };
+    }
+
+    if (perfil.veredito === VEREDITO.BAIT_PROVADO) {
+        score += 55;
+        motivos.push('Seguiu você primeiro, você retribuiu e depois foi largado — confirmado entre dois snapshots.');
+    } else if (perfil.veredito === VEREDITO.SUMIU) {
+        score += 30;
+        motivos.push('Te seguia no snapshot anterior e não segue mais.');
+    } else if (perfil.veredito === VEREDITO.BAIT_SUSPEITO) {
+        score += 20;
+        motivos.push('Você seguiu recentemente e não há reciprocidade.');
+    }
+
+    if (perfil.trocaInstantanea) {
+        score += 25;
+        motivos.push('A troca de follows aconteceu em menos de 10s — follow-back reflexo.');
+    }
+
+    const retencao = perfil.retencaoMaxSeg;
+    if (retencao != null) {
+        if (retencao <= 2 * DIA) {
+            score += 20;
+            motivos.push('Te largou em até 2 dias.');
+        } else if (retencao <= 7 * DIA) {
+            score += 12;
+            motivos.push('Te largou em até 1 semana.');
+        } else if (retencao >= 365 * DIA) {
+            score -= 15;
+            motivos.push('A relação durou mais de um ano — provavelmente não é isca.');
+        }
+    }
+
+    if (perfil.voceSeguiuEm != null) {
+        const idade = Math.floor(Date.now() / 1000) - perfil.voceSeguiuEm;
+        if (idade <= 90 * DIA) {
+            score += 8;
+            motivos.push('Follow recente (últimos 90 dias).');
+        }
+    }
+
+    return { score: Math.max(0, Math.min(100, score)), motivos };
+};
+
+/**
+ * Análise principal.
+ * @param {Array} snapshots  ordenados do mais antigo ao mais recente
+ * @param {Set}   historico  usernames que você já resolveu (parou de seguir)
+ */
+const analisar = (snapshots, historico = new Set()) => {
+    const ordenados = [...snapshots].sort((a, b) => a.takenAt - b.takenAt);
+    const atual = ordenados.at(-1);
+    if (!atual) return { perfis: [], resumo: null, temProva: false };
+
+    const followers = mapaDe(atual.followers);
+    const following = mapaDe(atual.following);
+    const temProva = ordenados.length >= 2;
+
+    /**
+     * Para cada usuário, a última vez que o vimos como seguidor e o timestamp
+     * original em que ele te seguiu — inclusive se ele já sumiu do snapshot atual.
+     */
+    const ultimoComoSeguidor = new Map();
+    const seguiuVoceEmHistorico = new Map();
+    for (const snap of ordenados) {
+        for (const [user, ts] of Object.entries(snap.followers ?? {})) {
+            ultimoComoSeguidor.set(user, snap.takenAt);
+            if (!seguiuVoceEmHistorico.has(user) && ts != null) seguiuVoceEmHistorico.set(user, ts);
+        }
+    }
+
+    const candidatos = new Set([...following.keys(), ...ultimoComoSeguidor.keys(), ...followers.keys()]);
+    const perfis = [];
+
+    for (const user of candidatos) {
+        const voceSegueAgora = following.has(user);
+        const teSegueAgora = followers.has(user);
+        const jaTeSeguiu = ultimoComoSeguidor.has(user);
+
+        // Relações intactas ou que você já resolveu não entram no ranking.
+        if (!voceSegueAgora && !teSegueAgora) continue;
+
+        const voceSeguiuEm = following.get(user) ?? null;
+        const seguiuVoceEm = followers.get(user) ?? seguiuVoceEmHistorico.get(user) ?? null;
+
+        const delta =
+            voceSeguiuEm != null && seguiuVoceEm != null ? voceSeguiuEm - seguiuVoceEm : null;
+        const trocaInstantanea = delta != null && Math.abs(delta) <= JANELA_TROCA_INSTANTANEA;
+        const quemVeioPrimeiro =
+            delta == null ? null : trocaInstantanea ? 'SIMULTANEO' : delta > 0 ? 'ELES' : 'VOCE';
+
+        // Em qual intervalo ele deixou de te seguir?
+        let perdidoEntre = null;
+        if (jaTeSeguiu && !teSegueAgora) {
+            const visto = ultimoComoSeguidor.get(user);
+            const posterior = ordenados.find((s) => s.takenAt > visto);
+            if (posterior) perdidoEntre = [visto, posterior.takenAt];
+        }
+
+        let veredito;
+        if (!voceSegueAgora && teSegueAgora) {
+            veredito = VEREDITO.SO_TE_SEGUE;
+        } else if (voceSegueAgora && teSegueAgora) {
+            veredito = VEREDITO.MUTUO;
+        } else if (perdidoEntre) {
+            // Provado: ele veio primeiro, você retribuiu, ele largou.
+            veredito =
+                quemVeioPrimeiro === 'ELES' || quemVeioPrimeiro === 'SIMULTANEO'
+                    ? VEREDITO.BAIT_PROVADO
+                    : VEREDITO.SUMIU;
+        } else if (temProva) {
+            veredito = VEREDITO.NUNCA_RETRIBUIU;
+        } else {
+            const recente =
+                voceSeguiuEm != null && Math.floor(Date.now() / 1000) - voceSeguiuEm <= 180 * DIA;
+            veredito = recente ? VEREDITO.BAIT_SUSPEITO : VEREDITO.NUNCA_RETRIBUIU;
+        }
+
+        // Janela de retenção: do seu follow até o momento em que o sumiço foi detectado.
+        const retencaoMaxSeg =
+            perdidoEntre && voceSeguiuEm != null ? perdidoEntre[1] - voceSeguiuEm : null;
+        const retencaoMinSeg =
+            perdidoEntre && voceSeguiuEm != null
+                ? Math.max(0, perdidoEntre[0] - voceSeguiuEm)
+                : null;
+
+        const perfil = {
+            user,
+            voceSegueAgora,
+            teSegueAgora,
+            voceSeguiuEm,
+            seguiuVoceEm,
+            deltaSeg: delta,
+            trocaInstantanea,
+            quemVeioPrimeiro,
+            perdidoEntre,
+            retencaoMinSeg,
+            retencaoMaxSeg,
+            veredito,
+            resolvido: historico.has(user)
+        };
+
+        Object.assign(perfil, calcularScore(perfil));
+        perfis.push(perfil);
+    }
+
+    perfis.sort((a, b) => b.score - a.score || (b.voceSeguiuEm ?? 0) - (a.voceSeguiuEm ?? 0));
+
+    const conta = (v) => perfis.filter((p) => p.veredito === v && !p.resolvido).length;
+    const resumo = {
+        snapshots: ordenados.length,
+        primeiroSnapshot: ordenados[0].takenAt,
+        ultimoSnapshot: atual.takenAt,
+        seguidores: followers.size,
+        seguindo: following.size,
+        temProva,
+        baitProvado: conta(VEREDITO.BAIT_PROVADO),
+        sumiu: conta(VEREDITO.SUMIU),
+        baitSuspeito: conta(VEREDITO.BAIT_SUSPEITO),
+        nuncaRetribuiu: conta(VEREDITO.NUNCA_RETRIBUIU),
+        mutuos: conta(VEREDITO.MUTUO),
+        soTeSeguem: conta(VEREDITO.SO_TE_SEGUE),
+        trocasInstantaneas: perfis.filter((p) => p.trocaInstantanea).length
+    };
+    resumo.naoRetribuem = resumo.baitProvado + resumo.sumiu + resumo.baitSuspeito + resumo.nuncaRetribuiu;
+    resumo.taxaReciprocidade = resumo.seguindo ? resumo.mutuos / resumo.seguindo : 0;
+
+    return { perfis, resumo, temProva, eventos: temProva ? diffSnapshots(ordenados.at(-2), atual) : [] };
+};
+
+/** Formata uma duração em segundos de forma legível. */
+const formatarDuracao = (seg) => {
+    if (seg == null) return '—';
+    if (seg < 60) return `${Math.round(seg)}s`;
+    if (seg < 3600) return `${Math.round(seg / 60)}min`;
+    if (seg < DIA) return `${Math.round(seg / 3600)}h`;
+    if (seg < 30 * DIA) return `${Math.round(seg / DIA)}d`;
+    if (seg < 365 * DIA) return `${Math.round(seg / (30 * DIA))} meses`;
+    return `${(seg / (365 * DIA)).toFixed(1)} anos`;
+};
+
+const formatarData = (ts) =>
+    ts == null ? '—' : new Date(ts * 1000).toLocaleDateString('pt-BR');
+
+/* ================= src/storage-local.js ================= */
+/**
+ * Persistência sem servidor, para a versão autossuficiente (arquivo .html único).
+ *
+ * Expõe a MESMA interface de storage.js, então app.js funciona nos dois modos
+ * sem nenhuma alteração. Aqui os dados ficam no armazenamento local do próprio
+ * navegador — não há Node, nem porta, nem arquivo em disco.
+ */
+
+const CHAVE_SNAPSHOTS = 'verificaSeguidores.snapshots';
+const CHAVE_HISTORICO = 'verificaSeguidores.historico';
+const MAX_SNAPSHOTS = 60;
+
+/**
+ * Abrindo o arquivo direto do disco (file://), alguns navegadores bloqueiam o
+ * armazenamento local — o Safari é o caso mais comum. Em vez de quebrar, o app
+ * cai para memória: continua funcionando na sessão, mas os dados somem ao fechar.
+ * O usuário é avisado e orientado a usar o botão Backup.
+ */
+const armazenamentoDisponivel = (() => {
+    try {
+        const teste = '__teste__';
+        localStorage.setItem(teste, '1');
+        localStorage.removeItem(teste);
+        return true;
+    } catch {
+        return false;
+    }
+})();
+
+const memoria = new Map();
+
+const ler = (chave, padrao) => {
+    try {
+        const bruto = armazenamentoDisponivel ? localStorage.getItem(chave) : memoria.get(chave);
+        return bruto ? JSON.parse(bruto) : padrao;
+    } catch {
+        return padrao;
+    }
+};
+
+const gravar = (chave, valor) => {
+    const texto = JSON.stringify(valor);
+    if (!armazenamentoDisponivel) {
+        memoria.set(chave, texto);
+        return;
+    }
+    try {
+        localStorage.setItem(chave, texto);
+    } catch (erro) {
+        if (erro.name === 'QuotaExceededError' || erro.code === 22) {
+            throw new Error(
+                'O armazenamento do navegador encheu. Exporte um backup e apague os snapshots mais antigos.'
+            );
+        }
+        throw erro;
+    }
+};
+
+const StorageService = {
+    modo: 'local',
+    persistente: armazenamentoDisponivel,
+
+    async carregarSnapshots() {
+        const lista = ler(CHAVE_SNAPSHOTS, []);
+        return Array.isArray(lista) ? lista.sort((a, b) => a.takenAt - b.takenAt) : [];
+    },
+
+    async salvarSnapshot(snapshot) {
+        const snaps = await this.carregarSnapshots();
+        // Um snapshot por dia: repetir no mesmo dia substitui em vez de duplicar.
+        const idx = snaps.findIndex((s) => Math.abs(s.takenAt - snapshot.takenAt) < 86400);
+        if (idx >= 0) snaps[idx] = snapshot;
+        else snaps.push(snapshot);
+
+        snaps.sort((a, b) => a.takenAt - b.takenAt);
+        const podados = snaps.slice(-MAX_SNAPSHOTS);
+        gravar(CHAVE_SNAPSHOTS, podados);
+        return { total: podados.length, substituido: idx >= 0 };
+    },
+
+    async apagarSnapshots() {
+        gravar(CHAVE_SNAPSHOTS, []);
+    },
+
+    async carregarHistorico() {
+        return new Set(ler(CHAVE_HISTORICO, []));
+    },
+
+    async salvarHistorico(historicoSet) {
+        gravar(CHAVE_HISTORICO, [...historicoSet]);
+    },
+
+    async limparHistorico() {
+        gravar(CHAVE_HISTORICO, []);
+    },
+
+    // ------------------------------------------------------------- backup
+
+    /**
+     * O armazenamento do navegador é apagado se você limpar os dados de navegação.
+     * O backup existe para isso — e para levar o histórico a outro computador.
+     */
+    async exportarBackup() {
+        const dados = {
+            formato: 'verifica-seguidores/backup',
+            versao: 1,
+            geradoEm: Math.floor(Date.now() / 1000),
+            snapshots: await this.carregarSnapshots(),
+            historico: [...(await this.carregarHistorico())]
+        };
+
+        const blob = new Blob([JSON.stringify(dados)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const data = new Date().toISOString().slice(0, 10);
+        a.href = url;
+        a.download = `verifica-seguidores-backup-${data}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        return dados.snapshots.length;
+    },
+
+    async importarBackup(file) {
+        let dados;
+        try {
+            dados = JSON.parse(await file.text());
+        } catch {
+            throw new Error('Arquivo de backup inválido.');
+        }
+        if (!Array.isArray(dados?.snapshots)) {
+            throw new Error('Este arquivo não é um backup do Verifica Seguidores.');
+        }
+
+        // Mescla com o que já existe, sem duplicar snapshots do mesmo dia.
+        const atuais = await this.carregarSnapshots();
+        for (const snap of dados.snapshots) {
+            if (!Number.isFinite(snap?.takenAt)) continue;
+            const idx = atuais.findIndex((s) => Math.abs(s.takenAt - snap.takenAt) < 86400);
+            if (idx >= 0) atuais[idx] = snap;
+            else atuais.push(snap);
+        }
+        atuais.sort((a, b) => a.takenAt - b.takenAt);
+        gravar(CHAVE_SNAPSHOTS, atuais.slice(-MAX_SNAPSHOTS));
+
+        if (Array.isArray(dados.historico)) {
+            const historico = await this.carregarHistorico();
+            dados.historico.forEach((u) => historico.add(u));
+            gravar(CHAVE_HISTORICO, [...historico]);
+        }
+        return atuais.length;
+    }
+};
+
+/* ================= src/ui.js ================= */
+const dom = {
+    followersInput: document.getElementById('followersInput'),
+    followingInput: document.getElementById('followingInput'),
+    btnSalvarSnapshot: document.getElementById('btnSalvarSnapshot'),
+    searchInput: document.getElementById('searchInput'),
+    ordenacao: document.getElementById('ordenacao'),
+    btnResetHistory: document.getElementById('btnResetHistory'),
+    btnExportarBackup: document.getElementById('btnExportarBackup'),
+    inputImportarBackup: document.getElementById('inputImportarBackup'),
+    usersGrid: document.getElementById('users-grid'),
+    paginationControls: document.getElementById('pagination-controls'),
+    statusFollowers: document.getElementById('status-followers'),
+    statusFollowing: document.getElementById('status-following'),
+    statsBar: document.getElementById('stats-bar'),
+    abas: document.getElementById('abas'),
+    listTitle: document.getElementById('list-title'),
+    avisoProva: document.getElementById('aviso-prova'),
+    linhaDoTempo: document.getElementById('linha-do-tempo')
+};
+
+const CLASSE_BADGE = {
+    [VEREDITO.BAIT_PROVADO]: 'badge badge-critico',
+    [VEREDITO.SUMIU]: 'badge badge-alerta',
+    [VEREDITO.BAIT_SUSPEITO]: 'badge badge-atencao',
+    [VEREDITO.NUNCA_RETRIBUIU]: 'badge badge-neutro',
+    [VEREDITO.MUTUO]: 'badge badge-ok',
+    [VEREDITO.SO_TE_SEGUE]: 'badge badge-ok'
+};
+
+const ABAS = [
+    { id: 'RANKING', rotulo: 'Ranking de iscas', filtro: (p) => p.score > 0 },
+    { id: VEREDITO.BAIT_PROVADO, rotulo: 'Isca confirmada', filtro: (p) => p.veredito === VEREDITO.BAIT_PROVADO },
+    { id: VEREDITO.SUMIU, rotulo: 'Te largaram', filtro: (p) => p.veredito === VEREDITO.SUMIU },
+    { id: 'NAO_RETRIBUEM', rotulo: 'Não te seguem', filtro: (p) => p.veredito === VEREDITO.NUNCA_RETRIBUIU || p.veredito === VEREDITO.BAIT_SUSPEITO },
+    { id: VEREDITO.SO_TE_SEGUE, rotulo: 'Te seguem e você não', filtro: (p) => p.veredito === VEREDITO.SO_TE_SEGUE }
+];
+
+const el = (tag, classe, texto) => {
+    const n = document.createElement(tag);
+    if (classe) n.className = classe;
+    if (texto != null) n.textContent = texto;
+    return n;
+};
+
+const UIService = {
+    itemsPerPage: 24,
+
+    renderizarResumo(resumo) {
+        dom.statsBar.replaceChildren();
+        if (!resumo) return;
+
+        const caixas = [
+            ['Seguidores', resumo.seguidores],
+            ['Seguindo', resumo.seguindo],
+            ['Não retribuem', resumo.naoRetribuem],
+            ['Reciprocidade', `${Math.round(resumo.taxaReciprocidade * 100)}%`],
+            [
+                resumo.temProva ? 'Iscas confirmadas' : 'Iscas prováveis',
+                resumo.temProva ? resumo.baitProvado : resumo.baitSuspeito
+            ]
+        ];
+
+        for (const [rotulo, valor] of caixas) {
+            const box = el('div', 'stat-box');
+            box.append(el('div', 'number', String(valor)), el('div', 'label', rotulo));
+            dom.statsBar.append(box);
+        }
+    },
+
+    /**
+     * O aviso mais importante da interface: com um snapshot só, o app não tem como
+     * provar bait. Ser honesto sobre isso é o que separa esta ferramenta dos apps
+     * que inventam números.
+     */
+    renderizarAvisoProva(resumo) {
+        dom.avisoProva.replaceChildren();
+        if (!resumo) return;
+
+        const caixa = el('div', resumo.temProva ? 'aviso aviso-ok' : 'aviso aviso-info');
+
+        if (resumo.temProva) {
+            caixa.append(
+                el('strong', null, `${resumo.snapshots} snapshots comparados. `),
+                el('span', null,
+                    `Janela de ${formatarData(resumo.primeiroSnapshot)} a ${formatarData(resumo.ultimoSnapshot)}. ` +
+                    'Os vereditos de "isca confirmada" são provados por diferença entre snapshots, não estimados.')
+            );
+        } else {
+            caixa.append(
+                el('strong', null, 'Só um snapshot carregado. '),
+                el('span', null,
+                    'Quando alguém te larga, o perfil some do arquivo de seguidores e a prova vai junto — ' +
+                    'por isso os vereditos abaixo são suspeitas, não confirmações. ' +
+                    'Baixe um novo export daqui a alguns dias e salve como segundo snapshot: a partir daí ' +
+                    'o app passa a provar exatamente quem te largou depois que você seguiu de volta.')
+            );
+        }
+        dom.avisoProva.append(caixa);
+    },
+
+    renderizarLinhaDoTempo(snapshots) {
+        dom.linhaDoTempo.replaceChildren();
+        if (!snapshots.length) return;
+
+        const trilha = el('div', 'timeline');
+        snapshots.forEach((s, i) => {
+            const ponto = el('span', 'timeline-item', formatarData(s.takenAt));
+            ponto.title = `${Object.keys(s.followers ?? {}).length} seguidores · ${Object.keys(s.following ?? {}).length} seguindo`;
+            if (i === snapshots.length - 1) ponto.classList.add('atual');
+            trilha.append(ponto);
+        });
+        dom.linhaDoTempo.append(
+            el('div', 'timeline-title', `Snapshots salvos (${snapshots.length})`),
+            trilha
+        );
+    },
+
+    renderizarAbas(perfis, abaAtiva, onTrocarAba) {
+        dom.abas.replaceChildren();
+        for (const aba of ABAS) {
+            const total = perfis.filter((p) => aba.filtro(p) && !p.resolvido).length;
+            const btn = el('button', `aba ${aba.id === abaAtiva ? 'ativa' : ''}`);
+            btn.append(el('span', null, aba.rotulo), el('span', 'aba-contagem', String(total)));
+            btn.addEventListener('click', () => onTrocarAba(aba.id));
+            dom.abas.append(btn);
+        }
+    },
+
+    atualizarStatusUpload(elemento, tamanho, origem = 'Carregado') {
+        elemento.textContent = `${origem} (${tamanho})`;
+        elemento.style.color = '#38bdf8';
+    },
+
+    atualizarBotaoReset(historicoSize) {
+        dom.btnResetHistory.style.display = historicoSize > 0 ? 'block' : 'none';
+        dom.btnResetHistory.textContent = `Limpar histórico (${historicoSize})`;
+    },
+
+    renderizarGrade(lista, currentPage, onResolver) {
+        dom.usersGrid.replaceChildren();
+
+        if (!lista.length) {
+            dom.usersGrid.append(el('div', 'status-message', 'Nenhum perfil nesta categoria.'));
+            return;
+        }
+
+        const inicio = (currentPage - 1) * this.itemsPerPage;
+        for (const p of lista.slice(inicio, inicio + this.itemsPerPage)) {
+            dom.usersGrid.append(this.criarCard(p, onResolver));
+        }
+    },
+
+    criarCard(p, onResolver) {
+        const card = el('div', 'user-card');
+
+        const topo = el('div', 'card-topo');
+        const link = el('a', 'user-link', `@${p.user}`);
+        link.href = `https://instagram.com/${encodeURIComponent(p.user)}/`;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        topo.append(link, el('span', CLASSE_BADGE[p.veredito] ?? 'badge', ROTULO_VEREDITO[p.veredito]));
+
+        const meta = el('div', 'card-meta');
+        if (p.score > 0) meta.append(el('span', 'score', `Risco ${p.score}`));
+        if (p.retencaoMaxSeg != null) meta.append(el('span', null, `reteve ~${formatarDuracao(p.retencaoMaxSeg)}`));
+        if (p.quemVeioPrimeiro === 'ELES') meta.append(el('span', null, 'veio primeiro'));
+        if (p.quemVeioPrimeiro === 'SIMULTANEO') meta.append(el('span', null, 'troca instantânea'));
+        if (p.voceSeguiuEm != null) meta.append(el('span', null, `você seguiu ${formatarData(p.voceSeguiuEm)}`));
+
+        const acoes = el('div', 'card-acoes');
+
+        const btnCopiar = el('button', 'btn-acao', 'Copiar');
+        btnCopiar.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(p.user);
+                btnCopiar.textContent = 'Copiado';
+                btnCopiar.classList.add('ok');
+                setTimeout(() => {
+                    btnCopiar.textContent = 'Copiar';
+                    btnCopiar.classList.remove('ok');
+                }, 1200);
+            } catch {
+                btnCopiar.textContent = 'Falhou';
+            }
+        });
+        acoes.append(btnCopiar);
+
+        if (p.voceSegueAgora) {
+            const btnResolver = el('button', 'btn-acao btn-resolver', 'Parei de seguir');
+            btnResolver.addEventListener('click', () => onResolver(p.user, btnResolver));
+            acoes.append(btnResolver);
+        }
+
+        card.append(topo, meta);
+        if (p.motivos.length) {
+            const motivos = el('ul', 'card-motivos');
+            for (const m of p.motivos.slice(0, 3)) motivos.append(el('li', null, m));
+            card.append(motivos);
+        }
+        card.append(acoes);
+        return card;
+    },
+
+    /** Paginação com janela deslizante — antes renderizava um botão por página. */
+    renderizarControlesPaginacao(totalItems, currentPage, onPageChange) {
+        dom.paginationControls.replaceChildren();
+        const totalPages = Math.ceil(totalItems / this.itemsPerPage) || 1;
+        if (totalPages <= 1) return;
+
+        const criar = (texto, destino, desativado = false, ativo = false) => {
+            const btn = el('button', `pagination-button ${ativo ? 'active' : ''}`, String(texto));
+            btn.disabled = desativado;
+            btn.addEventListener('click', () => {
+                onPageChange(destino);
+                dom.listTitle.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+            dom.paginationControls.append(btn);
+        };
+
+        const janela = 2;
+        const paginas = new Set([1, totalPages]);
+        for (let i = currentPage - janela; i <= currentPage + janela; i++) {
+            if (i >= 1 && i <= totalPages) paginas.add(i);
+        }
+
+        criar('Anterior', currentPage - 1, currentPage === 1);
+        let ultima = 0;
+        for (const p of [...paginas].sort((a, b) => a - b)) {
+            if (p - ultima > 1) dom.paginationControls.append(el('span', 'reticencias', '…'));
+            criar(p, p, false, p === currentPage);
+            ultima = p;
+        }
+        criar('Próximo', currentPage + 1, currentPage === totalPages);
+    },
+
+    toast(mensagem, tipo = 'info') {
+        const t = el('div', `toast toast-${tipo}`, mensagem);
+        document.body.append(t);
+        setTimeout(() => t.classList.add('sai'), 2600);
+        setTimeout(() => t.remove(), 3000);
+    }
+};
+
+/* ================= src/app.js ================= */
+const AppState = {
+    followers: new Map(),   // username -> quando ELE te seguiu
+    following: new Map(),   // username -> quando VOCÊ seguiu
+    snapshots: [],
+    historico: new Set(),
+    perfis: [],
+    resumo: null,
+    aba: 'RANKING',
+    pagina: 1
+};
+
+const ORDENADORES = {
+    score: (a, b) => b.score - a.score,
+    recente: (a, b) => (b.voceSeguiuEm ?? 0) - (a.voceSeguiuEm ?? 0),
+    antigo: (a, b) => (a.voceSeguiuEm ?? Infinity) - (b.voceSeguiuEm ?? Infinity),
+    alfabetica: (a, b) => a.user.localeCompare(b.user)
+};
+
+const temDadosCarregados = () => AppState.followers.size > 0 && AppState.following.size > 0;
+
+// -------------------------------------------------------------- análise e render
+
+const reanalisar = () => {
+    // Inclui o estado carregado agora como snapshot provisório (ainda não salvo).
+    const provisorio = temDadosCarregados()
+        ? [criarSnapshot(AppState.followers, AppState.following)]
+        : [];
+    const salvosAnteriores = AppState.snapshots.filter(
+        (s) => !provisorio.length || Math.abs(s.takenAt - provisorio[0].takenAt) >= 86400
+    );
+
+    const { perfis, resumo } = analisar([...salvosAnteriores, ...provisorio], AppState.historico);
+    AppState.perfis = perfis;
+    AppState.resumo = resumo;
+
+    UIService.renderizarResumo(resumo);
+    UIService.renderizarAvisoProva(resumo);
+    UIService.renderizarLinhaDoTempo(AppState.snapshots);
+    UIService.renderizarAbas(perfis, AppState.aba, trocarAba);
+    renderizarLista();
+};
+
+const listaVisivel = () => {
+    const aba = ABAS.find((a) => a.id === AppState.aba) ?? ABAS[0];
+    const busca = dom.searchInput.value.trim().toLowerCase();
+    return AppState.perfis
+        .filter((p) => !p.resolvido && aba.filtro(p) && (!busca || p.user.includes(busca)))
+        .sort(ORDENADORES[dom.ordenacao.value] ?? ORDENADORES.score);
+};
+
+const renderizarLista = () => {
+    const lista = listaVisivel();
+    const aba = ABAS.find((a) => a.id === AppState.aba) ?? ABAS[0];
+    dom.listTitle.textContent = `${aba.rotulo} — ${lista.length} perfis`;
+    dom.searchInput.disabled = !AppState.perfis.length;
+
+    UIService.renderizarGrade(lista, AppState.pagina, resolverPerfil);
+    UIService.renderizarControlesPaginacao(lista.length, AppState.pagina, (novaPagina) => {
+        AppState.pagina = novaPagina;
+        renderizarLista();
+    });
+};
+
+const trocarAba = (id) => {
+    AppState.aba = id;
+    AppState.pagina = 1;
+    UIService.renderizarAbas(AppState.perfis, AppState.aba, trocarAba);
+    renderizarLista();
+};
+
+/**
+ * Marca um perfil como resolvido. Com rollback: se a gravação falhar, o perfil
+ * volta para a lista em vez de sumir da tela e continuar no disco.
+ */
+const resolverPerfil = async (user, botao) => {
+    if (botao) botao.disabled = true;
+    AppState.historico.add(user);
+    const alvo = AppState.perfis.find((p) => p.user === user);
+    if (alvo) alvo.resolvido = true;
+
+    UIService.renderizarAbas(AppState.perfis, AppState.aba, trocarAba);
+    renderizarLista();
+
+    try {
+        await StorageService.salvarHistorico(AppState.historico);
+        UIService.atualizarBotaoReset(AppState.historico.size);
+    } catch (erro) {
+        AppState.historico.delete(user);
+        if (alvo) alvo.resolvido = false;
+        UIService.toast(`Não deu para salvar: ${erro.message}`, 'erro');
+        UIService.renderizarAbas(AppState.perfis, AppState.aba, trocarAba);
+        renderizarLista();
+    }
+};
+
+// -------------------------------------------------------------- entrada de arquivos
+
+const carregarArquivos = async (fileList, tipo) => {
+    if (!fileList?.length) return;
+    try {
+        const jsons = await ParserService.lerArquivosAsync(fileList);
+        if (tipo === 'followers') {
+            AppState.followers = ParserService.extrairSeguidores(...jsons);
+            UIService.atualizarStatusUpload(
+                dom.statusFollowers,
+                AppState.followers.size,
+                fileList.length > 1 ? `${fileList.length} arquivos` : 'Carregado'
+            );
+        } else {
+            AppState.following = ParserService.extrairSeguindo(...jsons);
+            UIService.atualizarStatusUpload(dom.statusFollowing, AppState.following.size);
+        }
+        dom.btnSalvarSnapshot.disabled = !temDadosCarregados();
+        reanalisar();
+    } catch (erro) {
+        UIService.toast(erro.message, 'erro');
+    }
+};
+
+const salvarSnapshot = async () => {
+    if (!temDadosCarregados()) return;
+    dom.btnSalvarSnapshot.disabled = true;
+    try {
+        const snapshot = criarSnapshot(AppState.followers, AppState.following);
+        const r = await StorageService.salvarSnapshot(snapshot);
+        AppState.snapshots = await StorageService.carregarSnapshots();
+        UIService.toast(
+            r.substituido
+                ? 'Snapshot de hoje atualizado.'
+                : `Snapshot salvo. Total: ${r.total}.`,
+            'ok'
+        );
+        reanalisar();
+    } catch (erro) {
+        UIService.toast(`Falha ao salvar snapshot: ${erro.message}`, 'erro');
+    } finally {
+        dom.btnSalvarSnapshot.disabled = !temDadosCarregados();
+    }
+};
+
+// -------------------------------------------------------------- listeners
+
+dom.followersInput.addEventListener('change', (e) => carregarArquivos(e.target.files, 'followers'));
+dom.followingInput.addEventListener('change', (e) => carregarArquivos(e.target.files, 'following'));
+dom.btnSalvarSnapshot.addEventListener('click', salvarSnapshot);
+dom.ordenacao.addEventListener('change', () => {
+    AppState.pagina = 1;
+    renderizarLista();
+});
+
+let debounce;
+dom.searchInput.addEventListener('input', () => {
+    clearTimeout(debounce);
+    debounce = setTimeout(() => {
+        AppState.pagina = 1;
+        renderizarLista();
+    }, 150);
+});
+
+dom.btnExportarBackup?.addEventListener('click', async () => {
+    try {
+        if (StorageService.exportarBackup) {
+            const total = await StorageService.exportarBackup();
+            UIService.toast(`Backup gerado com ${total} snapshot(s).`, 'ok');
+        } else {
+            // No modo servidor os dados já estão em disco, em data/snapshots.json.
+            UIService.toast('Seus dados já estão salvos na pasta data/ do projeto.', 'info');
+        }
+    } catch (erro) {
+        UIService.toast(erro.message, 'erro');
+    }
+});
+
+dom.inputImportarBackup?.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+        if (!StorageService.importarBackup) {
+            throw new Error('No modo servidor, restaure copiando o arquivo para data/snapshots.json.');
+        }
+        const total = await StorageService.importarBackup(file);
+        AppState.snapshots = await StorageService.carregarSnapshots();
+        AppState.historico = await StorageService.carregarHistorico();
+        UIService.atualizarBotaoReset(AppState.historico.size);
+
+        const ultimo = AppState.snapshots.at(-1);
+        if (ultimo) {
+            AppState.followers = new Map(Object.entries(ultimo.followers ?? {}));
+            AppState.following = new Map(Object.entries(ultimo.following ?? {}));
+            UIService.atualizarStatusUpload(dom.statusFollowers, AppState.followers.size, 'Do backup');
+            UIService.atualizarStatusUpload(dom.statusFollowing, AppState.following.size, 'Do backup');
+            dom.btnSalvarSnapshot.disabled = false;
+        }
+        UIService.toast(`Backup restaurado. ${total} snapshot(s) disponíveis.`, 'ok');
+        reanalisar();
+    } catch (erro) {
+        UIService.toast(erro.message, 'erro');
+    } finally {
+        e.target.value = '';
+    }
+});
+
+dom.btnResetHistory.addEventListener('click', async () => {
+    if (!confirm('Limpar o histórico de perfis que você já resolveu?')) return;
+    try {
+        await StorageService.limparHistorico();
+        AppState.historico.clear();
+        AppState.perfis.forEach((p) => (p.resolvido = false));
+        UIService.atualizarBotaoReset(0);
+        reanalisar();
+    } catch (erro) {
+        UIService.toast(erro.message, 'erro');
+    }
+});
+
+// -------------------------------------------------------------- inicialização
+
+const inicializar = async () => {
+    const [historico, snapshots] = await Promise.all([
+        StorageService.carregarHistorico(),
+        StorageService.carregarSnapshots()
+    ]);
+
+    AppState.historico = historico;
+    AppState.snapshots = snapshots;
+    UIService.atualizarBotaoReset(historico.size);
+
+    // Reidrata o último snapshot salvo para a tela já abrir com dados.
+    const ultimo = snapshots.at(-1);
+    if (ultimo) {
+        AppState.followers = new Map(Object.entries(ultimo.followers ?? {}));
+        AppState.following = new Map(Object.entries(ultimo.following ?? {}));
+        UIService.atualizarStatusUpload(dom.statusFollowers, AppState.followers.size, 'Do snapshot');
+        UIService.atualizarStatusUpload(dom.statusFollowing, AppState.following.size, 'Do snapshot');
+        dom.btnSalvarSnapshot.disabled = false;
+    } else {
+        dom.statusFollowers.textContent = 'Aguardando arquivo…';
+        dom.statusFollowing.textContent = 'Aguardando arquivo…';
+    }
+
+    // Navegador bloqueando o armazenamento local: o app funciona, mas esquece tudo ao fechar.
+    if (StorageService.persistente === false) {
+        UIService.toast(
+            'Seu navegador não permite salvar dados neste modo. Use o botão Backup antes de fechar.',
+            'erro'
+        );
+    }
+
+    reanalisar();
+};
+
+document.addEventListener('DOMContentLoaded', inicializar);
+
+})();
+</script>
+</body>
+</html>

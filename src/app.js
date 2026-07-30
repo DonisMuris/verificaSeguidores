@@ -162,6 +162,49 @@ dom.searchInput.addEventListener('input', () => {
     }, 150);
 });
 
+dom.btnExportarBackup?.addEventListener('click', async () => {
+    try {
+        if (StorageService.exportarBackup) {
+            const total = await StorageService.exportarBackup();
+            UIService.toast(`Backup gerado com ${total} snapshot(s).`, 'ok');
+        } else {
+            // No modo servidor os dados já estão em disco, em data/snapshots.json.
+            UIService.toast('Seus dados já estão salvos na pasta data/ do projeto.', 'info');
+        }
+    } catch (erro) {
+        UIService.toast(erro.message, 'erro');
+    }
+});
+
+dom.inputImportarBackup?.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+        if (!StorageService.importarBackup) {
+            throw new Error('No modo servidor, restaure copiando o arquivo para data/snapshots.json.');
+        }
+        const total = await StorageService.importarBackup(file);
+        AppState.snapshots = await StorageService.carregarSnapshots();
+        AppState.historico = await StorageService.carregarHistorico();
+        UIService.atualizarBotaoReset(AppState.historico.size);
+
+        const ultimo = AppState.snapshots.at(-1);
+        if (ultimo) {
+            AppState.followers = new Map(Object.entries(ultimo.followers ?? {}));
+            AppState.following = new Map(Object.entries(ultimo.following ?? {}));
+            UIService.atualizarStatusUpload(dom.statusFollowers, AppState.followers.size, 'Do backup');
+            UIService.atualizarStatusUpload(dom.statusFollowing, AppState.following.size, 'Do backup');
+            dom.btnSalvarSnapshot.disabled = false;
+        }
+        UIService.toast(`Backup restaurado. ${total} snapshot(s) disponíveis.`, 'ok');
+        reanalisar();
+    } catch (erro) {
+        UIService.toast(erro.message, 'erro');
+    } finally {
+        e.target.value = '';
+    }
+});
+
 dom.btnResetHistory.addEventListener('click', async () => {
     if (!confirm('Limpar o histórico de perfis que você já resolveu?')) return;
     try {
@@ -198,6 +241,14 @@ const inicializar = async () => {
     } else {
         dom.statusFollowers.textContent = 'Aguardando arquivo…';
         dom.statusFollowing.textContent = 'Aguardando arquivo…';
+    }
+
+    // Navegador bloqueando o armazenamento local: o app funciona, mas esquece tudo ao fechar.
+    if (StorageService.persistente === false) {
+        UIService.toast(
+            'Seu navegador não permite salvar dados neste modo. Use o botão Backup antes de fechar.',
+            'erro'
+        );
     }
 
     reanalisar();
