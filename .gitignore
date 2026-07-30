@@ -1,12 +1,53 @@
-# Ignorar a pasta de dados confidenciais do Instagram
+# ---------------------------------------------------------------------------
+# DADOS PESSOAIS — nada daqui pode ir para o repositório.
+# O export do Instagram contém os usernames de terceiros que te seguem, o que
+# é dado pessoal sob a LGPD. Publicar isso expõe pessoas que nunca consentiram.
+# ---------------------------------------------------------------------------
 data/
+instagram-*/
+*.zip
 
-# Ignorar ambientes virtuais do Python (caso use)
-venv/
-.venv/
-__pycache__/
-*.pyc
+# Snapshots e histórico gerados pelo app (caso alguém mova a pasta data/)
+snapshots.json
+unfollowed_history.json
+cached_*.json
+followers_*.json
+following.json
+*.tmp
 
-# Ignorar arquivos do sistema operacional ou do VS Code
+# ---------------------------------------------------------------------------
+# Dependências e build
+# ---------------------------------------------------------------------------
+node_modules/
+dist/
+build/
+*.tgz
+.npm/
+
+# ---------------------------------------------------------------------------
+# Segredos e ambiente
+# ---------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# ---------------------------------------------------------------------------
+# Logs
+# ---------------------------------------------------------------------------
+*.log
+npm-debug.log*
+logs/
+
+# ---------------------------------------------------------------------------
+# Sistema operacional e editores
+# ---------------------------------------------------------------------------
 .DS_Store
+Thumbs.db
+desktop.ini
 .vscode/
+!.vscode/extensions.json
+.idea/
+*.swp
+*~
