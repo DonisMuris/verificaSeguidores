@@ -76,6 +76,41 @@ export const resolverDataDoExport = ({ followers, following, mtime }) => {
 };
 
 /**
+ * Detecta export recortado por intervalo de datas.
+ *
+ * Se o usuário pedir o export com "Último ano" em vez de "Todo o período", a
+ * Meta corta a lista de seguidores mas entrega o following inteiro. O arquivo
+ * parece válido e o app não teria como desconfiar — mas comparar um snapshot
+ * completo com um recortado faz TODO seguidor antigo ausente virar um falso
+ * "te largou", contaminando a análise inteira.
+ *
+ * O sinal é a assimetria: num export completo, as duas listas começam mais ou
+ * menos na mesma época (quando a conta foi criada). Num recortado, os
+ * seguidores começam anos depois do primeiro follow que você deu.
+ */
+const FOLGA_JANELA = 180 * DIA;
+
+export const detectarExportParcial = (followers, following) => {
+    const menor = (mapa) => {
+        let min = Infinity;
+        for (const ts of mapa.values()) if (Number.isFinite(ts) && ts < min) min = ts;
+        return Number.isFinite(min) ? min : null;
+    };
+
+    const inicioFollowers = menor(followers);
+    const inicioFollowing = menor(following);
+    if (inicioFollowers == null || inicioFollowing == null) return { parcial: false };
+
+    const defasagem = inicioFollowers - inicioFollowing;
+    return {
+        parcial: defasagem > FOLGA_JANELA,
+        inicioFollowers,
+        inicioFollowing,
+        defasagemDias: Math.round(defasagem / DIA)
+    };
+};
+
+/**
  * Cria um snapshot serializável a partir dos Maps do parser.
  * Sem `takenAt` explícito, a data vem do conteúdo do export, não do relógio.
  */

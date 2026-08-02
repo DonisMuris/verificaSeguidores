@@ -42,13 +42,14 @@ Escolha assim:
 |---|---|
 | Conta | Sua conta do Instagram |
 | Quais informações | **Selecionar tipos de informações** → marque só **Seguidores e seguindo** |
-| Intervalo de datas | Todo o período |
+| **Intervalo de datas** | **Todo o período** — nunca "Último ano" |
 | **Formato** | **JSON** — obrigatório |
 | Qualidade de mídia | Irrelevante (não baixa fotos) |
 
-> **Duas armadilhas comuns:**
+> **Três armadilhas comuns:**
 > Escolher **HTML** em vez de JSON — o app não consegue ler, e é preciso refazer o pedido.
 > Pedir a **cópia completa** — demora horas ou dias. Marcando só "Seguidores e seguindo", costuma sair em minutos.
+> Deixar o **intervalo de datas** em "Último ano" — a Meta corta a lista de seguidores e mantém a de seguindo. O arquivo parece válido, mas quem te segue há mais tempo some dele. O app detecta e avisa, mas o certo é marcar "Todo o período".
 
 O Instagram avisa quando ficar pronto. O download fica em **Downloads disponíveis**, dentro da mesma tela, e expira em poucos dias.
 
@@ -146,6 +147,7 @@ Vale o alerta: aplicativos que mostram sua lista de seguidores **sem pedir esse 
 | A tela abre vazia | Carregue os dois arquivos e clique em **Salvar como snapshot**. |
 | "Seu navegador não permite salvar dados" | Raro, acontece no Safari abrindo o arquivo do disco. Use Chrome, Edge ou Firefox — ou clique em **Backup** antes de fechar. |
 | Perdi meus snapshots | Provavelmente limpou os dados de navegação. Restaure um backup, ou recarregue os exports. |
+| Faltam seguidores na conta | O export foi pedido com intervalo de datas limitado. Refaça marcando **Todo o período**. O app avisa quando detecta o recorte. |
 | Não acho os arquivos no .zip | Eles ficam em `connections/followers_and_following/`. Se essa pasta não existe, o export foi pedido sem marcar "Seguidores e seguindo". |
 
 ---

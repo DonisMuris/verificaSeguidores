@@ -1,7 +1,7 @@
 import { StorageService } from './storage.js';
 import { ParserService } from './parser.js';
 import { dom, UIService, ABAS } from './ui.js';
-import { analisar, criarSnapshot, formatarData, formatarDuracao, resolverDataDoExport, ROTULO_VEREDITO } from './analysis.js';
+import { analisar, criarSnapshot, formatarData, formatarDuracao, resolverDataDoExport, detectarExportParcial, ROTULO_VEREDITO } from './analysis.js';
 import { TriagemService } from './triagem.js';
 import { TemaService } from './tema.js';
 
@@ -13,6 +13,7 @@ const AppState = {
     carregadoDeArquivo: false,
     mtimeArquivos: null,      // File.lastModified dos JSONs carregados
     dataManual: null,         // data que o usuário digitou, se houver
+    exportParcial: null,      // export recortado por intervalo de datas
     perfis: [],
     resumo: null,
     aba: 'RANKING',
@@ -148,10 +149,33 @@ const carregarArquivos = async (fileList, tipo) => {
         }
         dom.btnSalvarSnapshot.disabled = !temDadosCarregados();
         atualizarCampoData();
+        avaliarIntegridade();
         reanalisar();
     } catch (erro) {
         UIService.toast(erro.message, 'erro');
     }
+};
+
+/**
+ * Export recortado por intervalo de datas é o erro mais caro que o usuário pode
+ * cometer: o arquivo parece válido e transforma seguidores antigos ausentes em
+ * falsos "te largou". Avisamos assim que dá para perceber, e de novo na hora de
+ * salvar — porque é o snapshot gravado que contamina a análise, não a leitura.
+ */
+const avaliarIntegridade = () => {
+    AppState.exportParcial = null;
+    if (!temDadosCarregados()) return;
+
+    const r = detectarExportParcial(AppState.followers, AppState.following);
+    if (!r.parcial) return;
+
+    AppState.exportParcial = r;
+    UIService.toast(
+        `Export parece recortado: o seguidor mais antigo é de ${formatarData(r.inicioFollowers)}, ` +
+            'mas você segue gente desde ' + formatarData(r.inicioFollowing) + '. ' +
+            'Refaça escolhendo "Todo o período".',
+        'erro'
+    );
 };
 
 const ROTULO_ORIGEM = {
@@ -181,6 +205,23 @@ const salvarSnapshot = async () => {
     if (!temDadosCarregados()) return;
     dom.btnSalvarSnapshot.disabled = true;
     try {
+        const parcial = AppState.exportParcial;
+        if (parcial) {
+            const seguir = confirm(
+                'Este export parece recortado por intervalo de datas.\n\n' +
+                `O seguidor mais antigo é de ${formatarData(parcial.inicioFollowers)}, mas você segue ` +
+                `pessoas desde ${formatarData(parcial.inicioFollowing)} — uma diferença de ` +
+                `${parcial.defasagemDias} dias.\n\n` +
+                'Salvar assim faz o app tratar todo seguidor antigo ausente como se tivesse te ' +
+                'largado, contaminando a análise. O certo é refazer o export marcando ' +
+                '"Todo o período".\n\nSalvar mesmo assim?'
+            );
+            if (!seguir) {
+                UIService.toast('Nada foi salvo. Refaça o export com "Todo o período".', 'info');
+                return;
+            }
+        }
+
         const { takenAt } = dataDoExport();
         const snapshot = criarSnapshot(AppState.followers, AppState.following, takenAt);
 
