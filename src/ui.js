@@ -1,4 +1,5 @@
 import { VEREDITO, ROTULO_VEREDITO, formatarDuracao, formatarData } from './analysis.js';
+import { el } from './dom-utils.js';
 
 export const dom = {
     followersInput: document.getElementById('followersInput'),
@@ -9,6 +10,7 @@ export const dom = {
     searchInput: document.getElementById('searchInput'),
     ordenacao: document.getElementById('ordenacao'),
     btnResetHistory: document.getElementById('btnResetHistory'),
+    btnTriagem: document.getElementById('btnTriagem'),
     btnExportarBackup: document.getElementById('btnExportarBackup'),
     inputImportarBackup: document.getElementById('inputImportarBackup'),
     usersGrid: document.getElementById('users-grid'),
@@ -38,13 +40,6 @@ export const ABAS = [
     { id: 'NAO_RETRIBUEM', rotulo: 'Não te seguem', filtro: (p) => p.veredito === VEREDITO.NUNCA_RETRIBUIU || p.veredito === VEREDITO.BAIT_SUSPEITO },
     { id: VEREDITO.SO_TE_SEGUE, rotulo: 'Te seguem e você não', filtro: (p) => p.veredito === VEREDITO.SO_TE_SEGUE }
 ];
-
-const el = (tag, classe, texto) => {
-    const n = document.createElement(tag);
-    if (classe) n.className = classe;
-    if (texto != null) n.textContent = texto;
-    return n;
-};
 
 export const UIService = {
     itemsPerPage: 24,
@@ -160,7 +155,9 @@ export const UIService = {
         const topo = el('div', 'card-topo');
         const link = el('a', 'user-link', `@${p.user}`);
         link.href = `https://instagram.com/${encodeURIComponent(p.user)}/`;
-        link.target = '_blank';
+        // Alvo nomeado (e não _blank): todo perfil reusa a MESMA aba, em vez de
+        // abrir uma nova a cada clique e obrigar a fechar tudo depois.
+        link.target = 'verificaSeguidoresPerfil';
         link.rel = 'noopener noreferrer';
         topo.append(link, el('span', CLASSE_BADGE[p.veredito] ?? 'badge', ROTULO_VEREDITO[p.veredito]));
 

@@ -99,6 +99,47 @@
         .toast-ok { background: #15803d; }
         .toast.sai { opacity: 0; transform: translateX(-50%) translateY(10px); }
 
+        .btn-triagem { background: #0f172a; color: #fff; border: 1px solid #0f172a; padding: 9px 16px; font-size: 13px; font-weight: 600; border-radius: 6px; cursor: pointer; }
+        .btn-triagem:hover { background: #1e293b; }
+        .btn-triagem:disabled { opacity: .4; cursor: not-allowed; }
+
+        .triagem { position: absolute; inset: 0; min-height: 100vh; background: rgba(15,23,42,.75); display: flex; align-items: flex-start; justify-content: center; padding: 40px 16px; z-index: 100; }
+        .triagem-painel { background: #fff; border-radius: 14px; width: 100%; max-width: 520px; padding: 22px 26px 18px; }
+        .triagem-topo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .triagem-progresso { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: .5px; }
+        .triagem-sair { background: none; border: 0; color: #94a3b8; font-size: 12px; cursor: pointer; font-weight: 600; }
+        .triagem-sair:hover { color: #475569; }
+        .triagem-barra { height: 4px; background: #f1f5f9; border-radius: 2px; overflow: hidden; margin-bottom: 22px; }
+        .triagem-barra-fill { height: 100%; background: #0ea5e9; transition: width .2s; }
+        .triagem-corpo { text-align: center; margin-bottom: 22px; }
+        .triagem-user { font-size: 24px; font-weight: 700; color: #0f172a; margin-bottom: 10px; word-break: break-all; }
+        .triagem-badge { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; padding: 4px 12px; border-radius: 20px; }
+        .triagem-badge.risco-alto { background: #fee2e2; color: #b91c1c; }
+        .triagem-badge.risco-medio { background: #fef9c3; color: #a16207; }
+        .triagem-badge.risco-baixo { background: #f1f5f9; color: #64748b; }
+        .triagem-score { font-size: 34px; font-weight: 700; color: #0f172a; margin: 14px 0 4px; }
+        .triagem-meta { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 10px; }
+        .triagem-meta span { background: #f8fafc; border: 1px solid #f1f5f9; color: #64748b; font-size: 11.5px; padding: 3px 9px; border-radius: 4px; }
+        .triagem-motivos { list-style: none; margin-top: 14px; text-align: left; font-size: 12px; color: #64748b; line-height: 1.6; background: #f8fafc; padding: 12px 14px; border-radius: 8px; }
+        .triagem-motivos li::before { content: "— "; }
+        .triagem-acoes { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+        .triagem-btn { display: flex; flex-direction: column; align-items: center; gap: 5px; background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; padding: 12px 8px; font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; transition: .15s; }
+        .triagem-btn:hover { background: #e2e8f0; }
+        .triagem-btn kbd { font-family: inherit; font-size: 10px; font-weight: 700; background: rgba(100,116,139,.16); padding: 2px 7px; border-radius: 4px; }
+        .triagem-btn-abrir { background: #0ea5e9; border-color: #0ea5e9; color: #fff; }
+        .triagem-btn-abrir:hover { background: #0284c7; }
+        .triagem-btn-abrir kbd { background: rgba(255,255,255,.25); }
+        .triagem-btn-unfollow:hover { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
+        .triagem-btn-principal { background: #0f172a; border-color: #0f172a; color: #fff; width: 100%; }
+        .triagem-rodape { display: flex; justify-content: space-between; align-items: center; gap: 10px; border-top: 1px solid #f1f5f9; padding-top: 12px; }
+        .triagem-voltar { background: none; border: 0; color: #64748b; font-size: 12px; font-weight: 600; cursor: pointer; }
+        .triagem-voltar:disabled { opacity: .35; cursor: not-allowed; }
+        .triagem-dica { font-size: 10.5px; color: #94a3b8; text-align: right; }
+        .triagem-fim-icone { font-size: 40px; color: #16a34a; text-align: center; }
+        .triagem-fim-titulo { font-size: 20px; font-weight: 700; text-align: center; margin: 10px 0 8px; }
+        .triagem-fim-texto { font-size: 13.5px; color: #475569; text-align: center; margin-bottom: 8px; }
+        .triagem-fim-nota { font-size: 12px; color: #94a3b8; text-align: center; margin-bottom: 18px; line-height: 1.5; }
+
         .guia { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 18px; overflow: hidden; }
         .guia > summary { padding: 14px 18px; font-size: 13px; font-weight: 700; color: #0f172a; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; }
         .guia > summary::after { content: "▾"; color: #94a3b8; }
@@ -218,6 +259,7 @@
                 <option value="antigo">Follow mais antigo</option>
                 <option value="alfabetica">A–Z</option>
             </select>
+            <button id="btnTriagem" class="btn-triagem" title="Revisar um por um, com teclado">Modo triagem</button>
             <button id="btnExportarBackup" class="btn-acao" title="Salva seus snapshots num arquivo">Backup</button>
             <label class="btn-acao" style="cursor:pointer" title="Restaura snapshots de um backup">
                 Restaurar
@@ -236,6 +278,23 @@
     <script>
 (() => {
 "use strict";
+
+/* ================= src/dom-utils.js ================= */
+/**
+ * Helpers de DOM compartilhados.
+ *
+ * Vive em módulo próprio porque o build concatena todos os arquivos num único
+ * escopo: duas declarações de `el` em módulos diferentes funcionam com imports
+ * ES, mas colidem no arquivo gerado.
+ */
+
+/** Cria um elemento com classe e texto opcionais. */
+const el = (tag, classe, texto) => {
+    const n = document.createElement(tag);
+    if (classe) n.className = classe;
+    if (texto != null) n.textContent = texto;
+    return n;
+};
 
 /* ================= src/parser.js ================= */
 /**
@@ -864,6 +923,228 @@ const StorageService = {
     }
 };
 
+/* ================= src/triagem.js ================= */
+/**
+ * Modo triagem: um perfil por vez, com teclado.
+ *
+ * O problema que resolve: revisar 235 perfis numa grade obriga a abrir cada
+ * link, voltar, procurar onde parou e repetir. Aqui a lista vira uma fila —
+ * você decide, ela avança sozinha, e dá para voltar atrás.
+ *
+ * Detalhe que mais economiza tempo: o perfil abre sempre na MESMA aba
+ * (window.open com nome fixo), em vez de acumular uma aba por perfil.
+ */
+
+const NOME_ABA_PERFIL = 'verificaSeguidoresPerfil';
+
+const TriagemService = {
+    ativa: false,
+    lista: [],
+    indice: 0,
+    decisoes: [],
+    onResolver: null,
+    onFechar: null,
+    raiz: null,
+    _teclado: null,
+
+    abrir(lista, { onResolver, onFechar, rotulos }) {
+        if (!lista.length) return false;
+        this.lista = [...lista];
+        this.indice = 0;
+        this.decisoes = [];
+        this.onResolver = onResolver;
+        this.onFechar = onFechar;
+        this.rotulos = rotulos ?? {};
+        this.ativa = true;
+
+        this.raiz = el('div', 'triagem');
+        document.body.append(this.raiz);
+        document.body.style.overflow = 'hidden';
+
+        this._teclado = (e) => this.tecla(e);
+        document.addEventListener('keydown', this._teclado);
+
+        this.render();
+        return true;
+    },
+
+    fechar() {
+        if (!this.ativa) return;
+        this.ativa = false;
+        document.removeEventListener('keydown', this._teclado);
+        document.body.style.overflow = '';
+        this.raiz?.remove();
+        this.raiz = null;
+        this.onFechar?.(this.decisoes.filter((d) => d.acao === 'unfollow').length);
+    },
+
+    tecla(e) {
+        if (!this.ativa) return;
+        const atalhos = {
+            Escape: () => this.fechar(),
+            ArrowRight: () => this.avancar('manter'),
+            ArrowLeft: () => this.voltar(),
+            Enter: () => this.avancar('manter'),
+            ' ': () => this.avancar('unfollow'),
+            u: () => this.avancar('unfollow'),
+            U: () => this.avancar('unfollow'),
+            o: () => this.abrirPerfil(),
+            O: () => this.abrirPerfil()
+        };
+        const acao = atalhos[e.key];
+        if (!acao) return;
+        e.preventDefault();
+        acao();
+    },
+
+    perfilAtual() {
+        return this.lista[this.indice] ?? null;
+    },
+
+    /** Abre sempre na mesma aba nomeada, em vez de empilhar uma por perfil. */
+    abrirPerfil() {
+        const p = this.perfilAtual();
+        if (!p) return;
+        window.open(
+            `https://instagram.com/${encodeURIComponent(p.user)}/`,
+            NOME_ABA_PERFIL,
+            'noopener'
+        );
+    },
+
+    avancar(acao) {
+        const p = this.perfilAtual();
+        if (!p) return;
+
+        this.decisoes.push({ user: p.user, acao });
+        if (acao === 'unfollow') this.onResolver?.(p.user);
+
+        if (this.indice >= this.lista.length - 1) {
+            this.render(true);
+            return;
+        }
+        this.indice += 1;
+        this.render();
+    },
+
+    /** Volta um passo. Decisões de unfollow não são desfeitas em silêncio. */
+    voltar() {
+        if (this.indice === 0) return;
+        this.indice -= 1;
+        this.decisoes.pop();
+        this.render();
+    },
+
+    render(finalizado = false) {
+        if (!this.raiz) return;
+        this.raiz.replaceChildren();
+
+        const painel = el('div', 'triagem-painel');
+
+        if (finalizado || !this.perfilAtual()) {
+            const marcados = this.decisoes.filter((d) => d.acao === 'unfollow').length;
+            painel.append(
+                el('div', 'triagem-fim-icone', '✓'),
+                el('h2', 'triagem-fim-titulo', 'Fila concluída'),
+                el(
+                    'p',
+                    'triagem-fim-texto',
+                    `${this.lista.length} perfis revisados. ${marcados} marcados como "parei de seguir".`
+                ),
+                el(
+                    'p',
+                    'triagem-fim-nota',
+                    'Marcar aqui só remove o perfil da sua lista de trabalho. O unfollow em si você faz no Instagram.'
+                )
+            );
+            const btn = el('button', 'triagem-btn triagem-btn-principal', 'Fechar');
+            btn.addEventListener('click', () => this.fechar());
+            painel.append(btn);
+            this.raiz.append(painel);
+            btn.focus();
+            return;
+        }
+
+        const p = this.perfilAtual();
+
+        // Cabeçalho: progresso e saída
+        const topo = el('div', 'triagem-topo');
+        topo.append(el('span', 'triagem-progresso', `${this.indice + 1} de ${this.lista.length}`));
+        const btnSair = el('button', 'triagem-sair', 'Sair (Esc)');
+        btnSair.addEventListener('click', () => this.fechar());
+        topo.append(btnSair);
+
+        const barra = el('div', 'triagem-barra');
+        const preenchida = el('div', 'triagem-barra-fill');
+        preenchida.style.width = `${((this.indice + 1) / this.lista.length) * 100}%`;
+        barra.append(preenchida);
+
+        // Corpo: o perfil
+        const corpo = el('div', 'triagem-corpo');
+        corpo.append(el('div', 'triagem-user', `@${p.user}`));
+
+        const badge = el('span', `triagem-badge risco-${this.faixaRisco(p.score)}`,
+            this.rotulos[p.veredito] ?? p.veredito);
+        corpo.append(badge);
+
+        if (p.score > 0) {
+            corpo.append(el('div', 'triagem-score', `Risco ${p.score}`));
+        }
+
+        const meta = el('div', 'triagem-meta');
+        for (const texto of this.linhasMeta(p)) meta.append(el('span', null, texto));
+        corpo.append(meta);
+
+        if (p.motivos?.length) {
+            const ul = el('ul', 'triagem-motivos');
+            for (const m of p.motivos) ul.append(el('li', null, m));
+            corpo.append(ul);
+        }
+
+        // Ações
+        const acoes = el('div', 'triagem-acoes');
+
+        const btnAbrir = el('button', 'triagem-btn triagem-btn-abrir', 'Abrir perfil');
+        btnAbrir.append(el('kbd', null, 'O'));
+        btnAbrir.addEventListener('click', () => this.abrirPerfil());
+
+        const btnManter = el('button', 'triagem-btn', 'Manter');
+        btnManter.append(el('kbd', null, '→'));
+        btnManter.addEventListener('click', () => this.avancar('manter'));
+
+        const btnUnfollow = el('button', 'triagem-btn triagem-btn-unfollow', 'Parei de seguir');
+        btnUnfollow.append(el('kbd', null, 'Espaço'));
+        btnUnfollow.addEventListener('click', () => this.avancar('unfollow'));
+
+        acoes.append(btnAbrir, btnManter, btnUnfollow);
+
+        const rodape = el('div', 'triagem-rodape');
+        const btnVoltar = el('button', 'triagem-voltar', '← Voltar um');
+        btnVoltar.disabled = this.indice === 0;
+        btnVoltar.addEventListener('click', () => this.voltar());
+        rodape.append(btnVoltar);
+        rodape.append(el('span', 'triagem-dica', 'O abre na mesma aba · → mantém · Espaço marca · ← volta'));
+
+        painel.append(topo, barra, corpo, acoes, rodape);
+        this.raiz.append(painel);
+    },
+
+    faixaRisco(score) {
+        if (score >= 70) return 'alto';
+        if (score >= 30) return 'medio';
+        return 'baixo';
+    },
+
+    linhasMeta(p) {
+        const linhas = [];
+        if (p.retencaoMaxSeg != null && p.fmtRetencao) linhas.push(`reteve ~${p.fmtRetencao}`);
+        if (p.quemVeioPrimeiro === 'ELES') linhas.push('ele veio primeiro');
+        if (p.quemVeioPrimeiro === 'SIMULTANEO') linhas.push('troca instantânea');
+        if (p.fmtSeguidoEm) linhas.push(`você seguiu ${p.fmtSeguidoEm}`);
+        return linhas;
+    }
+};
+
 /* ================= src/ui.js ================= */
 const dom = {
     followersInput: document.getElementById('followersInput'),
@@ -874,6 +1155,7 @@ const dom = {
     searchInput: document.getElementById('searchInput'),
     ordenacao: document.getElementById('ordenacao'),
     btnResetHistory: document.getElementById('btnResetHistory'),
+    btnTriagem: document.getElementById('btnTriagem'),
     btnExportarBackup: document.getElementById('btnExportarBackup'),
     inputImportarBackup: document.getElementById('inputImportarBackup'),
     usersGrid: document.getElementById('users-grid'),
@@ -903,13 +1185,6 @@ const ABAS = [
     { id: 'NAO_RETRIBUEM', rotulo: 'Não te seguem', filtro: (p) => p.veredito === VEREDITO.NUNCA_RETRIBUIU || p.veredito === VEREDITO.BAIT_SUSPEITO },
     { id: VEREDITO.SO_TE_SEGUE, rotulo: 'Te seguem e você não', filtro: (p) => p.veredito === VEREDITO.SO_TE_SEGUE }
 ];
-
-const el = (tag, classe, texto) => {
-    const n = document.createElement(tag);
-    if (classe) n.className = classe;
-    if (texto != null) n.textContent = texto;
-    return n;
-};
 
 const UIService = {
     itemsPerPage: 24,
@@ -1025,7 +1300,9 @@ const UIService = {
         const topo = el('div', 'card-topo');
         const link = el('a', 'user-link', `@${p.user}`);
         link.href = `https://instagram.com/${encodeURIComponent(p.user)}/`;
-        link.target = '_blank';
+        // Alvo nomeado (e não _blank): todo perfil reusa a MESMA aba, em vez de
+        // abrir uma nova a cada clique e obrigar a fechar tudo depois.
+        link.target = 'verificaSeguidoresPerfil';
         link.rel = 'noopener noreferrer';
         topo.append(link, el('span', CLASSE_BADGE[p.veredito] ?? 'badge', ROTULO_VEREDITO[p.veredito]));
 
@@ -1190,6 +1467,7 @@ const renderizarLista = () => {
     const aba = ABAS.find((a) => a.id === AppState.aba) ?? ABAS[0];
     dom.listTitle.textContent = `${aba.rotulo} — ${lista.length} perfis`;
     dom.searchInput.disabled = !AppState.perfis.length;
+    if (dom.btnTriagem) dom.btnTriagem.disabled = !lista.length;
 
     UIService.renderizarGrade(lista, AppState.pagina, resolverPerfil);
     UIService.renderizarControlesPaginacao(lista.length, AppState.pagina, (novaPagina) => {
@@ -1347,6 +1625,30 @@ dom.searchInput.addEventListener('input', () => {
         AppState.pagina = 1;
         renderizarLista();
     }, 150);
+});
+
+dom.btnTriagem?.addEventListener('click', () => {
+    const lista = listaVisivel();
+    if (!lista.length) {
+        UIService.toast('Nenhum perfil nesta aba para revisar.', 'info');
+        return;
+    }
+    // Pré-formata o que a triagem exibe, para ela não depender do motor.
+    const fila = lista.map((p) => ({
+        ...p,
+        fmtRetencao: p.retencaoMaxSeg != null ? formatarDuracao(p.retencaoMaxSeg) : null,
+        fmtSeguidoEm: p.voceSeguiuEm != null ? formatarData(p.voceSeguiuEm) : null
+    }));
+
+    TriagemService.abrir(fila, {
+        rotulos: ROTULO_VEREDITO,
+        onResolver: (user) => resolverPerfil(user),
+        onFechar: (marcados) => {
+            UIService.renderizarAbas(AppState.perfis, AppState.aba, trocarAba);
+            renderizarLista();
+            if (marcados) UIService.toast(`${marcados} perfil(is) marcados na triagem.`, 'ok');
+        }
+    });
 });
 
 dom.btnExportarBackup?.addEventListener('click', async () => {

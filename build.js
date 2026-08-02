@@ -18,9 +18,11 @@ const SAIDA = path.join(RAIZ, 'VerificaSeguidores.html');
 // Ordem importa: cada arquivo só pode usar o que já foi definido acima dele.
 // storage-local.js entra no lugar de storage.js — mesma interface, sem servidor.
 const MODULOS = [
+    'src/dom-utils.js',
     'src/parser.js',
     'src/analysis.js',
     'src/storage-local.js',
+    'src/triagem.js',
     'src/ui.js',
     'src/app.js'
 ];
@@ -31,6 +33,37 @@ const desmodularizar = (codigo) =>
         .replace(/^\s*import\s+[\s\S]*?from\s+['"][^'"]+['"];?\s*$/gm, '')
         .replace(/^export\s+/gm, '')
         .trim();
+
+/**
+ * Concatenar módulos num escopo só faz duas declarações homônimas colidirem —
+ * algo que os imports ES escondem. Falhar aqui é melhor que gerar um HTML que
+ * quebra no navegador.
+ */
+const detectarColisoes = (script) => {
+    const vistos = new Map();
+    const duplicados = [];
+    let arquivo = '(topo)';
+
+    for (const linha of script.split('\n')) {
+        const cabecalho = linha.match(/^\/\* =+ (\S+) =+ \*\/$/);
+        if (cabecalho) {
+            arquivo = cabecalho[1];
+            continue;
+        }
+        const decl = linha.match(/^(?:const|let|var|function|class)\s+([A-Za-z_$][\w$]*)/);
+        if (!decl) continue;
+        const nome = decl[1];
+        if (vistos.has(nome)) duplicados.push(`${nome} (${vistos.get(nome)} e ${arquivo})`);
+        else vistos.set(nome, arquivo);
+    }
+
+    if (duplicados.length) {
+        throw new Error(
+            'Identificadores declarados em mais de um módulo — extraia para um módulo comum:\n  ' +
+                duplicados.join('\n  ')
+        );
+    }
+};
 
 const construir = () => {
     const template = fs.readFileSync(path.join(RAIZ, 'index.html'), 'utf8');
@@ -56,6 +89,8 @@ const construir = () => {
     if (html.includes('<script type="module"')) {
         throw new Error('O script de módulo não foi substituído — o template mudou?');
     }
+
+    detectarColisoes(script);
 
     fs.writeFileSync(SAIDA, html, 'utf8');
 

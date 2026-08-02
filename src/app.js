@@ -1,7 +1,8 @@
 import { StorageService } from './storage.js';
 import { ParserService } from './parser.js';
 import { dom, UIService, ABAS } from './ui.js';
-import { analisar, criarSnapshot, formatarData, resolverDataDoExport } from './analysis.js';
+import { analisar, criarSnapshot, formatarData, formatarDuracao, resolverDataDoExport, ROTULO_VEREDITO } from './analysis.js';
+import { TriagemService } from './triagem.js';
 
 const AppState = {
     followers: new Map(),   // username -> quando ELE te seguiu
@@ -82,6 +83,7 @@ const renderizarLista = () => {
     const aba = ABAS.find((a) => a.id === AppState.aba) ?? ABAS[0];
     dom.listTitle.textContent = `${aba.rotulo} — ${lista.length} perfis`;
     dom.searchInput.disabled = !AppState.perfis.length;
+    if (dom.btnTriagem) dom.btnTriagem.disabled = !lista.length;
 
     UIService.renderizarGrade(lista, AppState.pagina, resolverPerfil);
     UIService.renderizarControlesPaginacao(lista.length, AppState.pagina, (novaPagina) => {
@@ -239,6 +241,30 @@ dom.searchInput.addEventListener('input', () => {
         AppState.pagina = 1;
         renderizarLista();
     }, 150);
+});
+
+dom.btnTriagem?.addEventListener('click', () => {
+    const lista = listaVisivel();
+    if (!lista.length) {
+        UIService.toast('Nenhum perfil nesta aba para revisar.', 'info');
+        return;
+    }
+    // Pré-formata o que a triagem exibe, para ela não depender do motor.
+    const fila = lista.map((p) => ({
+        ...p,
+        fmtRetencao: p.retencaoMaxSeg != null ? formatarDuracao(p.retencaoMaxSeg) : null,
+        fmtSeguidoEm: p.voceSeguiuEm != null ? formatarData(p.voceSeguiuEm) : null
+    }));
+
+    TriagemService.abrir(fila, {
+        rotulos: ROTULO_VEREDITO,
+        onResolver: (user) => resolverPerfil(user),
+        onFechar: (marcados) => {
+            UIService.renderizarAbas(AppState.perfis, AppState.aba, trocarAba);
+            renderizarLista();
+            if (marcados) UIService.toast(`${marcados} perfil(is) marcados na triagem.`, 'ok');
+        }
+    });
 });
 
 dom.btnExportarBackup?.addEventListener('click', async () => {

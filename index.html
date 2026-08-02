@@ -99,6 +99,47 @@
         .toast-ok { background: #15803d; }
         .toast.sai { opacity: 0; transform: translateX(-50%) translateY(10px); }
 
+        .btn-triagem { background: #0f172a; color: #fff; border: 1px solid #0f172a; padding: 9px 16px; font-size: 13px; font-weight: 600; border-radius: 6px; cursor: pointer; }
+        .btn-triagem:hover { background: #1e293b; }
+        .btn-triagem:disabled { opacity: .4; cursor: not-allowed; }
+
+        .triagem { position: absolute; inset: 0; min-height: 100vh; background: rgba(15,23,42,.75); display: flex; align-items: flex-start; justify-content: center; padding: 40px 16px; z-index: 100; }
+        .triagem-painel { background: #fff; border-radius: 14px; width: 100%; max-width: 520px; padding: 22px 26px 18px; }
+        .triagem-topo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .triagem-progresso { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: .5px; }
+        .triagem-sair { background: none; border: 0; color: #94a3b8; font-size: 12px; cursor: pointer; font-weight: 600; }
+        .triagem-sair:hover { color: #475569; }
+        .triagem-barra { height: 4px; background: #f1f5f9; border-radius: 2px; overflow: hidden; margin-bottom: 22px; }
+        .triagem-barra-fill { height: 100%; background: #0ea5e9; transition: width .2s; }
+        .triagem-corpo { text-align: center; margin-bottom: 22px; }
+        .triagem-user { font-size: 24px; font-weight: 700; color: #0f172a; margin-bottom: 10px; word-break: break-all; }
+        .triagem-badge { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; padding: 4px 12px; border-radius: 20px; }
+        .triagem-badge.risco-alto { background: #fee2e2; color: #b91c1c; }
+        .triagem-badge.risco-medio { background: #fef9c3; color: #a16207; }
+        .triagem-badge.risco-baixo { background: #f1f5f9; color: #64748b; }
+        .triagem-score { font-size: 34px; font-weight: 700; color: #0f172a; margin: 14px 0 4px; }
+        .triagem-meta { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 10px; }
+        .triagem-meta span { background: #f8fafc; border: 1px solid #f1f5f9; color: #64748b; font-size: 11.5px; padding: 3px 9px; border-radius: 4px; }
+        .triagem-motivos { list-style: none; margin-top: 14px; text-align: left; font-size: 12px; color: #64748b; line-height: 1.6; background: #f8fafc; padding: 12px 14px; border-radius: 8px; }
+        .triagem-motivos li::before { content: "— "; }
+        .triagem-acoes { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+        .triagem-btn { display: flex; flex-direction: column; align-items: center; gap: 5px; background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; padding: 12px 8px; font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; transition: .15s; }
+        .triagem-btn:hover { background: #e2e8f0; }
+        .triagem-btn kbd { font-family: inherit; font-size: 10px; font-weight: 700; background: rgba(100,116,139,.16); padding: 2px 7px; border-radius: 4px; }
+        .triagem-btn-abrir { background: #0ea5e9; border-color: #0ea5e9; color: #fff; }
+        .triagem-btn-abrir:hover { background: #0284c7; }
+        .triagem-btn-abrir kbd { background: rgba(255,255,255,.25); }
+        .triagem-btn-unfollow:hover { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
+        .triagem-btn-principal { background: #0f172a; border-color: #0f172a; color: #fff; width: 100%; }
+        .triagem-rodape { display: flex; justify-content: space-between; align-items: center; gap: 10px; border-top: 1px solid #f1f5f9; padding-top: 12px; }
+        .triagem-voltar { background: none; border: 0; color: #64748b; font-size: 12px; font-weight: 600; cursor: pointer; }
+        .triagem-voltar:disabled { opacity: .35; cursor: not-allowed; }
+        .triagem-dica { font-size: 10.5px; color: #94a3b8; text-align: right; }
+        .triagem-fim-icone { font-size: 40px; color: #16a34a; text-align: center; }
+        .triagem-fim-titulo { font-size: 20px; font-weight: 700; text-align: center; margin: 10px 0 8px; }
+        .triagem-fim-texto { font-size: 13.5px; color: #475569; text-align: center; margin-bottom: 8px; }
+        .triagem-fim-nota { font-size: 12px; color: #94a3b8; text-align: center; margin-bottom: 18px; line-height: 1.5; }
+
         .guia { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 18px; overflow: hidden; }
         .guia > summary { padding: 14px 18px; font-size: 13px; font-weight: 700; color: #0f172a; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; }
         .guia > summary::after { content: "▾"; color: #94a3b8; }
@@ -218,6 +259,7 @@
                 <option value="antigo">Follow mais antigo</option>
                 <option value="alfabetica">A–Z</option>
             </select>
+            <button id="btnTriagem" class="btn-triagem" title="Revisar um por um, com teclado">Modo triagem</button>
             <button id="btnExportarBackup" class="btn-acao" title="Salva seus snapshots num arquivo">Backup</button>
             <label class="btn-acao" style="cursor:pointer" title="Restaura snapshots de um backup">
                 Restaurar
