@@ -3,6 +3,7 @@ import { ParserService } from './parser.js';
 import { dom, UIService, ABAS } from './ui.js';
 import { analisar, criarSnapshot, formatarData, formatarDuracao, resolverDataDoExport, ROTULO_VEREDITO } from './analysis.js';
 import { TriagemService } from './triagem.js';
+import { TemaService } from './tema.js';
 
 const AppState = {
     followers: new Map(),   // username -> quando ELE te seguiu
@@ -326,6 +327,8 @@ dom.btnResetHistory.addEventListener('click', async () => {
 // -------------------------------------------------------------- inicialização
 
 const inicializar = async () => {
+    TemaService.iniciar(dom.btnTema);
+
     const [historico, snapshots] = await Promise.all([
         StorageService.carregarHistorico(),
         StorageService.carregarSnapshots()

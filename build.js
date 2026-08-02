@@ -19,6 +19,7 @@ const SAIDA = path.join(RAIZ, 'VerificaSeguidores.html');
 // storage-local.js entra no lugar de storage.js — mesma interface, sem servidor.
 const MODULOS = [
     'src/dom-utils.js',
+    'src/tema.js',
     'src/parser.js',
     'src/analysis.js',
     'src/storage-local.js',

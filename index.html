@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="app-token" content="__TOKEN__">
     <title>Verifica Seguidores — detector de follow-back bait</title>
+    <script>
+        // Roda antes de qualquer pintura: sem isto, abrir no modo escuro pisca
+        // branco por um quadro. Fica solto no head de proposito.
+        (() => {
+            const salvo = (() => { try { return localStorage.getItem('verificaSeguidores.tema'); } catch { return null; } })();
+            const escuro = salvo ? salvo === 'escuro'
+                : window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+            if (escuro) document.documentElement.dataset.tema = 'escuro';
+        })();
+    </script>
     <style>
         :root {
             --tinta:    #16161a;
@@ -14,6 +24,26 @@
             --linha-2:  #f4f4f6;
             --risco:    #b4231e;
             --papel:    #fff;
+            --hover:    #fafafb;   /* realce de linha ao passar o mouse */
+            --kbd-alt:  rgba(255,255,255,.55);  /* tecla dentro do botão sólido */
+            --veu:      rgba(255,255,255,.97);  /* fundo do overlay de triagem */
+            color-scheme: light;
+        }
+
+        /* Modo escuro. Só troca os tokens — nenhuma regra abaixo sabe que ele existe.
+           Os tons foram medidos: todos passam em WCAG AA sobre o fundo. */
+        [data-tema="escuro"] {
+            --tinta:    #ececee;   /* 15.7:1 */
+            --tinta-2:  #a8a8b4;   /*  7.9:1 */
+            --tinta-3:  #8b8b96;   /*  5.5:1 */
+            --linha:    #2c2c34;
+            --linha-2:  #212128;
+            --risco:    #f2837c;   /*  7.3:1 */
+            --papel:    #131317;
+            --hover:    #1a1a20;
+            --kbd-alt:  rgba(0,0,0,.5);
+            --veu:      rgba(19,19,23,.97);
+            color-scheme: dark;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -35,7 +65,10 @@
         /* ---------------------------------------------------- cabeçalho */
 
         .main-card { padding-top: 56px; }
+        .cabecalho-linha { display: flex; justify-content: space-between; align-items: baseline; gap: 20px; }
         .header h1 { font-size: 19px; font-weight: 500; letter-spacing: -.01em; }
+        .btn-tema { font-size: 12.5px; color: var(--tinta-3); transition: color .12s; white-space: nowrap; }
+        .btn-tema:hover { color: var(--tinta); }
         .header p {
             font-size: 13.5px; color: var(--tinta-2); margin: 6px 0 36px;
             max-width: 52ch;
@@ -49,7 +82,8 @@
         .file-label:hover { background: var(--linha-2); }
         .file-label strong { font-size: 13.5px; font-weight: 500; }
         .file-label small { font-size: 12px; color: var(--tinta-3); }
-        .file-label .status { font-size: 12px; color: var(--tinta-2); margin-top: 6px; }
+        .file-label .status { font-size: 12px; color: var(--tinta-3); margin-top: 6px; }
+        .file-label .status.carregado { color: var(--tinta); }
         .file-label input { display: none; }
 
         .linha-salvar { display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 44px; }
@@ -58,6 +92,7 @@
             background: none; border: 0; border-bottom: 1px solid var(--linha);
             padding: 6px 0; font-size: 14px; color: var(--tinta); width: 150px;
         }
+        [data-tema="escuro"] input[type=date]::-webkit-calendar-picker-indicator { filter: invert(1) opacity(.6); }
         .linha-salvar input[type=date]:focus { outline: 0; border-bottom-color: var(--tinta); }
         .linha-salvar input[type=date]:disabled { color: var(--tinta-3); }
         .linha-salvar small { font-size: 11px; text-transform: none; letter-spacing: 0; color: var(--tinta-3); }
@@ -125,7 +160,7 @@
             display: grid; grid-template-columns: 1fr auto; align-items: baseline;
             gap: 2px 20px; padding: 15px 0; border-bottom: 1px solid var(--linha-2);
         }
-        .user-card:hover { background: #fcfcfd; }
+        .user-card:hover { background: var(--hover); }
 
         .card-topo { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
         .user-link { text-decoration: none; color: var(--tinta); font-size: 14.5px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -177,7 +212,7 @@
         /* ---------------------------------------------------- triagem */
 
         .triagem {
-            position: fixed; inset: 0; background: rgba(255,255,255,.97);
+            position: fixed; inset: 0; background: var(--veu);
             display: flex; align-items: flex-start; justify-content: center;
             padding: 24px; z-index: 100; overflow-y: auto; overscroll-behavior: contain;
         }
@@ -211,7 +246,7 @@
         .triagem-btn kbd { font-family: inherit; font-size: 10.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--tinta-3); }
         .triagem-btn-abrir { background: var(--tinta); border-color: var(--tinta); color: var(--papel); }
         .triagem-btn-abrir:hover { background: var(--tinta); border-color: var(--tinta); color: var(--papel); opacity: .82; }
-        .triagem-btn-abrir kbd { color: rgba(255,255,255,.6); }
+        .triagem-btn-abrir kbd { color: var(--kbd-alt); }
         .triagem-btn-unfollow:hover { border-color: var(--risco); color: var(--risco); }
         .triagem-btn-principal { flex: none; width: 100%; background: var(--tinta); border-color: var(--tinta); color: var(--papel); }
 
@@ -256,7 +291,10 @@
     <div class="container">
         <div class="main-card">
             <div class="header">
-                <h1>Verifica Seguidores</h1>
+                <div class="cabecalho-linha">
+                    <h1>Verifica Seguidores</h1>
+                    <button id="btnTema" class="btn-tema" aria-label="Alternar tema">Modo escuro</button>
+                </div>
                 <p>
                     Detecta quem te seguiu, esperou o follow de volta e depois te largou.
                     Roda 100% na sua máquina, a partir do seu próprio export da Meta —

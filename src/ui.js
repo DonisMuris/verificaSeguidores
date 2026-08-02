@@ -11,6 +11,7 @@ export const dom = {
     ordenacao: document.getElementById('ordenacao'),
     btnResetHistory: document.getElementById('btnResetHistory'),
     btnTriagem: document.getElementById('btnTriagem'),
+    btnTema: document.getElementById('btnTema'),
     btnExportarBackup: document.getElementById('btnExportarBackup'),
     inputImportarBackup: document.getElementById('inputImportarBackup'),
     usersGrid: document.getElementById('users-grid'),
@@ -127,7 +128,8 @@ export const UIService = {
 
     atualizarStatusUpload(elemento, tamanho, origem = 'Carregado') {
         elemento.textContent = `${origem} (${tamanho})`;
-        elemento.style.color = '#38bdf8';
+        // Cor vem da CSS, não daqui: um hex cravado no JS ignoraria o tema.
+        elemento.classList.add('carregado');
     },
 
     atualizarBotaoReset(historicoSize) {
