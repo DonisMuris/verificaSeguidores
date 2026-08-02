@@ -134,5 +134,16 @@ export const ParserService = {
     /** Lê vários arquivos de uma vez (ex.: followers_1..N). */
     async lerArquivosAsync(fileList) {
         return Promise.all(Array.from(fileList).map((f) => this.lerArquivoAsync(f)));
+    },
+
+    /**
+     * Data de modificação dos arquivos, em segundos. É o carimbo que a Meta
+     * deixou ao gerar o export — a fonte mais confiável para datar o snapshot.
+     */
+    dataDeModificacao(fileList) {
+        const datas = Array.from(fileList)
+            .map((f) => f.lastModified)
+            .filter((t) => Number.isFinite(t) && t > 0);
+        return datas.length ? Math.floor(Math.max(...datas) / 1000) : null;
     }
 };

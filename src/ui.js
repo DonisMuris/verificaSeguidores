@@ -4,6 +4,8 @@ export const dom = {
     followersInput: document.getElementById('followersInput'),
     followingInput: document.getElementById('followingInput'),
     btnSalvarSnapshot: document.getElementById('btnSalvarSnapshot'),
+    dataSnapshot: document.getElementById('dataSnapshot'),
+    origemData: document.getElementById('origem-data'),
     searchInput: document.getElementById('searchInput'),
     ordenacao: document.getElementById('ordenacao'),
     btnResetHistory: document.getElementById('btnResetHistory'),

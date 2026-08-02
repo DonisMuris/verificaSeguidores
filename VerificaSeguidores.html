@@ -23,6 +23,12 @@
         .btn-primario { background: #0ea5e9; color: #fff; border: 0; padding: 12px 24px; font-size: 14px; font-weight: 600; border-radius: 6px; cursor: pointer; width: 100%; transition: background .2s; }
         .btn-primario:hover:not(:disabled) { background: #0284c7; }
         .btn-primario:disabled { background: rgba(255,255,255,.08); color: rgba(255,255,255,.3); cursor: not-allowed; }
+        .linha-salvar { display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap; }
+        .linha-salvar label { display: flex; flex-direction: column; gap: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; opacity: .7; }
+        .linha-salvar input[type=date] { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.18); color: #fff; padding: 10px 12px; border-radius: 6px; font-size: 13px; font-family: inherit; color-scheme: dark; }
+        .linha-salvar input[type=date]:disabled { opacity: .35; }
+        .linha-salvar small { font-size: 10px; font-weight: 400; text-transform: none; letter-spacing: 0; opacity: .6; }
+        .linha-salvar .btn-primario { width: auto; flex: 1; min-width: 220px; }
 
         .stats-bar { display: flex; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
         .stat-box { text-align: center; flex: 1; padding: 18px 8px; }
@@ -133,9 +139,16 @@
                         <input type="file" id="followingInput" accept=".json">
                     </label>
                 </div>
-                <button id="btnSalvarSnapshot" class="btn-primario" disabled>
-                    Salvar como snapshot
-                </button>
+                <div class="linha-salvar">
+                    <label for="dataSnapshot">
+                        Data do export
+                        <input type="date" id="dataSnapshot" disabled>
+                        <small id="origem-data">detectada do arquivo</small>
+                    </label>
+                    <button id="btnSalvarSnapshot" class="btn-primario" disabled>
+                        Salvar como snapshot
+                    </button>
+                </div>
             </div>
             <div class="stats-bar" id="stats-bar"></div>
         </div>
@@ -361,6 +374,17 @@ const ParserService = {
     /** Lê vários arquivos de uma vez (ex.: followers_1..N). */
     async lerArquivosAsync(fileList) {
         return Promise.all(Array.from(fileList).map((f) => this.lerArquivoAsync(f)));
+    },
+
+    /**
+     * Data de modificação dos arquivos, em segundos. É o carimbo que a Meta
+     * deixou ao gerar o export — a fonte mais confiável para datar o snapshot.
+     */
+    dataDeModificacao(fileList) {
+        const datas = Array.from(fileList)
+            .map((f) => f.lastModified)
+            .filter((t) => Number.isFinite(t) && t > 0);
+        return datas.length ? Math.floor(Math.max(...datas) / 1000) : null;
     }
 };
 
@@ -402,13 +426,12 @@ const DIA = 86400;
 const JANELA_TROCA_INSTANTANEA = 10;
 
 /**
- * Deduz a data do export a partir do próprio conteúdo: o follow mais recente
- * registrado é um piso confiável para quando a Meta gerou o arquivo.
+ * Piso para a data do export: o follow mais recente registrado. O arquivo não
+ * pode ter sido gerado antes do último evento que ele contém.
  *
- * Sem isto, o snapshot era datado no clique em "Salvar". Quem carregasse um
- * export antigo e um recente no mesmo dia teria os dois datados de hoje — e,
- * como snapshots do mesmo dia se substituem, perderia o primeiro e nunca
- * chegaria ao modo prova.
+ * Usar isto sozinho é frágil — mede atividade, não data de geração. Quem passar
+ * semanas sem seguir ninguém teria dois exports distintos deduzindo a mesma
+ * data. Serve como piso de validação e como último recurso, não como fonte.
  */
 const deduzirDataDoExport = (followers, following) => {
     const agora = Math.floor(Date.now() / 1000);
@@ -419,6 +442,28 @@ const deduzirDataDoExport = (followers, following) => {
         }
     }
     return maximo || agora;
+};
+
+/**
+ * Data do export, em ordem de confiabilidade:
+ *
+ *  1. `mtime` — a data de modificação dos próprios JSONs, que o navegador
+ *     entrega em `File.lastModified`. É o momento em que a Meta gerou o
+ *     arquivo e, na prática, o valor exato.
+ *  2. Maior timestamp do conteúdo, quando o mtime é implausível (arquivo
+ *     reeditado, copiado sem preservar data, ou vindo de outro fuso).
+ *
+ * O mtime só é aceito se cair entre o último evento registrado e agora — um
+ * export não pode ser mais antigo que o próprio conteúdo nem estar no futuro.
+ */
+const resolverDataDoExport = ({ followers, following, mtime }) => {
+    const agora = Math.floor(Date.now() / 1000);
+    const piso = deduzirDataDoExport(followers, following);
+
+    if (Number.isFinite(mtime) && mtime >= piso && mtime <= agora + 86400) {
+        return { takenAt: mtime, origem: 'arquivo' };
+    }
+    return { takenAt: piso, origem: 'conteudo' };
 };
 
 /**
@@ -724,10 +769,19 @@ const StorageService = {
         return Array.isArray(lista) ? lista.sort((a, b) => a.takenAt - b.takenAt) : [];
     },
 
-    async salvarSnapshot(snapshot) {
+    /**
+     * Nunca substitui em silêncio. Se já existe snapshot no mesmo dia, devolve
+     * `conflito` e cabe à interface confirmar — perder um snapshot significa
+     * perder a única evidência de quem deixou de te seguir naquele intervalo.
+     */
+    async salvarSnapshot(snapshot, { substituir = false } = {}) {
         const snaps = await this.carregarSnapshots();
-        // Um snapshot por dia: repetir no mesmo dia substitui em vez de duplicar.
         const idx = snaps.findIndex((s) => Math.abs(s.takenAt - snapshot.takenAt) < 86400);
+
+        if (idx >= 0 && !substituir) {
+            return { conflito: true, existente: snaps[idx].takenAt, total: snaps.length };
+        }
+
         if (idx >= 0) snaps[idx] = snapshot;
         else snaps.push(snapshot);
 
@@ -815,6 +869,8 @@ const dom = {
     followersInput: document.getElementById('followersInput'),
     followingInput: document.getElementById('followingInput'),
     btnSalvarSnapshot: document.getElementById('btnSalvarSnapshot'),
+    dataSnapshot: document.getElementById('dataSnapshot'),
+    origemData: document.getElementById('origem-data'),
     searchInput: document.getElementById('searchInput'),
     ordenacao: document.getElementById('ordenacao'),
     btnResetHistory: document.getElementById('btnResetHistory'),
@@ -1061,6 +1117,8 @@ const AppState = {
     snapshots: [],
     historico: new Set(),
     carregadoDeArquivo: false,
+    mtimeArquivos: null,      // File.lastModified dos JSONs carregados
+    dataManual: null,         // data que o usuário digitou, se houver
     perfis: [],
     resumo: null,
     aba: 'RANKING',
@@ -1076,6 +1134,24 @@ const ORDENADORES = {
 
 const temDadosCarregados = () => AppState.followers.size > 0 && AppState.following.size > 0;
 
+const SEG_DIA = 86400;
+const paraInputDate = (ts) => new Date(ts * 1000).toISOString().slice(0, 10);
+/** Meio-dia UTC evita que o fuso jogue a data para o dia anterior. */
+const deInputDate = (valor) => Math.floor(new Date(`${valor}T12:00:00Z`).getTime() / 1000);
+
+/**
+ * Data que será gravada no snapshot. O usuário manda; na ausência dele, o
+ * mtime do arquivo; e só então o conteúdo.
+ */
+const dataDoExport = () => {
+    if (AppState.dataManual) return { takenAt: AppState.dataManual, origem: 'manual' };
+    return resolverDataDoExport({
+        followers: AppState.followers,
+        following: AppState.following,
+        mtime: AppState.mtimeArquivos
+    });
+};
+
 // -------------------------------------------------------------- análise e render
 
 const reanalisar = () => {
@@ -1084,10 +1160,10 @@ const reanalisar = () => {
     // duplicaria a mesma leitura e podia derrubar um snapshot real da análise.
     const provisorio =
         AppState.carregadoDeArquivo && temDadosCarregados()
-            ? [criarSnapshot(AppState.followers, AppState.following)]
+            ? [criarSnapshot(AppState.followers, AppState.following, dataDoExport().takenAt)]
             : [];
     const salvosAnteriores = AppState.snapshots.filter(
-        (s) => !provisorio.length || Math.abs(s.takenAt - provisorio[0].takenAt) >= 86400
+        (s) => !provisorio.length || Math.abs(s.takenAt - provisorio[0].takenAt) >= SEG_DIA
     );
 
     const { perfis, resumo } = analisar([...salvosAnteriores, ...provisorio], AppState.historico);
@@ -1161,6 +1237,9 @@ const carregarArquivos = async (fileList, tipo) => {
     try {
         const jsons = await ParserService.lerArquivosAsync(fileList);
         AppState.carregadoDeArquivo = true;
+        AppState.dataManual = null;
+        const mtime = ParserService.dataDeModificacao(fileList);
+        if (mtime) AppState.mtimeArquivos = Math.max(AppState.mtimeArquivos ?? 0, mtime);
         if (tipo === 'followers') {
             AppState.followers = ParserService.extrairSeguidores(...jsons);
             UIService.atualizarStatusUpload(
@@ -1173,20 +1252,33 @@ const carregarArquivos = async (fileList, tipo) => {
             UIService.atualizarStatusUpload(dom.statusFollowing, AppState.following.size);
         }
         dom.btnSalvarSnapshot.disabled = !temDadosCarregados();
-        atualizarRotuloSnapshot();
+        atualizarCampoData();
         reanalisar();
     } catch (erro) {
         UIService.toast(erro.message, 'erro');
     }
 };
 
-/** Mostra a data deduzida do export para o usuário conferir antes de salvar. */
-const atualizarRotuloSnapshot = () => {
+const ROTULO_ORIGEM = {
+    arquivo: 'detectada da data do arquivo',
+    conteudo: 'estimada pelo conteúdo — confira',
+    manual: 'definida por você'
+};
+
+/** Mostra a data que será gravada, para o usuário conferir e corrigir. */
+const atualizarCampoData = () => {
     if (!temDadosCarregados()) {
+        dom.dataSnapshot.disabled = true;
+        dom.dataSnapshot.value = '';
+        dom.origemData.textContent = 'carregue os arquivos';
         dom.btnSalvarSnapshot.textContent = 'Salvar como snapshot';
         return;
     }
-    const { takenAt } = criarSnapshot(AppState.followers, AppState.following);
+    const { takenAt, origem } = dataDoExport();
+    dom.dataSnapshot.disabled = false;
+    dom.dataSnapshot.value = paraInputDate(takenAt);
+    dom.dataSnapshot.max = paraInputDate(Math.floor(Date.now() / 1000));
+    dom.origemData.textContent = ROTULO_ORIGEM[origem];
     dom.btnSalvarSnapshot.textContent = `Salvar snapshot de ${formatarData(takenAt)}`;
 };
 
@@ -1194,14 +1286,34 @@ const salvarSnapshot = async () => {
     if (!temDadosCarregados()) return;
     dom.btnSalvarSnapshot.disabled = true;
     try {
-        const snapshot = criarSnapshot(AppState.followers, AppState.following);
-        const r = await StorageService.salvarSnapshot(snapshot);
+        const { takenAt } = dataDoExport();
+        const snapshot = criarSnapshot(AppState.followers, AppState.following, takenAt);
+
+        let r = await StorageService.salvarSnapshot(snapshot);
+
+        // Já existe snapshot nesse dia. Substituir apaga a evidência do
+        // intervalo, então a decisão é do usuário, nunca automática.
+        if (r.conflito) {
+            const dia = formatarData(r.existente);
+            const confirmado = confirm(
+                `Já existe um snapshot de ${dia}.\n\n` +
+                'Substituir apaga o anterior e você perde a comparação daquele intervalo. ' +
+                'Se este export é de outra data, cancele e corrija a data antes de salvar.\n\n' +
+                'Substituir mesmo assim?'
+            );
+            if (!confirmado) {
+                UIService.toast('Nada foi alterado. Ajuste a data e tente de novo.', 'info');
+                return;
+            }
+            r = await StorageService.salvarSnapshot(snapshot, { substituir: true });
+        }
+
         AppState.snapshots = await StorageService.carregarSnapshots();
         AppState.carregadoDeArquivo = false;
         UIService.toast(
             r.substituido
-                ? 'Snapshot de hoje atualizado.'
-                : `Snapshot salvo. Total: ${r.total}.`,
+                ? `Snapshot de ${formatarData(takenAt)} atualizado.`
+                : `Snapshot de ${formatarData(takenAt)} salvo. Total: ${r.total}.`,
             'ok'
         );
         reanalisar();
@@ -1211,6 +1323,12 @@ const salvarSnapshot = async () => {
         dom.btnSalvarSnapshot.disabled = !temDadosCarregados();
     }
 };
+
+dom.dataSnapshot?.addEventListener('change', () => {
+    const valor = dom.dataSnapshot.value;
+    AppState.dataManual = valor ? deInputDate(valor) : null;
+    atualizarCampoData();
+});
 
 // -------------------------------------------------------------- listeners
 
@@ -1307,7 +1425,7 @@ const inicializar = async () => {
         UIService.atualizarStatusUpload(dom.statusFollowers, AppState.followers.size, 'Do snapshot');
         UIService.atualizarStatusUpload(dom.statusFollowing, AppState.following.size, 'Do snapshot');
         dom.btnSalvarSnapshot.disabled = false;
-        atualizarRotuloSnapshot();
+        atualizarCampoData();
     } else {
         dom.statusFollowers.textContent = 'Aguardando arquivo…';
         dom.statusFollowing.textContent = 'Aguardando arquivo…';

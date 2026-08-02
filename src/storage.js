@@ -35,8 +35,11 @@ export const StorageService = {
         }
     },
 
-    salvarSnapshot(snapshot) {
-        return pedir('/snapshots', { method: 'POST', body: JSON.stringify(snapshot) });
+    salvarSnapshot(snapshot, { substituir = false } = {}) {
+        return pedir('/snapshots', {
+            method: 'POST',
+            body: JSON.stringify({ ...snapshot, substituir })
+        });
     },
 
     apagarSnapshots() {

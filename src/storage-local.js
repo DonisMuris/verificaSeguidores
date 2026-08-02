@@ -65,10 +65,19 @@ export const StorageService = {
         return Array.isArray(lista) ? lista.sort((a, b) => a.takenAt - b.takenAt) : [];
     },
 
-    async salvarSnapshot(snapshot) {
+    /**
+     * Nunca substitui em silêncio. Se já existe snapshot no mesmo dia, devolve
+     * `conflito` e cabe à interface confirmar — perder um snapshot significa
+     * perder a única evidência de quem deixou de te seguir naquele intervalo.
+     */
+    async salvarSnapshot(snapshot, { substituir = false } = {}) {
         const snaps = await this.carregarSnapshots();
-        // Um snapshot por dia: repetir no mesmo dia substitui em vez de duplicar.
         const idx = snaps.findIndex((s) => Math.abs(s.takenAt - snapshot.takenAt) < 86400);
+
+        if (idx >= 0 && !substituir) {
+            return { conflito: true, existente: snaps[idx].takenAt, total: snaps.length };
+        }
+
         if (idx >= 0) snaps[idx] = snapshot;
         else snaps.push(snapshot);
 

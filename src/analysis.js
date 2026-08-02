@@ -35,13 +35,12 @@ const DIA = 86400;
 const JANELA_TROCA_INSTANTANEA = 10;
 
 /**
- * Deduz a data do export a partir do próprio conteúdo: o follow mais recente
- * registrado é um piso confiável para quando a Meta gerou o arquivo.
+ * Piso para a data do export: o follow mais recente registrado. O arquivo não
+ * pode ter sido gerado antes do último evento que ele contém.
  *
- * Sem isto, o snapshot era datado no clique em "Salvar". Quem carregasse um
- * export antigo e um recente no mesmo dia teria os dois datados de hoje — e,
- * como snapshots do mesmo dia se substituem, perderia o primeiro e nunca
- * chegaria ao modo prova.
+ * Usar isto sozinho é frágil — mede atividade, não data de geração. Quem passar
+ * semanas sem seguir ninguém teria dois exports distintos deduzindo a mesma
+ * data. Serve como piso de validação e como último recurso, não como fonte.
  */
 export const deduzirDataDoExport = (followers, following) => {
     const agora = Math.floor(Date.now() / 1000);
@@ -52,6 +51,28 @@ export const deduzirDataDoExport = (followers, following) => {
         }
     }
     return maximo || agora;
+};
+
+/**
+ * Data do export, em ordem de confiabilidade:
+ *
+ *  1. `mtime` — a data de modificação dos próprios JSONs, que o navegador
+ *     entrega em `File.lastModified`. É o momento em que a Meta gerou o
+ *     arquivo e, na prática, o valor exato.
+ *  2. Maior timestamp do conteúdo, quando o mtime é implausível (arquivo
+ *     reeditado, copiado sem preservar data, ou vindo de outro fuso).
+ *
+ * O mtime só é aceito se cair entre o último evento registrado e agora — um
+ * export não pode ser mais antigo que o próprio conteúdo nem estar no futuro.
+ */
+export const resolverDataDoExport = ({ followers, following, mtime }) => {
+    const agora = Math.floor(Date.now() / 1000);
+    const piso = deduzirDataDoExport(followers, following);
+
+    if (Number.isFinite(mtime) && mtime >= piso && mtime <= agora + 86400) {
+        return { takenAt: mtime, origem: 'arquivo' };
+    }
+    return { takenAt: piso, origem: 'conteudo' };
 };
 
 /**

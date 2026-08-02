@@ -177,11 +177,20 @@ const rotasApi = {
     },
 
     'POST /api/snapshots': async (req, res) => {
-        const snapshot = validarSnapshot(await lerCorpo(req));
+        const corpo = await lerCorpo(req);
+        const substituir = corpo?.substituir === true;
+        const snapshot = validarSnapshot(corpo);
+
         const resultado = await enfileirar('snapshots', async () => {
             const snaps = await lerJson(PATH_SNAPSHOTS, []);
-            // Substitui o snapshot do mesmo dia em vez de duplicar.
             const idx = snaps.findIndex((s) => Math.abs(s.takenAt - snapshot.takenAt) < 86400);
+
+            // Nunca sobrescreve calado: perder um snapshot é perder a evidência
+            // de quem deixou de seguir naquele intervalo.
+            if (idx >= 0 && !substituir) {
+                return { conflito: true, existente: snaps[idx].takenAt, total: snaps.length };
+            }
+
             if (idx >= 0) snaps[idx] = snapshot;
             else snaps.push(snapshot);
             snaps.sort((a, b) => a.takenAt - b.takenAt);

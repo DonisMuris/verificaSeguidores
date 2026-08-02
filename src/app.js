@@ -1,7 +1,7 @@
 import { StorageService } from './storage.js';
 import { ParserService } from './parser.js';
 import { dom, UIService, ABAS } from './ui.js';
-import { analisar, criarSnapshot, formatarData } from './analysis.js';
+import { analisar, criarSnapshot, formatarData, resolverDataDoExport } from './analysis.js';
 
 const AppState = {
     followers: new Map(),   // username -> quando ELE te seguiu
@@ -9,6 +9,8 @@ const AppState = {
     snapshots: [],
     historico: new Set(),
     carregadoDeArquivo: false,
+    mtimeArquivos: null,      // File.lastModified dos JSONs carregados
+    dataManual: null,         // data que o usuário digitou, se houver
     perfis: [],
     resumo: null,
     aba: 'RANKING',
@@ -24,6 +26,24 @@ const ORDENADORES = {
 
 const temDadosCarregados = () => AppState.followers.size > 0 && AppState.following.size > 0;
 
+const SEG_DIA = 86400;
+const paraInputDate = (ts) => new Date(ts * 1000).toISOString().slice(0, 10);
+/** Meio-dia UTC evita que o fuso jogue a data para o dia anterior. */
+const deInputDate = (valor) => Math.floor(new Date(`${valor}T12:00:00Z`).getTime() / 1000);
+
+/**
+ * Data que será gravada no snapshot. O usuário manda; na ausência dele, o
+ * mtime do arquivo; e só então o conteúdo.
+ */
+const dataDoExport = () => {
+    if (AppState.dataManual) return { takenAt: AppState.dataManual, origem: 'manual' };
+    return resolverDataDoExport({
+        followers: AppState.followers,
+        following: AppState.following,
+        mtime: AppState.mtimeArquivos
+    });
+};
+
 // -------------------------------------------------------------- análise e render
 
 const reanalisar = () => {
@@ -32,10 +52,10 @@ const reanalisar = () => {
     // duplicaria a mesma leitura e podia derrubar um snapshot real da análise.
     const provisorio =
         AppState.carregadoDeArquivo && temDadosCarregados()
-            ? [criarSnapshot(AppState.followers, AppState.following)]
+            ? [criarSnapshot(AppState.followers, AppState.following, dataDoExport().takenAt)]
             : [];
     const salvosAnteriores = AppState.snapshots.filter(
-        (s) => !provisorio.length || Math.abs(s.takenAt - provisorio[0].takenAt) >= 86400
+        (s) => !provisorio.length || Math.abs(s.takenAt - provisorio[0].takenAt) >= SEG_DIA
     );
 
     const { perfis, resumo } = analisar([...salvosAnteriores, ...provisorio], AppState.historico);
@@ -109,6 +129,9 @@ const carregarArquivos = async (fileList, tipo) => {
     try {
         const jsons = await ParserService.lerArquivosAsync(fileList);
         AppState.carregadoDeArquivo = true;
+        AppState.dataManual = null;
+        const mtime = ParserService.dataDeModificacao(fileList);
+        if (mtime) AppState.mtimeArquivos = Math.max(AppState.mtimeArquivos ?? 0, mtime);
         if (tipo === 'followers') {
             AppState.followers = ParserService.extrairSeguidores(...jsons);
             UIService.atualizarStatusUpload(
@@ -121,20 +144,33 @@ const carregarArquivos = async (fileList, tipo) => {
             UIService.atualizarStatusUpload(dom.statusFollowing, AppState.following.size);
         }
         dom.btnSalvarSnapshot.disabled = !temDadosCarregados();
-        atualizarRotuloSnapshot();
+        atualizarCampoData();
         reanalisar();
     } catch (erro) {
         UIService.toast(erro.message, 'erro');
     }
 };
 
-/** Mostra a data deduzida do export para o usuário conferir antes de salvar. */
-const atualizarRotuloSnapshot = () => {
+const ROTULO_ORIGEM = {
+    arquivo: 'detectada da data do arquivo',
+    conteudo: 'estimada pelo conteúdo — confira',
+    manual: 'definida por você'
+};
+
+/** Mostra a data que será gravada, para o usuário conferir e corrigir. */
+const atualizarCampoData = () => {
     if (!temDadosCarregados()) {
+        dom.dataSnapshot.disabled = true;
+        dom.dataSnapshot.value = '';
+        dom.origemData.textContent = 'carregue os arquivos';
         dom.btnSalvarSnapshot.textContent = 'Salvar como snapshot';
         return;
     }
-    const { takenAt } = criarSnapshot(AppState.followers, AppState.following);
+    const { takenAt, origem } = dataDoExport();
+    dom.dataSnapshot.disabled = false;
+    dom.dataSnapshot.value = paraInputDate(takenAt);
+    dom.dataSnapshot.max = paraInputDate(Math.floor(Date.now() / 1000));
+    dom.origemData.textContent = ROTULO_ORIGEM[origem];
     dom.btnSalvarSnapshot.textContent = `Salvar snapshot de ${formatarData(takenAt)}`;
 };
 
@@ -142,14 +178,34 @@ const salvarSnapshot = async () => {
     if (!temDadosCarregados()) return;
     dom.btnSalvarSnapshot.disabled = true;
     try {
-        const snapshot = criarSnapshot(AppState.followers, AppState.following);
-        const r = await StorageService.salvarSnapshot(snapshot);
+        const { takenAt } = dataDoExport();
+        const snapshot = criarSnapshot(AppState.followers, AppState.following, takenAt);
+
+        let r = await StorageService.salvarSnapshot(snapshot);
+
+        // Já existe snapshot nesse dia. Substituir apaga a evidência do
+        // intervalo, então a decisão é do usuário, nunca automática.
+        if (r.conflito) {
+            const dia = formatarData(r.existente);
+            const confirmado = confirm(
+                `Já existe um snapshot de ${dia}.\n\n` +
+                'Substituir apaga o anterior e você perde a comparação daquele intervalo. ' +
+                'Se este export é de outra data, cancele e corrija a data antes de salvar.\n\n' +
+                'Substituir mesmo assim?'
+            );
+            if (!confirmado) {
+                UIService.toast('Nada foi alterado. Ajuste a data e tente de novo.', 'info');
+                return;
+            }
+            r = await StorageService.salvarSnapshot(snapshot, { substituir: true });
+        }
+
         AppState.snapshots = await StorageService.carregarSnapshots();
         AppState.carregadoDeArquivo = false;
         UIService.toast(
             r.substituido
-                ? 'Snapshot de hoje atualizado.'
-                : `Snapshot salvo. Total: ${r.total}.`,
+                ? `Snapshot de ${formatarData(takenAt)} atualizado.`
+                : `Snapshot de ${formatarData(takenAt)} salvo. Total: ${r.total}.`,
             'ok'
         );
         reanalisar();
@@ -159,6 +215,12 @@ const salvarSnapshot = async () => {
         dom.btnSalvarSnapshot.disabled = !temDadosCarregados();
     }
 };
+
+dom.dataSnapshot?.addEventListener('change', () => {
+    const valor = dom.dataSnapshot.value;
+    AppState.dataManual = valor ? deInputDate(valor) : null;
+    atualizarCampoData();
+});
 
 // -------------------------------------------------------------- listeners
 
@@ -255,7 +317,7 @@ const inicializar = async () => {
         UIService.atualizarStatusUpload(dom.statusFollowers, AppState.followers.size, 'Do snapshot');
         UIService.atualizarStatusUpload(dom.statusFollowing, AppState.following.size, 'Do snapshot');
         dom.btnSalvarSnapshot.disabled = false;
-        atualizarRotuloSnapshot();
+        atualizarCampoData();
     } else {
         dom.statusFollowers.textContent = 'Aguardando arquivo…';
         dom.statusFollowing.textContent = 'Aguardando arquivo…';
