@@ -1,13 +1,14 @@
 import { StorageService } from './storage.js';
 import { ParserService } from './parser.js';
 import { dom, UIService, ABAS } from './ui.js';
-import { analisar, criarSnapshot } from './analysis.js';
+import { analisar, criarSnapshot, formatarData } from './analysis.js';
 
 const AppState = {
     followers: new Map(),   // username -> quando ELE te seguiu
     following: new Map(),   // username -> quando VOCÊ seguiu
     snapshots: [],
     historico: new Set(),
+    carregadoDeArquivo: false,
     perfis: [],
     resumo: null,
     aba: 'RANKING',
@@ -26,10 +27,13 @@ const temDadosCarregados = () => AppState.followers.size > 0 && AppState.followi
 // -------------------------------------------------------------- análise e render
 
 const reanalisar = () => {
-    // Inclui o estado carregado agora como snapshot provisório (ainda não salvo).
-    const provisorio = temDadosCarregados()
-        ? [criarSnapshot(AppState.followers, AppState.following)]
-        : [];
+    // Só entra como snapshot provisório o que o usuário acabou de carregar de
+    // arquivo. Quando os dados vêm de um snapshot já salvo, incluí-los de novo
+    // duplicaria a mesma leitura e podia derrubar um snapshot real da análise.
+    const provisorio =
+        AppState.carregadoDeArquivo && temDadosCarregados()
+            ? [criarSnapshot(AppState.followers, AppState.following)]
+            : [];
     const salvosAnteriores = AppState.snapshots.filter(
         (s) => !provisorio.length || Math.abs(s.takenAt - provisorio[0].takenAt) >= 86400
     );
@@ -104,6 +108,7 @@ const carregarArquivos = async (fileList, tipo) => {
     if (!fileList?.length) return;
     try {
         const jsons = await ParserService.lerArquivosAsync(fileList);
+        AppState.carregadoDeArquivo = true;
         if (tipo === 'followers') {
             AppState.followers = ParserService.extrairSeguidores(...jsons);
             UIService.atualizarStatusUpload(
@@ -116,10 +121,21 @@ const carregarArquivos = async (fileList, tipo) => {
             UIService.atualizarStatusUpload(dom.statusFollowing, AppState.following.size);
         }
         dom.btnSalvarSnapshot.disabled = !temDadosCarregados();
+        atualizarRotuloSnapshot();
         reanalisar();
     } catch (erro) {
         UIService.toast(erro.message, 'erro');
     }
+};
+
+/** Mostra a data deduzida do export para o usuário conferir antes de salvar. */
+const atualizarRotuloSnapshot = () => {
+    if (!temDadosCarregados()) {
+        dom.btnSalvarSnapshot.textContent = 'Salvar como snapshot';
+        return;
+    }
+    const { takenAt } = criarSnapshot(AppState.followers, AppState.following);
+    dom.btnSalvarSnapshot.textContent = `Salvar snapshot de ${formatarData(takenAt)}`;
 };
 
 const salvarSnapshot = async () => {
@@ -129,6 +145,7 @@ const salvarSnapshot = async () => {
         const snapshot = criarSnapshot(AppState.followers, AppState.following);
         const r = await StorageService.salvarSnapshot(snapshot);
         AppState.snapshots = await StorageService.carregarSnapshots();
+        AppState.carregadoDeArquivo = false;
         UIService.toast(
             r.substituido
                 ? 'Snapshot de hoje atualizado.'
@@ -238,6 +255,7 @@ const inicializar = async () => {
         UIService.atualizarStatusUpload(dom.statusFollowers, AppState.followers.size, 'Do snapshot');
         UIService.atualizarStatusUpload(dom.statusFollowing, AppState.following.size, 'Do snapshot');
         dom.btnSalvarSnapshot.disabled = false;
+        atualizarRotuloSnapshot();
     } else {
         dom.statusFollowers.textContent = 'Aguardando arquivo…';
         dom.statusFollowing.textContent = 'Aguardando arquivo…';

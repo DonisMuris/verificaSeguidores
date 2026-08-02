@@ -34,9 +34,32 @@ const DIA = 86400;
 /** Diferença máxima para considerar que houve troca recíproca no mesmo ato. */
 const JANELA_TROCA_INSTANTANEA = 10;
 
-/** Cria um snapshot serializável a partir dos Maps do parser. */
-export const criarSnapshot = (followers, following, takenAt = Math.floor(Date.now() / 1000)) => ({
-    takenAt,
+/**
+ * Deduz a data do export a partir do próprio conteúdo: o follow mais recente
+ * registrado é um piso confiável para quando a Meta gerou o arquivo.
+ *
+ * Sem isto, o snapshot era datado no clique em "Salvar". Quem carregasse um
+ * export antigo e um recente no mesmo dia teria os dois datados de hoje — e,
+ * como snapshots do mesmo dia se substituem, perderia o primeiro e nunca
+ * chegaria ao modo prova.
+ */
+export const deduzirDataDoExport = (followers, following) => {
+    const agora = Math.floor(Date.now() / 1000);
+    let maximo = 0;
+    for (const mapa of [followers, following]) {
+        for (const ts of mapa.values()) {
+            if (Number.isFinite(ts) && ts > maximo && ts <= agora) maximo = ts;
+        }
+    }
+    return maximo || agora;
+};
+
+/**
+ * Cria um snapshot serializável a partir dos Maps do parser.
+ * Sem `takenAt` explícito, a data vem do conteúdo do export, não do relógio.
+ */
+export const criarSnapshot = (followers, following, takenAt) => ({
+    takenAt: Number.isFinite(takenAt) ? takenAt : deduzirDataDoExport(followers, following),
     followers: Object.fromEntries(followers),
     following: Object.fromEntries(following)
 });
