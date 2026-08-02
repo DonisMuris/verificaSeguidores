@@ -103,24 +103,29 @@
         .btn-triagem:hover { background: #1e293b; }
         .btn-triagem:disabled { opacity: .4; cursor: not-allowed; }
 
-        .triagem { position: absolute; inset: 0; min-height: 100vh; background: rgba(15,23,42,.75); display: flex; align-items: flex-start; justify-content: center; padding: 40px 16px; z-index: 100; }
-        .triagem-painel { background: #fff; border-radius: 14px; width: 100%; max-width: 520px; padding: 22px 26px 18px; }
+        /* fixed, não absolute: o painel precisa acompanhar a JANELA. Com absolute
+           ele ancorava no topo do documento e, com o body travado sem rolagem,
+           ficava inalcançável se a página estivesse rolada. */
+        .triagem { position: fixed; inset: 0; background: rgba(15,23,42,.75); display: flex; align-items: flex-start; justify-content: center; padding: 20px 16px; z-index: 100; overflow-y: auto; overscroll-behavior: contain; }
+        /* margin auto centraliza quando cabe e permite rolar quando não cabe —
+           align-items:center cortaria o topo em telas baixas. */
+        .triagem-painel { background: #fff; border-radius: 14px; width: 100%; max-width: 520px; padding: 20px 24px 16px; margin: auto; }
         .triagem-topo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .triagem-progresso { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: .5px; }
         .triagem-sair { background: none; border: 0; color: #94a3b8; font-size: 12px; cursor: pointer; font-weight: 600; }
         .triagem-sair:hover { color: #475569; }
-        .triagem-barra { height: 4px; background: #f1f5f9; border-radius: 2px; overflow: hidden; margin-bottom: 22px; }
+        .triagem-barra { height: 4px; background: #f1f5f9; border-radius: 2px; overflow: hidden; margin-bottom: 16px; }
         .triagem-barra-fill { height: 100%; background: #0ea5e9; transition: width .2s; }
-        .triagem-corpo { text-align: center; margin-bottom: 22px; }
-        .triagem-user { font-size: 24px; font-weight: 700; color: #0f172a; margin-bottom: 10px; word-break: break-all; }
+        .triagem-corpo { text-align: center; margin-bottom: 16px; }
+        .triagem-user { font-size: 22px; font-weight: 700; color: #0f172a; margin-bottom: 10px; word-break: break-all; }
         .triagem-badge { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; padding: 4px 12px; border-radius: 20px; }
         .triagem-badge.risco-alto { background: #fee2e2; color: #b91c1c; }
         .triagem-badge.risco-medio { background: #fef9c3; color: #a16207; }
         .triagem-badge.risco-baixo { background: #f1f5f9; color: #64748b; }
-        .triagem-score { font-size: 34px; font-weight: 700; color: #0f172a; margin: 14px 0 4px; }
+        .triagem-score { font-size: 28px; font-weight: 700; color: #0f172a; margin: 10px 0 2px; }
         .triagem-meta { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 10px; }
         .triagem-meta span { background: #f8fafc; border: 1px solid #f1f5f9; color: #64748b; font-size: 11.5px; padding: 3px 9px; border-radius: 4px; }
-        .triagem-motivos { list-style: none; margin-top: 14px; text-align: left; font-size: 12px; color: #64748b; line-height: 1.6; background: #f8fafc; padding: 12px 14px; border-radius: 8px; }
+        .triagem-motivos { list-style: none; margin-top: 10px; text-align: left; font-size: 12px; color: #64748b; line-height: 1.6; background: #f8fafc; padding: 12px 14px; border-radius: 8px; }
         .triagem-motivos li::before { content: "— "; }
         .triagem-acoes { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
         .triagem-btn { display: flex; flex-direction: column; align-items: center; gap: 5px; background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; padding: 12px 8px; font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; transition: .15s; }

@@ -173,7 +173,7 @@ export const TriagemService = {
 
         if (p.motivos?.length) {
             const ul = el('ul', 'triagem-motivos');
-            for (const m of p.motivos) ul.append(el('li', null, m));
+            for (const m of p.motivos.slice(0, 3)) ul.append(el('li', null, m));
             corpo.append(ul);
         }
 
@@ -203,6 +203,9 @@ export const TriagemService = {
 
         painel.append(topo, barra, corpo, acoes, rodape);
         this.raiz.append(painel);
+        // Cada perfil recomeça do topo: sem isso, um perfil com muitos motivos
+        // deixaria o seguinte aberto no meio.
+        this.raiz.scrollTop = 0;
     },
 
     faixaRisco(score) {
