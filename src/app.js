@@ -327,6 +327,7 @@ dom.btnResetHistory.addEventListener('click', async () => {
 // -------------------------------------------------------------- inicialização
 
 const inicializar = async () => {
+    UIService.montarIconesFixos();
     TemaService.iniciar(dom.btnTema);
 
     const [historico, snapshots] = await Promise.all([

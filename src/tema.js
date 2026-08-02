@@ -1,3 +1,5 @@
+import { icone } from './icones.js';
+
 /**
  * Alternância de tema.
  *
@@ -46,11 +48,12 @@ export const TemaService = {
         this.aplicar(!this.estaEscuro());
     },
 
-    /** O rótulo anuncia o destino da ação, não o estado atual. */
+    /** O ícone anuncia o destino da ação, não o estado atual. */
     sincronizarBotao() {
         if (!this.botao) return;
         const escuro = this.estaEscuro();
-        this.botao.textContent = escuro ? 'Modo claro' : 'Modo escuro';
+        this.botao.replaceChildren(icone(escuro ? 'sol' : 'lua', 16));
+        this.botao.title = escuro ? 'Voltar ao modo claro' : 'Ativar modo escuro';
         this.botao.setAttribute('aria-pressed', String(escuro));
     },
 

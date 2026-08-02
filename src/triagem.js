@@ -1,4 +1,5 @@
 import { el } from './dom-utils.js';
+import { icone, iniciais } from './icones.js';
 
 /**
  * Modo triagem: um perfil por vez, com teclado.
@@ -119,8 +120,10 @@ export const TriagemService = {
 
         if (finalizado || !this.perfilAtual()) {
             const marcados = this.decisoes.filter((d) => d.acao === 'unfollow').length;
+            const marca = el('div', 'triagem-fim-icone');
+            marca.append(icone('checkCirculo', 40));
             painel.append(
-                el('div', 'triagem-fim-icone', '✓'),
+                marca,
                 el('h2', 'triagem-fim-titulo', 'Fila concluída'),
                 el(
                     'p',
@@ -146,7 +149,10 @@ export const TriagemService = {
         // Cabeçalho: progresso e saída
         const topo = el('div', 'triagem-topo');
         topo.append(el('span', 'triagem-progresso', `${this.indice + 1} de ${this.lista.length}`));
-        const btnSair = el('button', 'triagem-sair', 'Sair (Esc)');
+        const btnSair = el('button', 'triagem-sair');
+        btnSair.title = 'Sair (Esc)';
+        btnSair.setAttribute('aria-label', 'Sair da triagem');
+        btnSair.append(icone('fechar', 15));
         btnSair.addEventListener('click', () => this.fechar());
         topo.append(btnSair);
 
@@ -155,21 +161,27 @@ export const TriagemService = {
         preenchida.style.width = `${((this.indice + 1) / this.lista.length) * 100}%`;
         barra.append(preenchida);
 
-        // Corpo: o perfil
+        // Corpo: avatar + identidade, depois os detalhes
+        const nivel = this.faixaRisco(p.score);
         const corpo = el('div', 'triagem-corpo');
-        corpo.append(el('div', 'triagem-user', `@${p.user}`));
 
-        const badge = el('span', `triagem-badge risco-${this.faixaRisco(p.score)}`,
-            this.rotulos[p.veredito] ?? p.veredito);
-        corpo.append(badge);
+        const cabecalho = el('div', 'triagem-cabecalho');
+        const avatar = el('div', 'triagem-avatar', iniciais(p.user));
+        avatar.dataset.nivel = nivel;
 
-        if (p.score > 0) {
-            corpo.append(el('div', 'triagem-score', `Risco ${p.score}`));
-        }
+        const identidade = el('div');
+        identidade.append(el('div', 'triagem-user', `@${p.user}`));
+        const selos = el('div', 'triagem-selos');
+        selos.append(el('span', `triagem-badge risco-${nivel}`, this.rotulos[p.veredito] ?? p.veredito));
+        if (p.score > 0) selos.append(el('span', 'triagem-score', `risco ${p.score}`));
+        identidade.append(selos);
+
+        cabecalho.append(avatar, identidade);
+        corpo.append(cabecalho);
 
         const meta = el('div', 'triagem-meta');
         for (const texto of this.linhasMeta(p)) meta.append(el('span', null, texto));
-        corpo.append(meta);
+        if (meta.childElementCount) corpo.append(meta);
 
         if (p.motivos?.length) {
             const ul = el('ul', 'triagem-motivos');
@@ -180,26 +192,27 @@ export const TriagemService = {
         // Ações
         const acoes = el('div', 'triagem-acoes');
 
-        const btnAbrir = el('button', 'triagem-btn triagem-btn-abrir', 'Abrir perfil');
-        btnAbrir.append(el('kbd', null, 'O'));
+        const btnAbrir = el('button', 'triagem-btn triagem-btn-abrir');
+        btnAbrir.append(icone('abrir', 17), el('span', null, 'Abrir'), el('kbd', null, 'O'));
         btnAbrir.addEventListener('click', () => this.abrirPerfil());
 
-        const btnManter = el('button', 'triagem-btn', 'Manter');
-        btnManter.append(el('kbd', null, '→'));
+        const btnManter = el('button', 'triagem-btn');
+        btnManter.append(icone('check', 17), el('span', null, 'Manter'), el('kbd', null, '→'));
         btnManter.addEventListener('click', () => this.avancar('manter'));
 
-        const btnUnfollow = el('button', 'triagem-btn triagem-btn-unfollow', 'Parei de seguir');
-        btnUnfollow.append(el('kbd', null, 'Espaço'));
+        const btnUnfollow = el('button', 'triagem-btn triagem-btn-unfollow');
+        btnUnfollow.append(icone('remover', 17), el('span', null, 'Remover'), el('kbd', null, 'Espaço'));
         btnUnfollow.addEventListener('click', () => this.avancar('unfollow'));
 
         acoes.append(btnAbrir, btnManter, btnUnfollow);
 
         const rodape = el('div', 'triagem-rodape');
-        const btnVoltar = el('button', 'triagem-voltar', '← Voltar um');
+        const btnVoltar = el('button', 'triagem-voltar');
+        btnVoltar.append(icone('voltar', 14), el('span', null, 'Voltar'));
         btnVoltar.disabled = this.indice === 0;
         btnVoltar.addEventListener('click', () => this.voltar());
         rodape.append(btnVoltar);
-        rodape.append(el('span', 'triagem-dica', 'O abre na mesma aba · → mantém · Espaço marca · ← volta'));
+        rodape.append(el('span', 'triagem-dica', 'O abre · → mantém · Espaço remove · ← volta'));
 
         painel.append(topo, barra, corpo, acoes, rodape);
         this.raiz.append(painel);

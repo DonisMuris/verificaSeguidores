@@ -16,33 +16,61 @@
         })();
     </script>
     <style>
+        /* ================================================================
+           Tokens. O tema escuro troca só estes valores; nenhuma regra abaixo
+           sabe que ele existe.
+           ================================================================ */
         :root {
-            --tinta:    #16161a;
-            --tinta-2:  #5c5c66;
-            --tinta-3:  #70707a;   /* 4.9:1 sobre branco — passa no WCAG AA */
-            --linha:    #e9e9ec;
-            --linha-2:  #f4f4f6;
-            --risco:    #b4231e;
-            --papel:    #fff;
-            --hover:    #fafafb;   /* realce de linha ao passar o mouse */
-            --kbd-alt:  rgba(255,255,255,.55);  /* tecla dentro do botão sólido */
-            --veu:      rgba(255,255,255,.97);  /* fundo do overlay de triagem */
+            --tinta:     #16161a;
+            --tinta-2:   #5c5c66;
+            --tinta-3:   #70707a;
+            --linha:     #e6e6ea;
+            --papel:     #fff;
+            --superf-1:  #f7f7f9;   /* cartão sobre o papel */
+            --superf-2:  #fff;      /* cartão elevado, com borda */
+            --hover:     #f2f2f5;
+
+            --acento:      #2f6df6;
+            --acento-bg:   #eaf0fe;
+            --acento-tx:   #1b4fc4;
+            --risco:       #c02a22;
+            --risco-bg:    #fdecea;
+            --risco-tx:    #a32019;
+            --alerta:      #b06a06;
+            --alerta-bg:   #fdf3e2;
+            --alerta-tx:   #8a5205;
+            --ok-bg:       #e8f5ed;
+            --ok-tx:       #17693c;
+
+            --r-sm: 8px;
+            --r-md: 10px;
+            --r-lg: 14px;
+            --sombra: 0 1px 2px rgba(16,16,24,.04);
             color-scheme: light;
         }
 
-        /* Modo escuro. Só troca os tokens — nenhuma regra abaixo sabe que ele existe.
-           Os tons foram medidos: todos passam em WCAG AA sobre o fundo. */
         [data-tema="escuro"] {
-            --tinta:    #ececee;   /* 15.7:1 */
-            --tinta-2:  #a8a8b4;   /*  7.9:1 */
-            --tinta-3:  #8b8b96;   /*  5.5:1 */
-            --linha:    #2c2c34;
-            --linha-2:  #212128;
-            --risco:    #f2837c;   /*  7.3:1 */
-            --papel:    #131317;
-            --hover:    #1a1a20;
-            --kbd-alt:  rgba(0,0,0,.5);
-            --veu:      rgba(19,19,23,.97);
+            --tinta:     #ececed;
+            --tinta-2:   #a6a6b2;
+            --tinta-3:   #8b8b96;
+            --linha:     #2a2a32;
+            --papel:     #121216;
+            --superf-1:  #191920;
+            --superf-2:  #1a1a21;
+            --hover:     #21212a;
+
+            --acento:      #6a9bff;
+            --acento-bg:   #1b2740;
+            --acento-tx:   #9dbcff;
+            --risco:       #f0817a;
+            --risco-bg:    #35201f;
+            --risco-tx:    #f2938c;
+            --alerta:      #dfa441;
+            --alerta-bg:   #322614;
+            --alerta-tx:   #e8b665;
+            --ok-bg:       #16301f;
+            --ok-tx:       #79c99a;
+            --sombra: none;
             color-scheme: dark;
         }
 
@@ -53,264 +81,365 @@
             color: var(--tinta);
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             font-size: 14px;
-            line-height: 1.6;
+            line-height: 1.55;
             -webkit-font-smoothing: antialiased;
-            padding: 0 24px 120px;
+            padding: 0 20px 100px;
         }
-        .container { max-width: 760px; margin: 0 auto; }
+        .container { max-width: 820px; margin: 0 auto; }
 
         button, select, input { font-family: inherit; font-size: inherit; color: inherit; }
         button { cursor: pointer; background: none; border: 0; }
+        .icone { flex-shrink: 0; }
+        :focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; border-radius: 4px; }
 
-        /* ---------------------------------------------------- cabeçalho */
+        /* ---------------------------------------------------- barra do topo */
 
-        .main-card { padding-top: 56px; }
-        .cabecalho-linha { display: flex; justify-content: space-between; align-items: baseline; gap: 20px; }
-        .header h1 { font-size: 19px; font-weight: 500; letter-spacing: -.01em; }
-        .btn-tema { font-size: 12.5px; color: var(--tinta-3); transition: color .12s; white-space: nowrap; }
-        .btn-tema:hover { color: var(--tinta); }
-        .header p {
-            font-size: 13.5px; color: var(--tinta-2); margin: 6px 0 36px;
-            max-width: 52ch;
+        .barra-topo {
+            position: sticky; top: 0; z-index: 40;
+            display: flex; align-items: center; justify-content: space-between; gap: 14px;
+            padding: 12px 0; margin-bottom: 20px;
+            background: var(--papel); border-bottom: 1px solid var(--linha);
         }
+        .marca { display: flex; align-items: center; gap: 10px; }
+        .marca-icone {
+            width: 30px; height: 30px; border-radius: var(--r-sm);
+            background: var(--acento); color: #fff;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .marca-nome { font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
+        .barra-topo-acoes { display: flex; align-items: center; gap: 8px; }
 
-        .upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--linha); border-block: 1px solid var(--linha); margin-bottom: 28px; }
+        .selo {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 12px; font-weight: 500; padding: 5px 11px; border-radius: 20px;
+        }
+        .selo-alerta { background: var(--alerta-bg); color: var(--alerta-tx); }
+        .selo-ok { background: var(--ok-bg); color: var(--ok-tx); }
+
+        .btn-icone {
+            width: 32px; height: 32px; border-radius: var(--r-sm);
+            border: 1px solid var(--linha); color: var(--tinta-2);
+            display: inline-flex; align-items: center; justify-content: center;
+            transition: background .12s, color .12s, border-color .12s;
+        }
+        .btn-icone:hover { background: var(--hover); color: var(--tinta); }
+        .btn-icone.perigo:hover { background: var(--risco-bg); color: var(--risco-tx); border-color: var(--risco-bg); }
+        .btn-icone.ok { background: var(--ok-bg); color: var(--ok-tx); border-color: var(--ok-bg); }
+
+        /* ---------------------------------------------------- entrada de arquivos */
+
+        .header h1 { font-size: 21px; font-weight: 600; letter-spacing: -.02em; }
+        .header p { font-size: 13.5px; color: var(--tinta-2); margin: 6px 0 20px; max-width: 56ch; }
+
+        .upload-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; margin-bottom: 12px; }
         .file-label {
-            background: var(--papel); padding: 18px 20px; cursor: pointer;
-            display: flex; flex-direction: column; gap: 2px; transition: background .12s;
+            display: flex; flex-direction: column; gap: 2px; cursor: pointer;
+            background: var(--superf-1); border: 1px solid transparent; border-radius: var(--r-md);
+            padding: 14px 16px; transition: border-color .12s, background .12s;
         }
-        .file-label:hover { background: var(--linha-2); }
+        .file-label:hover { border-color: var(--linha); background: var(--hover); }
         .file-label strong { font-size: 13.5px; font-weight: 500; }
         .file-label small { font-size: 12px; color: var(--tinta-3); }
-        .file-label .status { font-size: 12px; color: var(--tinta-3); margin-top: 6px; }
-        .file-label .status.carregado { color: var(--tinta); }
+        .file-label .status { font-size: 12px; color: var(--tinta-3); margin-top: 5px; }
+        .file-label .status.carregado { color: var(--ok-tx); font-weight: 500; }
         .file-label input { display: none; }
 
-        .linha-salvar { display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 44px; }
-        .linha-salvar label { display: flex; flex-direction: column; gap: 5px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--tinta-3); }
-        .linha-salvar input[type=date] {
-            background: none; border: 0; border-bottom: 1px solid var(--linha);
-            padding: 6px 0; font-size: 14px; color: var(--tinta); width: 150px;
+        .linha-salvar {
+            display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap;
+            background: var(--superf-1); border-radius: var(--r-md); padding: 14px 16px; margin-bottom: 24px;
         }
+        .linha-salvar label { display: flex; flex-direction: column; gap: 4px; font-size: 11px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; color: var(--tinta-3); }
+        .linha-salvar input[type=date] {
+            background: var(--papel); border: 1px solid var(--linha); border-radius: var(--r-sm);
+            padding: 8px 10px; font-size: 13.5px; color: var(--tinta);
+        }
+        .linha-salvar input[type=date]:focus { outline: 0; border-color: var(--acento); }
         [data-tema="escuro"] input[type=date]::-webkit-calendar-picker-indicator { filter: invert(1) opacity(.6); }
-        .linha-salvar input[type=date]:focus { outline: 0; border-bottom-color: var(--tinta); }
-        .linha-salvar input[type=date]:disabled { color: var(--tinta-3); }
-        .linha-salvar small { font-size: 11px; text-transform: none; letter-spacing: 0; color: var(--tinta-3); }
+        .linha-salvar small { font-size: 11px; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--tinta-3); }
 
         .btn-primario {
-            background: var(--tinta); color: var(--papel); padding: 11px 22px;
-            font-size: 13.5px; font-weight: 500; border-radius: 3px; transition: opacity .12s;
+            display: inline-flex; align-items: center; gap: 8px;
+            background: var(--acento); color: #fff; padding: 10px 18px;
+            font-size: 13.5px; font-weight: 500; border-radius: var(--r-sm);
+            transition: filter .12s; flex: 1; justify-content: center; min-width: 200px;
         }
-        .btn-primario:hover:not(:disabled) { opacity: .82; }
-        .btn-primario:disabled { background: none; color: var(--tinta-3); border: 1px solid var(--linha); cursor: not-allowed; }
+        .btn-primario:hover:not(:disabled) { filter: brightness(1.08); }
+        .btn-primario:disabled { background: var(--superf-1); color: var(--tinta-3); border: 1px solid var(--linha); cursor: not-allowed; }
 
-        /* ---------------------------------------------------- números */
+        /* ---------------------------------------------------- cartões de métrica */
 
-        .stats-bar { display: flex; gap: 44px; flex-wrap: wrap; padding-bottom: 32px; }
-        .stat-box .number { font-size: 27px; font-weight: 400; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
-        .stat-box .label { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--tinta-3); margin-top: 1px; }
+        .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 14px; }
+        .stat-box { background: var(--superf-1); border-radius: var(--r-md); padding: 14px 16px; }
+        .stat-box .label { font-size: 12px; color: var(--tinta-2); margin-bottom: 5px; }
+        .stat-box .valor { display: flex; align-items: baseline; gap: 8px; }
+        .stat-box .number { font-size: 25px; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+        .stat-box .nota { font-size: 12px; color: var(--tinta-3); }
+        .stat-box .nota.perigo { color: var(--risco-tx); }
+        .trilho { height: 4px; border-radius: 2px; background: var(--linha); margin-top: 10px; overflow: hidden; }
+        .trilho > i { display: block; height: 100%; border-radius: 2px; background: var(--acento); }
+        .trilho > i.perigo { background: var(--risco); }
 
-        /* ---------------------------------------------------- avisos */
+        /* ---------------------------------------------------- banner */
 
-        .aviso { font-size: 13px; line-height: 1.65; color: var(--tinta-2); padding: 0 0 0 16px; border-left: 2px solid var(--linha); margin-bottom: 32px; max-width: 62ch; }
-        .aviso strong { color: var(--tinta); font-weight: 500; }
-        .aviso-ok { border-left-color: var(--tinta); }
+        .aviso {
+            display: flex; gap: 12px; align-items: flex-start;
+            border-radius: var(--r-md); padding: 14px 16px; margin-bottom: 20px;
+            background: var(--alerta-bg); color: var(--alerta-tx);
+        }
+        .aviso-ok { background: var(--ok-bg); color: var(--ok-tx); }
+        .aviso .icone { margin-top: 1px; }
+        .aviso strong { display: block; font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+        .aviso span { font-size: 12.5px; line-height: 1.6; opacity: .92; }
 
-        .timeline-title { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--tinta-3); margin-bottom: 10px; }
-        .timeline { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 32px; font-size: 12.5px; color: var(--tinta-3); }
-        .timeline-item.atual { color: var(--tinta); }
+        .timeline-title { font-size: 11px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; color: var(--tinta-3); margin-bottom: 8px; }
+        .timeline { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 22px; }
+        .timeline-item {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 12px; color: var(--tinta-2);
+            background: var(--superf-1); border-radius: 20px; padding: 4px 11px;
+        }
+        .timeline-item.atual { background: var(--acento-bg); color: var(--acento-tx); font-weight: 500; }
 
-        /* ---------------------------------------------------- abas */
+        /* ---------------------------------------------------- controle segmentado */
 
-        .abas { display: flex; gap: 26px; flex-wrap: wrap; border-bottom: 1px solid var(--linha); margin-bottom: 4px; }
+        .abas {
+            display: inline-flex; gap: 2px; padding: 3px; flex-wrap: wrap;
+            background: var(--superf-1); border-radius: var(--r-md); margin-bottom: 14px; max-width: 100%;
+        }
         .aba {
-            display: flex; align-items: baseline; gap: 7px; padding: 0 0 12px;
-            font-size: 13.5px; color: var(--tinta-3); border-bottom: 1px solid transparent;
-            margin-bottom: -1px; transition: color .12s;
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 7px 13px; border-radius: var(--r-sm);
+            font-size: 13px; color: var(--tinta-2); white-space: nowrap;
+            transition: background .12s, color .12s;
         }
-        .aba:hover { color: var(--tinta-2); }
-        .aba.ativa { color: var(--tinta); border-bottom-color: var(--tinta); }
-        .aba-contagem { font-size: 11.5px; font-variant-numeric: tabular-nums; color: var(--tinta-3); }
+        .aba:hover { color: var(--tinta); }
+        .aba.ativa { background: var(--papel); color: var(--tinta); font-weight: 500; box-shadow: var(--sombra); }
+        .aba-contagem { font-size: 11.5px; color: var(--tinta-3); font-variant-numeric: tabular-nums; }
         .aba.ativa .aba-contagem { color: var(--tinta-2); }
 
-        /* ---------------------------------------------------- barra de ferramentas */
+        /* ---------------------------------------------------- painel da lista */
 
-        .toolbar { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; padding: 18px 0 8px; }
-        .search-input { flex: 1; min-width: 180px; background: none; border: 0; border-bottom: 1px solid var(--linha); padding: 7px 0; }
+        .toolbar {
+            display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+            border: 1px solid var(--linha); border-radius: var(--r-lg) var(--r-lg) 0 0;
+            border-bottom: 0; padding: 10px 14px; background: var(--superf-2);
+        }
+        .campo-busca { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 170px; color: var(--tinta-3); }
+        .search-input { flex: 1; min-width: 0; background: none; border: 0; padding: 4px 0; }
         .search-input::placeholder { color: var(--tinta-3); }
-        .search-input:focus { outline: 0; border-bottom-color: var(--tinta); }
-        select { background: none; border: 0; padding: 7px 0; color: var(--tinta-2); font-size: 13px; }
+        .search-input:focus { outline: 0; }
+        select { background: none; border: 0; color: var(--tinta-2); font-size: 12.5px; padding: 4px 0; }
         select:focus { outline: 0; color: var(--tinta); }
 
-        .btn-triagem { background: var(--tinta); color: var(--papel); padding: 8px 16px; font-size: 13px; font-weight: 500; border-radius: 3px; transition: opacity .12s; }
-        .btn-triagem:hover:not(:disabled) { opacity: .82; }
-        .btn-triagem:disabled { background: none; color: var(--tinta-3); cursor: not-allowed; }
-        .btn-acao { font-size: 12.5px; color: var(--tinta-2); transition: color .12s; }
-        .btn-acao:hover { color: var(--tinta); }
-        .btn-acao.ok { color: var(--tinta); }
-        .btn-reset-history { font-size: 12.5px; color: var(--tinta-3); }
-        .btn-reset-history:hover { color: var(--risco); }
+        .btn-triagem {
+            display: inline-flex; align-items: center; gap: 7px;
+            background: var(--acento); color: #fff; padding: 7px 14px;
+            font-size: 13px; font-weight: 500; border-radius: var(--r-sm); transition: filter .12s;
+        }
+        .btn-triagem:hover:not(:disabled) { filter: brightness(1.08); }
+        .btn-triagem:disabled { background: var(--superf-1); color: var(--tinta-3); cursor: not-allowed; }
 
         .list-section-title { display: none; }
 
-        /* ---------------------------------------------------- lista de perfis */
-
-        .users-grid { display: block; }
+        .users-grid {
+            display: block; border: 1px solid var(--linha);
+            border-radius: 0 0 var(--r-lg) var(--r-lg); background: var(--superf-2); overflow: hidden;
+        }
         .user-card {
-            display: grid; grid-template-columns: 1fr auto; align-items: baseline;
-            gap: 2px 20px; padding: 15px 0; border-bottom: 1px solid var(--linha-2);
+            display: flex; align-items: center; gap: 12px;
+            padding: 11px 14px; border-top: 1px solid var(--linha);
+            transition: background .12s;
         }
         .user-card:hover { background: var(--hover); }
 
-        .card-topo { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
-        .user-link { text-decoration: none; color: var(--tinta); font-size: 14.5px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .user-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+        .avatar {
+            width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12.5px; font-weight: 600; letter-spacing: .02em;
+            background: var(--superf-1); color: var(--tinta-2);
+        }
+        .avatar[data-nivel="alto"] { background: var(--risco-bg); color: var(--risco-tx); }
+        .avatar[data-nivel="medio"] { background: var(--alerta-bg); color: var(--alerta-tx); }
 
-        /* Cor só onde significa risco. O resto é texto. */
-        .badge { font-size: 12px; color: var(--tinta-3); white-space: nowrap; }
-        .badge-critico { color: var(--risco); }
-        .badge-alerta, .badge-atencao, .badge-neutro, .badge-ok { color: var(--tinta-3); }
+        .card-info { flex: 1; min-width: 0; }
+        .card-topo { display: flex; align-items: center; gap: 8px; min-width: 0; }
+        .user-link { text-decoration: none; color: var(--tinta); font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .user-link:hover { color: var(--acento); }
 
-        .card-meta { grid-column: 1; display: flex; flex-wrap: wrap; gap: 0 8px; font-size: 12.5px; color: var(--tinta-3); }
+        .badge { font-size: 10.5px; font-weight: 500; padding: 2px 9px; border-radius: 20px; white-space: nowrap; background: var(--superf-1); color: var(--tinta-2); }
+        .badge-critico { background: var(--risco-bg); color: var(--risco-tx); }
+        .badge-alerta, .badge-atencao { background: var(--alerta-bg); color: var(--alerta-tx); }
+        .badge-ok { background: var(--ok-bg); color: var(--ok-tx); }
+
+        .card-meta { display: flex; flex-wrap: wrap; gap: 0 7px; font-size: 12px; color: var(--tinta-3); margin-top: 1px; }
         .card-meta span:not(:last-child)::after { content: " ·"; }
-        .card-meta .score { order: -1; color: var(--tinta-2); font-variant-numeric: tabular-nums; }
         .card-motivos { display: none; }
 
-        /* Sempre visíveis. Esconder ação atrás de hover enxuga a tela e piora a
-           usabilidade — some com o affordance e quebra teclado e toque. */
-        .card-acoes { grid-row: 1 / 3; grid-column: 2; display: flex; gap: 16px; align-self: center; }
-        .card-acoes .btn-acao { color: var(--tinta-3); }
-        .card-acoes .btn-acao:hover { color: var(--tinta); }
-        .btn-resolver:hover { color: var(--risco); }
+        .medidor { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; width: 38px; }
+        .medidor-valor { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--tinta-2); }
+        .medidor-valor.perigo { color: var(--risco-tx); }
+        .medidor-trilho { width: 100%; height: 3px; border-radius: 2px; background: var(--linha); overflow: hidden; }
+        .medidor-trilho > i { display: block; height: 100%; background: var(--tinta-3); }
+        .medidor-trilho > i.perigo { background: var(--risco); }
+        .medidor-trilho > i.atencao { background: var(--alerta); }
 
-        .pagination-container { display: flex; justify-content: center; align-items: center; gap: 4px; margin-top: 40px; flex-wrap: wrap; }
-        .pagination-button { font-size: 13px; color: var(--tinta-3); padding: 6px 10px; font-variant-numeric: tabular-nums; transition: color .12s; }
-        .pagination-button:hover:not(:disabled) { color: var(--tinta); }
-        .pagination-button.active { color: var(--tinta); }
+        .card-acoes { display: flex; gap: 5px; flex-shrink: 0; }
+        .card-acoes .btn-icone { width: 30px; height: 30px; }
+
+        .pagination-container { display: flex; justify-content: center; align-items: center; gap: 4px; margin-top: 20px; flex-wrap: wrap; }
+        .pagination-button {
+            min-width: 32px; height: 32px; padding: 0 9px; border-radius: var(--r-sm);
+            font-size: 13px; color: var(--tinta-2); font-variant-numeric: tabular-nums;
+            display: inline-flex; align-items: center; justify-content: center; transition: background .12s;
+        }
+        .pagination-button:hover:not(:disabled) { background: var(--hover); color: var(--tinta); }
+        .pagination-button.active { background: var(--acento); color: #fff; font-weight: 500; }
         .pagination-button:disabled { opacity: .35; cursor: not-allowed; }
-        .reticencias { color: var(--tinta-3); }
-        .status-message { padding: 56px 0; color: var(--tinta-3); font-size: 13.5px; }
+        .reticencias { color: var(--tinta-3); padding: 0 2px; }
+        .status-message { padding: 52px 20px; text-align: center; color: var(--tinta-3); font-size: 13.5px; }
 
         /* ---------------------------------------------------- guia */
 
-        .guia { border-bottom: 1px solid var(--linha); margin-bottom: 32px; }
-        .guia > summary { padding: 16px 0; font-size: 13.5px; color: var(--tinta-2); cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+        .guia { background: var(--superf-1); border-radius: var(--r-md); margin-bottom: 20px; }
+        .guia > summary {
+            display: flex; align-items: center; gap: 10px; justify-content: space-between;
+            padding: 13px 16px; font-size: 13.5px; font-weight: 500; cursor: pointer; list-style: none;
+        }
         .guia > summary::-webkit-details-marker { display: none; }
-        .guia > summary::after { content: "+"; color: var(--tinta-3); }
-        .guia[open] > summary { color: var(--tinta); }
+        .guia > summary::after { content: "+"; color: var(--tinta-3); font-weight: 400; }
         .guia[open] > summary::after { content: "\2013"; }
-        .guia-corpo { padding: 4px 0 28px; font-size: 13px; line-height: 1.75; color: var(--tinta-2); max-width: 62ch; }
+        .guia-corpo { padding: 0 16px 20px; font-size: 13px; line-height: 1.7; color: var(--tinta-2); max-width: 64ch; }
         .guia-corpo p { margin-bottom: 10px; }
-        .guia-corpo strong { color: var(--tinta); font-weight: 500; }
+        .guia-corpo strong { color: var(--tinta); font-weight: 600; }
         .guia-corpo code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--tinta); }
-        .guia-corpo table { width: 100%; border-collapse: collapse; margin: 14px 0 18px; font-size: 12.5px; }
-        .guia-corpo th, .guia-corpo td { text-align: left; padding: 8px 12px 8px 0; border-bottom: 1px solid var(--linha-2); vertical-align: top; }
-        .guia-corpo th { font-weight: 400; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--tinta-3); }
-        .guia-corpo .destaque { border-left: 2px solid var(--linha); padding: 2px 0 2px 14px; margin: 16px 0; }
-        .guia-corpo .caminho { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; line-height: 2; color: var(--tinta); background: var(--linha-2); padding: 14px 16px; border-radius: 3px; margin: 12px 0; }
+        .guia-corpo table { width: 100%; border-collapse: collapse; margin: 12px 0 16px; font-size: 12.5px; }
+        .guia-corpo th, .guia-corpo td { text-align: left; padding: 7px 12px 7px 0; border-bottom: 1px solid var(--linha); vertical-align: top; }
+        .guia-corpo th { font-weight: 500; font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--tinta-3); }
+        .guia-corpo .destaque { background: var(--alerta-bg); color: var(--alerta-tx); border-radius: var(--r-sm); padding: 11px 14px; margin: 14px 0; }
+        .guia-corpo .caminho { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; line-height: 1.9; color: var(--tinta); background: var(--papel); border: 1px solid var(--linha); padding: 13px 15px; border-radius: var(--r-sm); margin: 10px 0; }
 
         /* ---------------------------------------------------- triagem */
 
         .triagem {
-            position: fixed; inset: 0; background: var(--veu);
+            position: fixed; inset: 0; z-index: 100;
+            background: rgba(16,16,24,.4); backdrop-filter: blur(3px);
             display: flex; align-items: flex-start; justify-content: center;
-            padding: 24px; z-index: 100; overflow-y: auto; overscroll-behavior: contain;
+            padding: 24px 16px; overflow-y: auto; overscroll-behavior: contain;
         }
-        .triagem-painel { width: 100%; max-width: 460px; margin: auto; }
+        [data-tema="escuro"] .triagem { background: rgba(0,0,0,.62); }
+        .triagem-painel {
+            width: 100%; max-width: 440px; margin: auto;
+            background: var(--papel); border: 1px solid var(--linha);
+            border-radius: var(--r-lg); padding: 18px 20px 16px;
+            box-shadow: 0 12px 32px rgba(16,16,24,.14);
+        }
 
-        .triagem-topo { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
-        .triagem-progresso { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--tinta-3); font-variant-numeric: tabular-nums; }
-        .triagem-sair { font-size: 12.5px; color: var(--tinta-3); }
-        .triagem-sair:hover { color: var(--tinta); }
-        .triagem-barra { height: 1px; background: var(--linha); margin-bottom: 56px; }
-        .triagem-barra-fill { height: 100%; background: var(--tinta); transition: width .18s; }
+        .triagem-topo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .triagem-progresso { font-size: 12px; color: var(--tinta-2); font-variant-numeric: tabular-nums; }
+        .triagem-sair { width: 28px; height: 28px; border-radius: var(--r-sm); border: 1px solid var(--linha); color: var(--tinta-2); display: inline-flex; align-items: center; justify-content: center; }
+        .triagem-sair:hover { background: var(--hover); color: var(--tinta); }
+        .triagem-barra { height: 3px; border-radius: 2px; background: var(--linha); margin-bottom: 22px; overflow: hidden; }
+        .triagem-barra-fill { height: 100%; background: var(--acento); transition: width .2s; }
 
-        .triagem-corpo { margin-bottom: 48px; }
-        .triagem-user { font-size: 28px; font-weight: 400; letter-spacing: -.02em; word-break: break-all; margin-bottom: 8px; }
-        .triagem-badge { font-size: 13px; color: var(--tinta-3); }
-        .triagem-badge.risco-alto { color: var(--risco); }
-        .triagem-score { display: none; }
-        .triagem-meta { display: flex; flex-wrap: wrap; gap: 0 8px; margin-top: 14px; font-size: 13px; color: var(--tinta-3); }
+        .triagem-corpo { margin-bottom: 18px; }
+        .triagem-cabecalho { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+        .triagem-avatar { width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 600; background: var(--superf-1); color: var(--tinta-2); }
+        .triagem-avatar[data-nivel="alto"] { background: var(--risco-bg); color: var(--risco-tx); }
+        .triagem-avatar[data-nivel="medio"] { background: var(--alerta-bg); color: var(--alerta-tx); }
+        .triagem-user { font-size: 19px; font-weight: 600; letter-spacing: -.01em; word-break: break-all; }
+        .triagem-selos { display: flex; align-items: center; gap: 7px; margin-top: 4px; flex-wrap: wrap; }
+        .triagem-badge { font-size: 11px; font-weight: 500; padding: 2px 9px; border-radius: 20px; background: var(--superf-1); color: var(--tinta-2); }
+        .triagem-badge.risco-alto { background: var(--risco-bg); color: var(--risco-tx); }
+        .triagem-badge.risco-medio { background: var(--alerta-bg); color: var(--alerta-tx); }
+        .triagem-score { font-size: 12px; color: var(--tinta-3); }
+        .triagem-meta { display: flex; flex-wrap: wrap; gap: 0 7px; font-size: 12.5px; color: var(--tinta-3); }
         .triagem-meta span:not(:last-child)::after { content: " ·"; }
-        .triagem-motivos { list-style: none; margin-top: 20px; font-size: 13px; color: var(--tinta-2); line-height: 1.7; max-width: 46ch; }
-        .triagem-motivos li { padding-left: 14px; text-indent: -14px; }
+        .triagem-motivos { list-style: none; margin-top: 12px; font-size: 12.5px; color: var(--tinta-2); line-height: 1.65; background: var(--superf-1); border-radius: var(--r-sm); padding: 11px 13px; }
+        .triagem-motivos li { padding-left: 13px; text-indent: -13px; }
         .triagem-motivos li::before { content: "— "; color: var(--tinta-3); }
 
-        .triagem-acoes { display: flex; gap: 10px; margin-bottom: 20px; }
+        .triagem-acoes { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
         .triagem-btn {
-            flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px;
-            padding: 14px 8px; font-size: 13.5px; color: var(--tinta-2);
-            border: 1px solid var(--linha); border-radius: 3px; transition: all .12s;
+            display: flex; flex-direction: column; align-items: center; gap: 5px;
+            padding: 11px 6px; font-size: 12.5px; font-weight: 500; color: var(--tinta-2);
+            border: 1px solid var(--linha); border-radius: var(--r-md); transition: all .12s;
         }
-        .triagem-btn:hover { border-color: var(--tinta-3); color: var(--tinta); }
-        .triagem-btn kbd { font-family: inherit; font-size: 10.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--tinta-3); }
-        .triagem-btn-abrir { background: var(--tinta); border-color: var(--tinta); color: var(--papel); }
-        .triagem-btn-abrir:hover { background: var(--tinta); border-color: var(--tinta); color: var(--papel); opacity: .82; }
-        .triagem-btn-abrir kbd { color: var(--kbd-alt); }
-        .triagem-btn-unfollow:hover { border-color: var(--risco); color: var(--risco); }
-        .triagem-btn-principal { flex: none; width: 100%; background: var(--tinta); border-color: var(--tinta); color: var(--papel); }
+        .triagem-btn:hover { background: var(--hover); color: var(--tinta); }
+        .triagem-btn kbd { font-family: inherit; font-size: 10px; font-weight: 400; letter-spacing: .04em; text-transform: uppercase; color: var(--tinta-3); }
+        .triagem-btn-abrir { background: var(--acento); border-color: var(--acento); color: #fff; }
+        .triagem-btn-abrir:hover { background: var(--acento); border-color: var(--acento); color: #fff; filter: brightness(1.08); }
+        .triagem-btn-abrir kbd { color: rgba(255,255,255,.7); }
+        .triagem-btn-unfollow:hover { background: var(--risco-bg); border-color: var(--risco-bg); color: var(--risco-tx); }
+        .triagem-btn-unfollow:hover kbd { color: var(--risco-tx); opacity: .7; }
+        .triagem-btn-principal { grid-column: 1 / -1; flex-direction: row; background: var(--acento); border-color: var(--acento); color: #fff; }
 
-        .triagem-rodape { display: flex; justify-content: space-between; align-items: center; gap: 14px; }
-        .triagem-voltar { font-size: 12.5px; color: var(--tinta-3); }
+        .triagem-rodape { display: flex; justify-content: space-between; align-items: center; gap: 12px; border-top: 1px solid var(--linha); padding-top: 11px; }
+        .triagem-voltar { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--tinta-2); }
         .triagem-voltar:hover:not(:disabled) { color: var(--tinta); }
-        .triagem-voltar:disabled { opacity: .4; cursor: not-allowed; }
-        .triagem-dica { font-size: 11.5px; color: var(--tinta-3); text-align: right; }
+        .triagem-voltar:disabled { opacity: .38; cursor: not-allowed; }
+        .triagem-dica { font-size: 11px; color: var(--tinta-3); text-align: right; }
 
-        .triagem-fim-icone { display: none; }
-        .triagem-fim-titulo { font-size: 24px; font-weight: 400; letter-spacing: -.02em; margin-bottom: 10px; }
-        .triagem-fim-texto { font-size: 14px; color: var(--tinta-2); margin-bottom: 8px; }
-        .triagem-fim-nota { font-size: 12.5px; color: var(--tinta-3); margin-bottom: 32px; max-width: 46ch; line-height: 1.65; }
+        .triagem-fim-icone { display: flex; justify-content: center; color: var(--ok-tx); margin-bottom: 12px; }
+        .triagem-fim-titulo { font-size: 19px; font-weight: 600; text-align: center; margin-bottom: 8px; }
+        .triagem-fim-texto { font-size: 13.5px; color: var(--tinta-2); text-align: center; margin-bottom: 6px; }
+        .triagem-fim-nota { font-size: 12px; color: var(--tinta-3); text-align: center; margin-bottom: 20px; line-height: 1.6; }
 
-        /* ---------------------------------------------------- avisos flutuantes */
+        /* ---------------------------------------------------- toast */
 
         .toast {
-            position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
-            background: var(--tinta); color: var(--papel); padding: 11px 20px;
-            border-radius: 3px; font-size: 13px; z-index: 200;
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+            display: flex; align-items: center; gap: 9px;
+            background: var(--tinta); color: var(--papel); padding: 11px 18px;
+            border-radius: var(--r-md); font-size: 13px; z-index: 200;
+            box-shadow: 0 8px 24px rgba(16,16,24,.18);
             transition: opacity .25s, transform .25s;
         }
-        .toast-erro { background: var(--risco); }
-        .toast.sai { opacity: 0; transform: translateX(-50%) translateY(6px); }
+        .toast-erro { background: var(--risco); color: #fff; }
+        .toast-ok { background: var(--ok-tx); color: #fff; }
+        .toast.sai { opacity: 0; transform: translateX(-50%) translateY(8px); }
 
-        @media (max-width: 620px) {
-            body { padding: 0 18px 80px; }
-            .upload-grid { grid-template-columns: 1fr; }
-            .stats-bar { gap: 28px; }
-            .abas { gap: 18px; }
-            .card-acoes { gap: 12px; }
+        @media (max-width: 640px) {
+            body { padding: 0 14px 80px; }
+            .stats-bar { grid-template-columns: 1fr 1fr; }
+            .abas { display: flex; overflow-x: auto; }
+            .medidor { display: none; }
+            .triagem-dica { display: none; }
         }
 
-        :focus-visible { outline: 2px solid var(--tinta); outline-offset: 3px; border-radius: 2px; }
-
-        @media (prefers-reduced-motion: reduce) {
-            * { transition: none !important; }
-        }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
     </style>
 </head>
 <body>
     <div class="container">
+        <header class="barra-topo">
+            <div class="marca">
+                <span class="marca-icone" id="marca-icone"></span>
+                <span class="marca-nome">Verifica seguidores</span>
+            </div>
+            <div class="barra-topo-acoes">
+                <span class="selo" id="selo-modo" hidden></span>
+                <button id="btnTema" class="btn-icone" aria-label="Alternar tema"></button>
+            </div>
+        </header>
+
         <div class="main-card">
             <div class="header">
-                <div class="cabecalho-linha">
-                    <h1>Verifica Seguidores</h1>
-                    <button id="btnTema" class="btn-tema" aria-label="Alternar tema">Modo escuro</button>
-                </div>
+                <h1>Quem te usou como isca</h1>
                 <p>
-                    Detecta quem te seguiu, esperou o follow de volta e depois te largou.
-                    Roda 100% na sua máquina, a partir do seu próprio export da Meta —
-                    sem login, sem senha e sem acessar o Instagram.
+                    Perfis que te seguiram, esperaram você seguir de volta e removeram o follow.
+                    Tudo roda no seu computador, a partir do seu próprio export da Meta.
                 </p>
                 <div class="upload-grid">
                     <label class="file-label">
                         <strong>Seguidores</strong>
                         <small>followers_1.json (pode selecionar _2, _3… juntos)</small>
-                        <span id="status-followers" class="status">Aguardando arquivo…</span>
+                        <span id="status-followers" class="status">Aguardando arquivo</span>
                         <input type="file" id="followersInput" accept=".json" multiple>
                     </label>
                     <label class="file-label">
                         <strong>Seguindo</strong>
                         <small>following.json</small>
-                        <span id="status-following" class="status">Aguardando arquivo…</span>
+                        <span id="status-following" class="status">Aguardando arquivo</span>
                         <input type="file" id="followingInput" accept=".json">
                     </label>
                 </div>
@@ -318,7 +447,7 @@
                     <label for="dataSnapshot">
                         Data do export
                         <input type="date" id="dataSnapshot" disabled>
-                        <small id="origem-data">detectada do arquivo</small>
+                        <small id="origem-data">carregue os arquivos</small>
                     </label>
                     <button id="btnSalvarSnapshot" class="btn-primario" disabled>
                         Salvar como snapshot
@@ -327,6 +456,9 @@
             </div>
             <div class="stats-bar" id="stats-bar"></div>
         </div>
+
+        <div id="aviso-prova"></div>
+        <div id="linha-do-tempo"></div>
 
         <details class="guia" id="guia">
             <summary>Onde baixar os arquivos no Instagram (passo a passo)</summary>
@@ -381,25 +513,26 @@
             </div>
         </details>
 
-        <div id="aviso-prova"></div>
-        <div id="linha-do-tempo"></div>
         <div class="abas" id="abas"></div>
 
         <div class="toolbar">
-            <input type="text" id="searchInput" class="search-input" placeholder="Pesquisar usuário…" disabled>
+            <span class="campo-busca">
+                <span id="icone-busca"></span>
+                <input type="text" id="searchInput" class="search-input" placeholder="Buscar perfil" disabled>
+            </span>
             <select id="ordenacao" title="Ordenar por">
                 <option value="score">Maior risco</option>
                 <option value="recente">Follow mais recente</option>
                 <option value="antigo">Follow mais antigo</option>
                 <option value="alfabetica">A–Z</option>
             </select>
-            <button id="btnTriagem" class="btn-triagem" title="Revisar um por um, com teclado">Modo triagem</button>
-            <button id="btnExportarBackup" class="btn-acao" title="Salva seus snapshots num arquivo">Backup</button>
-            <label class="btn-acao" style="cursor:pointer" title="Restaura snapshots de um backup">
-                Restaurar
+            <button id="btnTriagem" class="btn-triagem" title="Revisar um por um, com teclado">Triagem</button>
+            <button id="btnExportarBackup" class="btn-icone" title="Backup dos snapshots" aria-label="Backup"></button>
+            <label class="btn-icone" title="Restaurar backup" style="cursor:pointer">
+                <span id="icone-restaurar"></span>
                 <input type="file" id="inputImportarBackup" accept=".json" style="display:none">
             </label>
-            <button id="btnResetHistory" class="btn-reset-history" style="display:none;">Limpar histórico</button>
+            <button id="btnResetHistory" class="btn-icone perigo" title="Limpar histórico" aria-label="Limpar histórico" style="display:none;"></button>
         </div>
 
         <div class="list-section-title" id="list-title">Carregue os arquivos para começar</div>
@@ -428,6 +561,72 @@ const el = (tag, classe, texto) => {
     if (classe) n.className = classe;
     if (texto != null) n.textContent = texto;
     return n;
+};
+
+/* ================= src/icones.js ================= */
+/**
+ * Ícones SVG embutidos.
+ *
+ * Nada de fonte de ícone via CDN: o app precisa continuar funcionando com duplo
+ * clique, offline e sem nenhuma requisição externa. Traçado de 24px no estilo
+ * Tabler, herdando a cor do texto via `currentColor`.
+ */
+
+const TRACOS = {
+    marca: 'M9 7a4 4 0 1 0 0 8 4 4 0 0 0 0-8M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2M16 11h6',
+    lua: 'M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9',
+    sol: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8M12 3v2M12 19v2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M3 12h2M19 12h2M5.6 18.4L7 17M17 7l1.4-1.4',
+    alerta: 'M12 9v4M12 17h.01M10.2 4l-8.4 14A2 2 0 0 0 3.5 21h17a2 2 0 0 0 1.7-3L13.8 4a2 2 0 0 0-3.5 0z',
+    info: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M12 8h.01M11 12h1v4h1',
+    checkCirculo: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M9 12l2 2 4-4',
+    busca: 'M10 3a7 7 0 1 0 0 14 7 7 0 0 0 0-14M21 21l-6-6',
+    ordenar: 'M3 9l4-4 4 4M7 5v14M21 15l-4 4-4-4M17 19V5',
+    triagem: 'M12 3 4 7l8 4 8-4-8-4M4 12l8 4 8-4M4 17l8 4 8-4',
+    abrir: 'M12 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6M11 13l9-9M15 4h5v5',
+    remover: 'M9 7a4 4 0 1 0 0 8 4 4 0 0 0 0-8M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2M16 11h6',
+    copiar: 'M10 8h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2',
+    check: 'M5 12l5 5L20 7',
+    fechar: 'M18 6 6 18M6 6l12 12',
+    voltar: 'M5 12h14M5 12l6 6M5 12l6-6',
+    esquerda: 'M15 6l-6 6 6 6',
+    direita: 'M9 6l6 6-6 6',
+    baixar: 'M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 11l5 5 5-5M12 4v12',
+    subir: 'M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 9l5-5 5 5M12 4v12',
+    limpar: 'M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3',
+    arquivo: 'M14 3v4a1 1 0 0 0 1 1h4M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z',
+    calendario: 'M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zM16 3v4M8 3v4M4 11h16'
+};
+
+const NS = 'http://www.w3.org/2000/svg';
+
+/** Devolve um <svg> pronto para inserir. Decorativo por padrão. */
+const icone = (nome, tamanho = 16) => {
+    const svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('width', tamanho);
+    svg.setAttribute('height', tamanho);
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '1.6');
+    svg.setAttribute('stroke-linecap', 'round');
+    svg.setAttribute('stroke-linejoin', 'round');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.classList.add('icone');
+
+    const path = document.createElementNS(NS, 'path');
+    path.setAttribute('d', TRACOS[nome] ?? '');
+    svg.append(path);
+    return svg;
+};
+
+/**
+ * Iniciais para o avatar. O export da Meta não traz foto de perfil, então o
+ * monograma é a única âncora visual possível — e é o que permite varrer a
+ * lista sem ler cada @.
+ */
+const iniciais = (user) => {
+    const limpo = String(user ?? '').replace(/[^a-z0-9]/gi, '');
+    return (limpo.slice(0, 2) || '?').toUpperCase();
 };
 
 /* ================= src/tema.js ================= */
@@ -479,11 +678,12 @@ const TemaService = {
         this.aplicar(!this.estaEscuro());
     },
 
-    /** O rótulo anuncia o destino da ação, não o estado atual. */
+    /** O ícone anuncia o destino da ação, não o estado atual. */
     sincronizarBotao() {
         if (!this.botao) return;
         const escuro = this.estaEscuro();
-        this.botao.textContent = escuro ? 'Modo claro' : 'Modo escuro';
+        this.botao.replaceChildren(icone(escuro ? 'sol' : 'lua', 16));
+        this.botao.title = escuro ? 'Voltar ao modo claro' : 'Ativar modo escuro';
         this.botao.setAttribute('aria-pressed', String(escuro));
     },
 
@@ -1249,8 +1449,10 @@ const TriagemService = {
 
         if (finalizado || !this.perfilAtual()) {
             const marcados = this.decisoes.filter((d) => d.acao === 'unfollow').length;
+            const marca = el('div', 'triagem-fim-icone');
+            marca.append(icone('checkCirculo', 40));
             painel.append(
-                el('div', 'triagem-fim-icone', '✓'),
+                marca,
                 el('h2', 'triagem-fim-titulo', 'Fila concluída'),
                 el(
                     'p',
@@ -1276,7 +1478,10 @@ const TriagemService = {
         // Cabeçalho: progresso e saída
         const topo = el('div', 'triagem-topo');
         topo.append(el('span', 'triagem-progresso', `${this.indice + 1} de ${this.lista.length}`));
-        const btnSair = el('button', 'triagem-sair', 'Sair (Esc)');
+        const btnSair = el('button', 'triagem-sair');
+        btnSair.title = 'Sair (Esc)';
+        btnSair.setAttribute('aria-label', 'Sair da triagem');
+        btnSair.append(icone('fechar', 15));
         btnSair.addEventListener('click', () => this.fechar());
         topo.append(btnSair);
 
@@ -1285,21 +1490,27 @@ const TriagemService = {
         preenchida.style.width = `${((this.indice + 1) / this.lista.length) * 100}%`;
         barra.append(preenchida);
 
-        // Corpo: o perfil
+        // Corpo: avatar + identidade, depois os detalhes
+        const nivel = this.faixaRisco(p.score);
         const corpo = el('div', 'triagem-corpo');
-        corpo.append(el('div', 'triagem-user', `@${p.user}`));
 
-        const badge = el('span', `triagem-badge risco-${this.faixaRisco(p.score)}`,
-            this.rotulos[p.veredito] ?? p.veredito);
-        corpo.append(badge);
+        const cabecalho = el('div', 'triagem-cabecalho');
+        const avatar = el('div', 'triagem-avatar', iniciais(p.user));
+        avatar.dataset.nivel = nivel;
 
-        if (p.score > 0) {
-            corpo.append(el('div', 'triagem-score', `Risco ${p.score}`));
-        }
+        const identidade = el('div');
+        identidade.append(el('div', 'triagem-user', `@${p.user}`));
+        const selos = el('div', 'triagem-selos');
+        selos.append(el('span', `triagem-badge risco-${nivel}`, this.rotulos[p.veredito] ?? p.veredito));
+        if (p.score > 0) selos.append(el('span', 'triagem-score', `risco ${p.score}`));
+        identidade.append(selos);
+
+        cabecalho.append(avatar, identidade);
+        corpo.append(cabecalho);
 
         const meta = el('div', 'triagem-meta');
         for (const texto of this.linhasMeta(p)) meta.append(el('span', null, texto));
-        corpo.append(meta);
+        if (meta.childElementCount) corpo.append(meta);
 
         if (p.motivos?.length) {
             const ul = el('ul', 'triagem-motivos');
@@ -1310,26 +1521,27 @@ const TriagemService = {
         // Ações
         const acoes = el('div', 'triagem-acoes');
 
-        const btnAbrir = el('button', 'triagem-btn triagem-btn-abrir', 'Abrir perfil');
-        btnAbrir.append(el('kbd', null, 'O'));
+        const btnAbrir = el('button', 'triagem-btn triagem-btn-abrir');
+        btnAbrir.append(icone('abrir', 17), el('span', null, 'Abrir'), el('kbd', null, 'O'));
         btnAbrir.addEventListener('click', () => this.abrirPerfil());
 
-        const btnManter = el('button', 'triagem-btn', 'Manter');
-        btnManter.append(el('kbd', null, '→'));
+        const btnManter = el('button', 'triagem-btn');
+        btnManter.append(icone('check', 17), el('span', null, 'Manter'), el('kbd', null, '→'));
         btnManter.addEventListener('click', () => this.avancar('manter'));
 
-        const btnUnfollow = el('button', 'triagem-btn triagem-btn-unfollow', 'Parei de seguir');
-        btnUnfollow.append(el('kbd', null, 'Espaço'));
+        const btnUnfollow = el('button', 'triagem-btn triagem-btn-unfollow');
+        btnUnfollow.append(icone('remover', 17), el('span', null, 'Remover'), el('kbd', null, 'Espaço'));
         btnUnfollow.addEventListener('click', () => this.avancar('unfollow'));
 
         acoes.append(btnAbrir, btnManter, btnUnfollow);
 
         const rodape = el('div', 'triagem-rodape');
-        const btnVoltar = el('button', 'triagem-voltar', '← Voltar um');
+        const btnVoltar = el('button', 'triagem-voltar');
+        btnVoltar.append(icone('voltar', 14), el('span', null, 'Voltar'));
         btnVoltar.disabled = this.indice === 0;
         btnVoltar.addEventListener('click', () => this.voltar());
         rodape.append(btnVoltar);
-        rodape.append(el('span', 'triagem-dica', 'O abre na mesma aba · → mantém · Espaço marca · ← volta'));
+        rodape.append(el('span', 'triagem-dica', 'O abre · → mantém · Espaço remove · ← volta'));
 
         painel.append(topo, barra, corpo, acoes, rodape);
         this.raiz.append(painel);
@@ -1376,7 +1588,11 @@ const dom = {
     abas: document.getElementById('abas'),
     listTitle: document.getElementById('list-title'),
     avisoProva: document.getElementById('aviso-prova'),
-    linhaDoTempo: document.getElementById('linha-do-tempo')
+    linhaDoTempo: document.getElementById('linha-do-tempo'),
+    marcaIcone: document.getElementById('marca-icone'),
+    seloModo: document.getElementById('selo-modo'),
+    iconeBusca: document.getElementById('icone-busca'),
+    iconeRestaurar: document.getElementById('icone-restaurar')
 };
 
 const CLASSE_BADGE = {
@@ -1388,37 +1604,90 @@ const CLASSE_BADGE = {
     [VEREDITO.SO_TE_SEGUE]: 'badge badge-ok'
 };
 
+/** Rótulo curto para o segmentado; `titulo` carrega a explicação completa. */
 const ABAS = [
-    { id: 'RANKING', rotulo: 'Ranking de iscas', filtro: (p) => p.score > 0 },
-    { id: VEREDITO.BAIT_PROVADO, rotulo: 'Isca confirmada', filtro: (p) => p.veredito === VEREDITO.BAIT_PROVADO },
-    { id: VEREDITO.SUMIU, rotulo: 'Te largaram', filtro: (p) => p.veredito === VEREDITO.SUMIU },
-    { id: 'NAO_RETRIBUEM', rotulo: 'Não te seguem', filtro: (p) => p.veredito === VEREDITO.NUNCA_RETRIBUIU || p.veredito === VEREDITO.BAIT_SUSPEITO },
-    { id: VEREDITO.SO_TE_SEGUE, rotulo: 'Te seguem e você não', filtro: (p) => p.veredito === VEREDITO.SO_TE_SEGUE }
+    { id: 'RANKING', rotulo: 'Iscas', titulo: 'Ranking de risco', filtro: (p) => p.score > 0 },
+    { id: VEREDITO.BAIT_PROVADO, rotulo: 'Confirmadas', titulo: 'Isca confirmada entre dois snapshots', filtro: (p) => p.veredito === VEREDITO.BAIT_PROVADO },
+    { id: VEREDITO.SUMIU, rotulo: 'Te largaram', titulo: 'Te seguiam antes e não seguem mais', filtro: (p) => p.veredito === VEREDITO.SUMIU },
+    { id: 'NAO_RETRIBUEM', rotulo: 'Não seguem', titulo: 'Você segue e não há retorno', filtro: (p) => p.veredito === VEREDITO.NUNCA_RETRIBUIU || p.veredito === VEREDITO.BAIT_SUSPEITO },
+    { id: VEREDITO.SO_TE_SEGUE, rotulo: 'Te seguem', titulo: 'Te seguem sem retribuição sua', filtro: (p) => p.veredito === VEREDITO.SO_TE_SEGUE }
 ];
+
+/** Faixa de risco, usada por avatar, medidor e badge. */
+const nivelRisco = (score) => (score >= 70 ? 'alto' : score >= 30 ? 'medio' : 'baixo');
 
 const UIService = {
     itemsPerPage: 24,
 
+    /** Cartão de métrica: rótulo, número, nota e barra opcional de proporção. */
+    criarCartao({ rotulo, numero, nota, notaPerigo, proporcao, perigo }) {
+        const box = el('div', 'stat-box');
+        box.append(el('div', 'label', rotulo));
+
+        const valor = el('div', 'valor');
+        valor.append(el('span', 'number', String(numero)));
+        if (nota) valor.append(el('span', `nota ${notaPerigo ? 'perigo' : ''}`, nota));
+        box.append(valor);
+
+        if (proporcao != null) {
+            const trilho = el('div', 'trilho');
+            const preenchido = el('i', perigo ? 'perigo' : null);
+            preenchido.style.width = `${Math.min(100, Math.round(proporcao * 100))}%`;
+            trilho.append(preenchido);
+            box.append(trilho);
+        }
+        return box;
+    },
+
     renderizarResumo(resumo) {
         dom.statsBar.replaceChildren();
+        this.renderizarSeloModo(resumo);
         if (!resumo) return;
 
-        const caixas = [
-            ['Seguidores', resumo.seguidores],
-            ['Seguindo', resumo.seguindo],
-            ['Não retribuem', resumo.naoRetribuem],
-            ['Reciprocidade', `${Math.round(resumo.taxaReciprocidade * 100)}%`],
-            [
-                resumo.temProva ? 'Iscas confirmadas' : 'Iscas prováveis',
-                resumo.temProva ? resumo.baitProvado : resumo.baitSuspeito
-            ]
-        ];
+        const pctNaoRetribuem = resumo.seguindo ? resumo.naoRetribuem / resumo.seguindo : 0;
 
-        for (const [rotulo, valor] of caixas) {
-            const box = el('div', 'stat-box');
-            box.append(el('div', 'number', String(valor)), el('div', 'label', rotulo));
-            dom.statsBar.append(box);
+        dom.statsBar.append(
+            this.criarCartao({
+                rotulo: 'Não retribuem',
+                numero: resumo.naoRetribuem.toLocaleString('pt-BR'),
+                nota: `${Math.round(pctNaoRetribuem * 100)}%`,
+                notaPerigo: true,
+                proporcao: pctNaoRetribuem,
+                perigo: true
+            }),
+            this.criarCartao({
+                rotulo: 'Reciprocidade',
+                numero: `${Math.round(resumo.taxaReciprocidade * 100)}%`,
+                nota: `${resumo.mutuos.toLocaleString('pt-BR')} mútuos`,
+                proporcao: resumo.taxaReciprocidade
+            }),
+            this.criarCartao({
+                rotulo: 'Seguidores',
+                numero: resumo.seguidores.toLocaleString('pt-BR'),
+                nota: `${resumo.seguindo.toLocaleString('pt-BR')} seguindo`
+            }),
+            this.criarCartao({
+                rotulo: resumo.temProva ? 'Iscas confirmadas' : 'Iscas prováveis',
+                numero: resumo.temProva ? resumo.baitProvado : resumo.baitSuspeito,
+                nota: resumo.temProva ? 'provado' : 'estimado',
+                notaPerigo: resumo.temProva
+            })
+        );
+    },
+
+    /** Selo no topo: diz de longe se o app está provando ou supondo. */
+    renderizarSeloModo(resumo) {
+        if (!dom.seloModo) return;
+        if (!resumo) {
+            dom.seloModo.hidden = true;
+            return;
         }
+        dom.seloModo.hidden = false;
+        dom.seloModo.className = `selo ${resumo.temProva ? 'selo-ok' : 'selo-alerta'}`;
+        dom.seloModo.replaceChildren(
+            icone(resumo.temProva ? 'checkCirculo' : 'alerta', 14),
+            el('span', null, resumo.temProva ? 'modo prova' : 'modo suspeita')
+        );
     },
 
     /**
@@ -1430,25 +1699,26 @@ const UIService = {
         dom.avisoProva.replaceChildren();
         if (!resumo) return;
 
-        const caixa = el('div', resumo.temProva ? 'aviso aviso-ok' : 'aviso aviso-info');
+        const caixa = el('div', resumo.temProva ? 'aviso aviso-ok' : 'aviso');
+        caixa.append(icone(resumo.temProva ? 'checkCirculo' : 'info', 18));
+        const texto = el('div');
 
         if (resumo.temProva) {
-            caixa.append(
-                el('strong', null, `${resumo.snapshots} snapshots comparados. `),
+            texto.append(
+                el('strong', null, `${resumo.snapshots} snapshots comparados`),
                 el('span', null,
                     `Janela de ${formatarData(resumo.primeiroSnapshot)} a ${formatarData(resumo.ultimoSnapshot)}. ` +
-                    'Os vereditos de "isca confirmada" são provados por diferença entre snapshots, não estimados.')
+                    'As iscas confirmadas são provadas pela diferença entre snapshots, não estimadas.')
             );
         } else {
-            caixa.append(
-                el('strong', null, 'Só um snapshot carregado. '),
+            texto.append(
+                el('strong', null, 'Falta um segundo export para provar'),
                 el('span', null,
-                    'Quando alguém te larga, o perfil some do arquivo de seguidores e a prova vai junto — ' +
-                    'por isso os vereditos abaixo são suspeitas, não confirmações. ' +
-                    'Baixe um novo export daqui a alguns dias e salve como segundo snapshot: a partir daí ' +
-                    'o app passa a provar exatamente quem te largou depois que você seguiu de volta.')
+                    'Quem te larga some do arquivo de seguidores e leva a prova junto. ' +
+                    'Com dois snapshots o app confirma em vez de estimar.')
             );
         }
+        caixa.append(texto);
         dom.avisoProva.append(caixa);
     },
 
@@ -1458,7 +1728,8 @@ const UIService = {
 
         const trilha = el('div', 'timeline');
         snapshots.forEach((s, i) => {
-            const ponto = el('span', 'timeline-item', formatarData(s.takenAt));
+            const ponto = el('span', 'timeline-item');
+            ponto.append(icone('calendario', 13), el('span', null, formatarData(s.takenAt)));
             ponto.title = `${Object.keys(s.followers ?? {}).length} seguidores · ${Object.keys(s.following ?? {}).length} seguindo`;
             if (i === snapshots.length - 1) ponto.classList.add('atual');
             trilha.append(ponto);
@@ -1474,6 +1745,7 @@ const UIService = {
         for (const aba of ABAS) {
             const total = perfis.filter((p) => aba.filtro(p) && !p.resolvido).length;
             const btn = el('button', `aba ${aba.id === abaAtiva ? 'ativa' : ''}`);
+            btn.title = aba.titulo ?? aba.rotulo;
             btn.append(el('span', null, aba.rotulo), el('span', 'aba-contagem', String(total)));
             btn.addEventListener('click', () => onTrocarAba(aba.id));
             dom.abas.append(btn);
@@ -1487,8 +1759,18 @@ const UIService = {
     },
 
     atualizarBotaoReset(historicoSize) {
-        dom.btnResetHistory.style.display = historicoSize > 0 ? 'block' : 'none';
-        dom.btnResetHistory.textContent = `Limpar histórico (${historicoSize})`;
+        dom.btnResetHistory.style.display = historicoSize > 0 ? 'inline-flex' : 'none';
+        dom.btnResetHistory.title = `Limpar histórico (${historicoSize})`;
+        dom.btnResetHistory.replaceChildren(icone('limpar', 15));
+    },
+
+    /** Ícones que ficam fixos no HTML e não dependem de estado. */
+    montarIconesFixos() {
+        dom.marcaIcone?.replaceChildren(icone('marca', 17));
+        dom.iconeBusca?.replaceChildren(icone('busca', 15));
+        dom.iconeRestaurar?.replaceChildren(icone('subir', 15));
+        dom.btnExportarBackup?.replaceChildren(icone('baixar', 15));
+        dom.btnTriagem?.prepend(icone('triagem', 15));
     },
 
     renderizarGrade(lista, currentPage, onResolver) {
@@ -1507,53 +1789,74 @@ const UIService = {
 
     criarCard(p, onResolver) {
         const card = el('div', 'user-card');
+        const nivel = nivelRisco(p.score);
 
+        // O export da Meta não traz foto: o monograma é a única âncora visual
+        // possível, e a cor dele carrega o veredito.
+        const avatar = el('div', 'avatar', iniciais(p.user));
+        avatar.dataset.nivel = nivel;
+
+        const info = el('div', 'card-info');
         const topo = el('div', 'card-topo');
         const link = el('a', 'user-link', `@${p.user}`);
         link.href = `https://instagram.com/${encodeURIComponent(p.user)}/`;
-        // Alvo nomeado (e não _blank): todo perfil reusa a MESMA aba, em vez de
-        // abrir uma nova a cada clique e obrigar a fechar tudo depois.
+        // Alvo nomeado (e não _blank): todo perfil reusa a MESMA aba.
         link.target = 'verificaSeguidoresPerfil';
         link.rel = 'noopener noreferrer';
         topo.append(link, el('span', CLASSE_BADGE[p.veredito] ?? 'badge', ROTULO_VEREDITO[p.veredito]));
 
         const meta = el('div', 'card-meta');
-        if (p.score > 0) meta.append(el('span', 'score', `Risco ${p.score}`));
         if (p.retencaoMaxSeg != null) meta.append(el('span', null, `reteve ~${formatarDuracao(p.retencaoMaxSeg)}`));
         if (p.quemVeioPrimeiro === 'ELES') meta.append(el('span', null, 'veio primeiro'));
         if (p.quemVeioPrimeiro === 'SIMULTANEO') meta.append(el('span', null, 'troca instantânea'));
         if (p.voceSeguiuEm != null) meta.append(el('span', null, `você seguiu ${formatarData(p.voceSeguiuEm)}`));
+        info.append(topo, meta);
+
+        card.append(avatar, info);
+
+        // Medidor: o número diz o valor, a barra deixa comparar de relance.
+        if (p.score > 0) {
+            const medidor = el('div', 'medidor');
+            medidor.title = `Risco ${p.score} de 100`;
+            medidor.append(el('span', `medidor-valor ${nivel === 'alto' ? 'perigo' : ''}`, String(p.score)));
+            const trilho = el('span', 'medidor-trilho');
+            const preenchido = el('i', nivel === 'alto' ? 'perigo' : nivel === 'medio' ? 'atencao' : null);
+            preenchido.style.width = `${p.score}%`;
+            trilho.append(preenchido);
+            medidor.append(trilho);
+            card.append(medidor);
+        }
 
         const acoes = el('div', 'card-acoes');
 
-        const btnCopiar = el('button', 'btn-acao', 'Copiar');
+        const btnCopiar = el('button', 'btn-icone');
+        btnCopiar.title = 'Copiar @';
+        btnCopiar.setAttribute('aria-label', `Copiar ${p.user}`);
+        btnCopiar.append(icone('copiar', 15));
         btnCopiar.addEventListener('click', async () => {
             try {
                 await navigator.clipboard.writeText(p.user);
-                btnCopiar.textContent = 'Copiado';
+                btnCopiar.replaceChildren(icone('check', 15));
                 btnCopiar.classList.add('ok');
                 setTimeout(() => {
-                    btnCopiar.textContent = 'Copiar';
+                    btnCopiar.replaceChildren(icone('copiar', 15));
                     btnCopiar.classList.remove('ok');
                 }, 1200);
             } catch {
-                btnCopiar.textContent = 'Falhou';
+                /* Área de transferência bloqueada: o @ continua visível no card. */
             }
         });
         acoes.append(btnCopiar);
 
         if (p.voceSegueAgora) {
-            const btnResolver = el('button', 'btn-acao btn-resolver', 'Parei de seguir');
+            const btnResolver = el('button', 'btn-icone perigo');
+            btnResolver.title = 'Marcar que parei de seguir';
+            btnResolver.setAttribute('aria-label', `Marcar ${p.user} como resolvido`);
+            btnResolver.append(icone('remover', 15));
             btnResolver.addEventListener('click', () => onResolver(p.user, btnResolver));
             acoes.append(btnResolver);
         }
 
-        card.append(topo, meta);
-        if (p.motivos.length) {
-            const motivos = el('ul', 'card-motivos');
-            for (const m of p.motivos.slice(0, 3)) motivos.append(el('li', null, m));
-            card.append(motivos);
-        }
         card.append(acoes);
         return card;
     },
@@ -1572,6 +1875,7 @@ const UIService = {
                 dom.listTitle.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
             dom.paginationControls.append(btn);
+            return btn;
         };
 
         const janela = 2;
@@ -1580,18 +1884,23 @@ const UIService = {
             if (i >= 1 && i <= totalPages) paginas.add(i);
         }
 
-        criar('Anterior', currentPage - 1, currentPage === 1);
+        const btnAnterior = criar('', currentPage - 1, currentPage === 1);
+        btnAnterior.replaceChildren(icone('esquerda', 15));
+        btnAnterior.setAttribute('aria-label', 'Página anterior');
         let ultima = 0;
         for (const p of [...paginas].sort((a, b) => a - b)) {
             if (p - ultima > 1) dom.paginationControls.append(el('span', 'reticencias', '…'));
             criar(p, p, false, p === currentPage);
             ultima = p;
         }
-        criar('Próximo', currentPage + 1, currentPage === totalPages);
+        const btnProximo = criar('', currentPage + 1, currentPage === totalPages);
+        btnProximo.replaceChildren(icone('direita', 15));
+        btnProximo.setAttribute('aria-label', 'Próxima página');
     },
 
     toast(mensagem, tipo = 'info') {
-        const t = el('div', `toast toast-${tipo}`, mensagem);
+        const t = el('div', `toast toast-${tipo}`);
+        t.append(icone(tipo === 'erro' ? 'alerta' : tipo === 'ok' ? 'checkCirculo' : 'info', 16), el('span', null, mensagem));
         document.body.append(t);
         setTimeout(() => t.classList.add('sai'), 2600);
         setTimeout(() => t.remove(), 3000);
@@ -1921,6 +2230,7 @@ dom.btnResetHistory.addEventListener('click', async () => {
 // -------------------------------------------------------------- inicialização
 
 const inicializar = async () => {
+    UIService.montarIconesFixos();
     TemaService.iniciar(dom.btnTema);
 
     const [historico, snapshots] = await Promise.all([
