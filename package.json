@@ -9,7 +9,8 @@
   },
   "scripts": {
     "start": "node server.js",
-    "build": "node build.js"
+    "build": "node build.js",
+    "build:release": "node build.js --release --saida public/index.html"
   },
   "keywords": [
     "instagram",

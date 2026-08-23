@@ -51,3 +51,8 @@ desktop.ini
 .idea/
 *.swp
 *~
+
+# Saída de build e de ferramentas de deploy
+# ---------------------------------------------------------------------------
+public/
+.wrangler/
