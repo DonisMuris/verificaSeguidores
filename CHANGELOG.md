@@ -3,25 +3,7 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 Versionamento em [SemVer](https://semver.org/lang/pt-BR/).
 
-## [2.2.0] - 2026-08-19
-
-### Adicionado
-
-- `docs/USO-DE-IA.md`, documento de transparência sobre onde assistentes de IA
-  entraram no desenvolvimento, o que não foi delegado e como o resultado é
-  verificado.
-- `docs/MELHORIAS.md` com os itens levantados e não implementados, cada um com o
-  motivo da decisão. O app chegou a um ponto funcional para os experimentos, então
-  o que ficou de fora ficou por escolha.
-- Screenshots gerados a partir de dados sintéticos.
-
-### Alterado
-
-- Documentação reescrita para leitura mais direta: travessões caíram de 99 para
-  menos de 50, o padrão de abrir parágrafo em negrito foi desfeito, e as frases de
-  efeito viraram afirmações diretas.
-
-## [2.1.0] — 2026-08-19
+## [2.1.0] - 2026-08-22
 
 ### Adicionado
 
@@ -37,7 +19,10 @@ Versionamento em [SemVer](https://semver.org/lang/pt-BR/).
   o navegador passa a bloquear qualquer requisição saindo da página.
 - Rodapé de privacidade na página, exigido pela LGPD quando o app deixa de ser local.
 - **52 testes** com `node:test`, e CI em Node 20, 22 e 24.
-- Documentação separada por público: `docs/USO.md` e `docs/ARQUITETURA.md`.
+- Documentação separada por público: `docs/USO.md` (manual), `docs/ARQUITETURA.md`
+  (decisões de design), `docs/MELHORIAS.md` (itens em aberto, com o motivo de cada
+  um) e `docs/USO-DE-IA.md` (transparência sobre ferramentas assistidas).
+- Screenshots e diagrama gerados a partir de dados sintéticos.
 - Publicação em Cloudflare Workers com assets estáticos.
 
 ### Alterado
@@ -59,10 +44,8 @@ Versionamento em [SemVer](https://semver.org/lang/pt-BR/).
   plausível e errada, em silêncio. Agora avisa e bloqueia.
 - Ordenação por data ficava empatada em zero na aba "eu não sigo de volta".
 - `formatarDuracao` dizia "1 meses".
-- Build de release gerava arquivos diferentes no Windows e no Linux, porque as
-  regras de limpeza assumiam `\n` puro e não casavam com CRLF.
 
-## [2.0.0] — 2026-08-02
+## [2.0.0] - 2026-08-02
 
 ### Adicionado
 
@@ -84,7 +67,7 @@ Versionamento em [SemVer](https://semver.org/lang/pt-BR/).
   contas grandes.
 - CORS aberto e bind em todas as interfaces no modo servidor.
 
-## [1.0.0] — 2026-05-25
+## [1.0.0] - 2026-05-25
 
 Primeira versão. Scripts em Python que liam o export local e serviam uma página
 estática; substituídos por JavaScript ainda em maio.
