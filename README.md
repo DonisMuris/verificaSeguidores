@@ -1,175 +1,191 @@
 # Verifica Seguidores
 
-Descobre quem te segue, espera você seguir de volta e depois remove o follow — te deixando na posição de "fã" de alguém que nunca quis te seguir.
+[![CI](https://github.com/DonisMuris/verificaSeguidores/actions/workflows/ci.yml/badge.svg)](https://github.com/DonisMuris/verificaSeguidores/actions/workflows/ci.yml)
+[![Dependencies: none](https://img.shields.io/badge/dependencies-none-2f6df6)](package.json)
+[![License: MIT](https://img.shields.io/badge/license-MIT-informational)](LICENSE)
 
-Funciona a partir do **seu próprio arquivo de dados do Instagram**. Não pede login, não pede senha e não acessa o Instagram. Nada sai do seu computador.
+Local-first web app that reads your own Instagram data export and shows who doesn't
+follow you back. With two exports taken on different dates, it also identifies who
+removed the follow after you reciprocated.
 
----
+No login, no server, no dependencies. The app never contacts Instagram. It reads the
+file Meta gives you when you request your own data.
 
-## Início rápido
+[Live demo](https://verificaseguidores.dm-apps.workers.dev) ·
+[Manual de uso (PT)](docs/USO.md) ·
+[Arquitetura (PT)](docs/ARQUITETURA.md) ·
+[Roadmap (PT)](docs/MELHORIAS.md)
 
-**Não instala nada.** O projeto não tem dependências: nenhum `npm install`, nenhum ambiente virtual, nenhum resíduo para limpar depois.
+![Main screen: four metric cards that double as tabs, showing who doesn't follow
+back, who dropped you after you reciprocated, who you don't follow back, and mutuals,
+above a list of profiles with verdict labels and risk scores](docs/imagens/tela-principal.png)
 
-1. Baixe seus dados do Instagram em **formato JSON** ([passo a passo detalhado abaixo](#como-baixar-seus-dados-no-instagram)).
-2. Descompacte o `.zip` e localize `connections/followers_and_following/`.
-3. Dê **duplo clique em `VerificaSeguidores.html`**.
-4. Carregue `followers_1.json` e `following.json` e clique em **Salvar como snapshot**.
-5. **Repita daqui a alguns dias** com um export novo — é aí que a ferramenta prova quem te largou.
+<sub>Every profile shown is synthetic. Screenshots never use real export data.</sub>
 
-Só isso. Sem terminal, sem servidor, sem Node.
+## The problem
 
-> O arquivo ocupa ~55 KB e guarda os dados no armazenamento do próprio navegador.
-> Para apagar tudo: use **Limpar histórico** ou limpe os dados do site no navegador.
+When someone stops following you, their profile disappears from your followers
+export. The record that they ever followed you is gone with it. A single export
+cannot separate "never followed me" from "followed me and left", because both look
+the same on disk: absence.
 
----
+I tried to work around this with a heuristic. Cluster follows by time, then treat
+unreciprocated follows that fall inside windows of confirmed reciprocal exchanges as
+probable bait. Measured against a real export of a thousand-odd non-reciprocating
+profiles, it recovered under 8% of cases even with a one-hour window, and the false
+positives were indistinguishable from the hits. Discarded.
 
-## Como baixar seus dados no Instagram
+The information simply isn't in one file. So the app compares snapshots over time,
+and states which mode it is operating in:
 
-### 1. Peça o export para a Meta
+![Two snapshots compared: a profile present in the first followers list and absent
+from the second is evidence of an unfollow, and the timestamps show who followed
+first](docs/imagens/modelo-de-prova.svg)
 
-No app do Instagram, ou em [accountscenter.instagram.com](https://accountscenter.instagram.com):
+Most apps in this category claim certainty they cannot have. This one shows a badge
+in the header saying whether it is estimating or comparing.
+
+## Notable implementation details
+
+**No dependencies at runtime or build time.** Only Node built-ins and browser APIs.
+Two places where that meant writing something instead of installing it:
+
+`src/zip.js` reads the ZIP central directory and inflates entries with the browser's
+native `DecompressionStream('deflate-raw')`. It pulls only the two files it needs out
+of an archive with hundreds. About 150 lines.
+
+`build.js` strips comments from the published artifact. A regex would break this
+codebase specifically, since it is full of `'https://www.instagram.com/'` string
+literals and regexes like `/instagram\.com\/(?:_u\/)?([^/?#]+)/i`. The implementation
+is a state machine over code, strings, template literals and regex literals, with a
+stack to decide whether a `}` closes a block or a `${…}` interpolation. It refuses to
+write output that fails to parse or isn't idempotent.
+
+**The privacy claim is enforced by the browser.** The deployed site sends
+`Content-Security-Policy: connect-src 'none'`, so the page cannot make network
+requests at all. Anyone can confirm it in the Network tab. The tradeoff is that
+adding analytics later would mean giving that up.
+
+**Two storage backends, one interface.** `storage.js` (HTTP API) and
+`storage-local.js` (localStorage) expose the same contract, so `app.js` runs in both
+modes without branching. The build swaps one for the other.
+
+**Tabs named after questions, not verdicts.** They used to carry the engine's
+vocabulary (*Iscas, Confirmadas, Te largaram, Não seguem, Te seguem*): five
+overlapping categories, two of them hard to tell apart at a glance. Now there are
+four, phrased as questions, and the metric cards are the tabs, so one control does
+the job that two were doing.
+
+## Stack
+
+Vanilla JavaScript (ES Modules), Node.js for build and optional server, `node:test`
+for tests, Cloudflare Workers for hosting. No framework, no bundler, no transpiler.
 
 ```
-Perfil → Menu (☰) → Central de Contas
-      → Suas informações e permissões
-      → Exportar suas informações        (nome antigo: "Baixar suas informações")
-      → Criar exportação → Exportar para o dispositivo
+src/
+  parser.js         reads Meta's export, preserving every timestamp
+  zip.js            reads the .zip natively
+  analysis.js       snapshot diffing and risk score       <- core
+  ui.js             cards, list, pagination
+  triagem.js        keyboard-driven one-by-one review
+  storage.js        persistence via HTTP API (server mode)
+  storage-local.js  persistence via localStorage (single-file mode)
+  tema.js           light/dark
+  icones.js         inline SVG, no icon font
+build.js            inlines src/ + index.html into one self-contained file
+server.js           optional local server, loopback only, session token
 ```
 
-Escolha assim:
+Profiles are stored as `Map<username, timestamp>` rather than `Set<string>`. The
+timestamp in `followers_N.json` is when they followed you; the one in
+`following.json` is when you did. The order between the two is what the whole
+analysis rests on.
 
-| Opção | O que selecionar |
-|---|---|
-| Conta | Sua conta do Instagram |
-| Quais informações | **Selecionar tipos de informações** → marque só **Seguidores e seguindo** |
-| **Intervalo de datas** | **Todo o período** — nunca "Último ano" |
-| **Formato** | **JSON** — obrigatório |
-| Qualidade de mídia | Irrelevante (não baixa fotos) |
+Design rationale in [docs/ARQUITETURA.md](docs/ARQUITETURA.md) (Portuguese).
 
-> **Três armadilhas comuns:**
-> Escolher **HTML** em vez de JSON — o app não consegue ler, e é preciso refazer o pedido.
-> Pedir a **cópia completa** — demora horas ou dias. Marcando só "Seguidores e seguindo", costuma sair em minutos.
-> Deixar o **intervalo de datas** em "Último ano" — a Meta corta a lista de seguidores e mantém a de seguindo. O arquivo parece válido, mas quem te segue há mais tempo some dele. O app detecta e avisa, mas o certo é marcar "Todo o período".
+## Running it
 
-O Instagram avisa quando ficar pronto. O download fica em **Downloads disponíveis**, dentro da mesma tela, e expira em poucos dias.
-
-### 2. Ache os dois arquivos dentro do .zip
-
-Descompacte o arquivo baixado. A estrutura é esta:
-
-```
-seu-export/
-└── connections/
-    └── followers_and_following/
-        ├── followers_1.json      ← carregue no campo "Seguidores"
-        └── following.json        ← carregue no campo "Seguindo"
-```
-
-Se existirem `followers_2.json`, `followers_3.json`… (contas com muitos seguidores), **selecione todos juntos** no campo "Seguidores" — segure `Ctrl` ao clicar. Carregar só o primeiro faz a conta sair errada, sem aviso.
-
-Os outros arquivos da pasta não são usados.
-
-### 3. Onde colocar os arquivos?
-
-**Em lugar nenhum.** Não existe pasta de destino. Você clica nos campos do app e seleciona os arquivos onde eles já estiverem — Downloads, Área de Trabalho, um pendrive, tanto faz.
-
-O app apenas lê o conteúdo na hora. Não copia, não move e não envia nada para lugar algum.
-
----
-
-## Por que preciso baixar duas vezes?
-
-Quando alguém deixa de te seguir, o perfil simplesmente **desaparece** do seu arquivo de seguidores. Não fica registro nenhum. Com um arquivo só, é impossível distinguir quem nunca te seguiu de quem te seguiu e sumiu.
-
-Comparando dois arquivos de datas diferentes, a diferença entre eles revela exatamente quem saiu — e os horários registrados provam quem seguiu primeiro.
-
-| Você tem | O app entrega |
-|---|---|
-| 1 export | Quem não te segue de volta, com **suspeitas** ranqueadas |
-| 2 ou mais | **Prova**: quem te largou, quando, quem seguiu primeiro e por quanto tempo te reteve |
-
-A tela avisa em qual dos dois modos você está. Quanto mais exports acumular, mais completo fica o histórico. Um a cada duas semanas já dá um bom retrato.
-
----
-
-## Entendendo a tela
-
-**Abas**
-
-| Aba | Significado |
-|---|---|
-| Ranking de iscas | Todos os perfis com algum risco, do pior para o melhor |
-| Isca confirmada | Te seguiu primeiro, você retribuiu, e ele sumiu depois — comprovado |
-| Te largaram | Te seguia antes e não segue mais |
-| Não te seguem | Você segue e não há retorno |
-| Te seguem e você não | Perfis que te seguem sem retribuição sua |
-
-**Números do topo**
-
-- **Reciprocidade** — quantos, dos perfis que você segue, te seguem de volta.
-- **Não retribuem** — total de perfis que você segue sem retorno.
-- **Iscas confirmadas / prováveis** — muda conforme você tenha 1 ou 2+ exports.
-
-**Nos cartões**
-
-- **Risco (0 a 100)** — combina a força da prova, a velocidade do descarte e se houve troca instantânea de follows.
-- **Troca instantânea** — vocês se seguiram com menos de 10 segundos de diferença. É a marca do follow-back reflexo, exatamente o comportamento explorado por quem usa a tática.
-- **Reteve ~X** — quanto tempo a pessoa te manteve seguindo antes de remover.
-- **Copiar** — copia o @ para colar na busca do Instagram (útil quando o perfil trocou de nome).
-- **Parei de seguir** — some o perfil da sua lista de trabalho, para você não revisitar. Não faz nada no Instagram; a ação lá é sua, manualmente.
-
-**Backup e Restaurar**
-
-Seus snapshots ficam no navegador. Limpar os dados de navegação apaga tudo. Use **Backup** de vez em quando para gerar um arquivo — e **Restaurar** para trazer o histórico de volta ou levá-lo para outro computador.
-
----
-
-## Privacidade
-
-- Roda inteiramente no seu computador. Não há conta, nuvem, telemetria ou envio de dados.
-- O app nunca se conecta ao Instagram — só lê o arquivo que a própria Meta te entregou.
-- Seus arquivos de dados ficam onde você os deixou; o app não os copia.
-
-### Isso pode banir minha conta?
-
-Não, porque não há nenhum contato com o Instagram.
-
-Vale o alerta: aplicativos que mostram sua lista de seguidores **sem pedir esse arquivo** estão necessariamente raspando o Instagram ou usando seu login — prática proibida nos Termos de Uso e principal causa dos bloqueios associados a "apps de unfollowers". Não existe API oficial que forneça a lista de seguidores. Se um app mostra a lista sem pedir seu export, ele está te colocando em risco.
-
----
-
-## Problemas comuns
-
-| Sintoma | Solução |
-|---|---|
-| "não é um JSON válido" | Você baixou o export em HTML. Refaça o pedido escolhendo **JSON**. |
-| Números menores que o esperado | Você tem mais de um `followers_N.json` e carregou só o primeiro. Selecione todos juntos. |
-| A tela abre vazia | Carregue os dois arquivos e clique em **Salvar como snapshot**. |
-| "Seu navegador não permite salvar dados" | Raro, acontece no Safari abrindo o arquivo do disco. Use Chrome, Edge ou Firefox — ou clique em **Backup** antes de fechar. |
-| Perdi meus snapshots | Provavelmente limpou os dados de navegação. Restaure um backup, ou recarregue os exports. |
-| Faltam seguidores na conta | O export foi pedido com intervalo de datas limitado. Refaça marcando **Todo o período**. O app avisa quando detecta o recorte. |
-| Não acho os arquivos no .zip | Eles ficam em `connections/followers_and_following/`. Se essa pasta não existe, o export foi pedido sem marcar "Seguidores e seguindo". |
-
----
-
-## Modo servidor (opcional)
-
-Existe também uma versão que roda com Node e guarda os snapshots em arquivo, na pasta `data/`, em vez do navegador. Útil se você prefere os dados em disco.
+Node.js 20+ for the build and tests. The app itself needs only a browser.
 
 ```bash
-node server.js     # depois abra http://127.0.0.1:3000
+git clone https://github.com/DonisMuris/verificaSeguidores.git
+cd verificaSeguidores
+
+npm test              # 52 tests, nothing to install
+npm run build         # regenerates VerificaSeguidores.html
+npm start             # optional server mode at http://127.0.0.1:3000
 ```
 
-Requer [Node.js 18+](https://nodejs.org). Continua sem dependências externas.
+`VerificaSeguidores.html` is the main artifact: one self-contained file that runs by
+double-clicking, offline. Request your Instagram export in **JSON**, selecting only
+*Followers and following* over *All time*, then drag the `.zip` onto the page.
 
-Para regenerar o `VerificaSeguidores.html` depois de alterar algo em `src/`:
+![Empty state: three numbered steps and a drop zone that takes the whole .zip
+straight from Instagram](docs/imagens/estado-vazio.png)
+
+Long lists are easier to handle one at a time. The review mode turns the list into a
+keyboard-driven queue, and opening a profile reuses the same browser tab instead of
+piling up one tab per profile.
+
+![Review overlay showing one profile with its verdict, risk score, the reasons behind
+it, and three keyboard actions](docs/imagens/triagem.png)
+
+Marking a profile here never touches your Instagram account. It only removes the
+profile from your working list.
+
+Step by step in [docs/USO.md](docs/USO.md).
+
+## Tests
 
 ```bash
-node build.js
+npm test
 ```
 
----
+52 tests on `node:test`, no test framework installed. Coverage follows risk rather
+than a percentage target:
 
-## Licença
+- `build.test.js` covers the comment scanner, where a bug shows up as a broken app in
+  someone else's browser after deploy. Every real module gets stripped and checked to
+  still parse, stay idempotent, and produce identical output.
+- `analysis.test.js` covers verdicts, the guard that keeps mutual follows at zero
+  risk, the partition of the three UI lists, and detection of date-clipped exports.
+- `parser.test.js` covers timestamp preservation, `followers_1..N` merging, and the
+  refusal to guess the type of an unknown array, since `close_friends.json` has the
+  same shape as `followers_N.json`.
+- `zip.test.js` runs against a real ZIP with a central directory and deflate, because
+  the offset arithmetic is the part that can break.
 
-MIT — veja [LICENSE](LICENSE).
+CI runs on Node 20, 22 and 24, and checks that the committed single-file build still
+matches what the source generates.
+
+## Status
+
+Working and deployed. The current state covers what it was built for, so the open
+items in [docs/MELHORIAS.md](docs/MELHORIAS.md) are parked on purpose, each with the
+reasoning for the decision.
+
+## Privacy and legality
+
+- Runs entirely in the browser. No account, no cloud, no telemetry, no cookies.
+- Never connects to Instagram, so it cannot get an account banned.
+- The followers list contains personal data of third parties who never consented.
+  Processing it only on the client is what keeps this out of data-controller
+  territory under Brazil's LGPD.
+- Apps that show your followers list without asking for this export are scraping
+  Instagram or using your login, which violates Meta's Terms and is the usual reason
+  "unfollower apps" get accounts blocked. No official API returns the followers list.
+- Not affiliated with, sponsored by, or endorsed by Instagram or Meta.
+
+## Documentation
+
+| Document | Audience |
+|---|---|
+| [docs/USO.md](docs/USO.md) | End users: step by step, reading the screen, shortcuts, troubleshooting |
+| [docs/ARQUITETURA.md](docs/ARQUITETURA.md) | Developers: design decisions, data model, what was tried and dropped |
+| [docs/MELHORIAS.md](docs/MELHORIAS.md) | Open items and why each one is parked |
+| [docs/USO-DE-IA.md](docs/USO-DE-IA.md) | Where AI assistance was used, what it wasn't, and how output is verified |
+| [CHANGELOG.md](CHANGELOG.md) | Release history |
+
+## License
+
+MIT. See [LICENSE](LICENSE).

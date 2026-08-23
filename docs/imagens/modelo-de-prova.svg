@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 430" width="760" height="430" role="img" aria-labelledby="titulo desc">
+  <title id="titulo">Como dois snapshots provam quem removeu o follow</title>
+  <desc id="desc">Um único export não distingue quem nunca te seguiu de quem te seguiu e saiu, porque nos dois casos o perfil está ausente. Comparando dois exports em datas diferentes, a diferença revela quem saiu, e os timestamps dizem quem seguiu primeiro.</desc>
+
+  <!-- Fundo próprio: garante legibilidade tanto no tema claro quanto no escuro do GitHub. -->
+  <rect width="760" height="430" rx="12" fill="#ffffff"/>
+  <rect x="0.5" y="0.5" width="759" height="429" rx="12" fill="none" stroke="#e6e6ea"/>
+
+  <style>
+    .t  { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; fill: #16161a; }
+    .m  { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; fill: #16161a; }
+    .lbl{ font-size: 11px; letter-spacing: .06em; text-transform: uppercase; fill: #70707a; }
+    .sm { font-size: 12px; fill: #5c5c66; }
+    .bd { font-weight: 600; }
+  </style>
+
+  <text class="t bd" x="28" y="34" font-size="15">Por que um export só não basta</text>
+  <text class="t sm" x="28" y="54">Quem remove o follow some do arquivo. No disco, “nunca te seguiu” e “te seguiu e saiu” são o mesmo estado: ausência.</text>
+
+  <!-- snapshot A -->
+  <rect x="28" y="76" width="300" height="150" rx="10" fill="#f7f7f9"/>
+  <text class="t lbl" x="46" y="100">Snapshot A · 10/07/2026</text>
+
+  <text class="m" x="46" y="126" font-size="12.5">followers</text>
+  <text class="m" x="130" y="126" font-size="12.5" fill="#5c5c66">ana, <tspan fill="#a32019" font-weight="600">bruno</tspan>, caio</text>
+
+  <text class="m" x="46" y="152" font-size="12.5">following</text>
+  <text class="m" x="130" y="152" font-size="12.5" fill="#5c5c66">ana, <tspan fill="#a32019" font-weight="600">bruno</tspan>, davi</text>
+
+  <line x1="46" y1="170" x2="310" y2="170" stroke="#e6e6ea"/>
+  <text class="t sm" x="46" y="192">bruno te seguiu às 14:02:11</text>
+  <text class="t sm" x="46" y="210">você retribuiu às 14:02:15 — 4s depois</text>
+
+  <!-- snapshot B -->
+  <rect x="432" y="76" width="300" height="150" rx="10" fill="#f7f7f9"/>
+  <text class="t lbl" x="450" y="100">Snapshot B · 19/08/2026</text>
+
+  <text class="m" x="450" y="126" font-size="12.5">followers</text>
+  <text class="m" x="534" y="126" font-size="12.5" fill="#5c5c66">ana, caio</text>
+  <text class="m" x="612" y="126" font-size="12.5" fill="#a32019">← bruno sumiu</text>
+
+  <text class="m" x="450" y="152" font-size="12.5">following</text>
+  <text class="m" x="534" y="152" font-size="12.5" fill="#5c5c66">ana, <tspan fill="#a32019" font-weight="600">bruno</tspan>, davi</text>
+
+  <line x1="450" y1="170" x2="714" y2="170" stroke="#e6e6ea"/>
+  <text class="t sm" x="450" y="192">você continua seguindo bruno</text>
+  <text class="t sm" x="450" y="210">ele te reteve por ~40 dias</text>
+
+  <!-- seta de diff -->
+  <line x1="336" y1="151" x2="416" y2="151" stroke="#2f6df6" stroke-width="1.6"/>
+  <path d="M416 151 l-7 -4.5 v9 z" fill="#2f6df6"/>
+  <text class="t" x="376" y="141" font-size="11.5" font-weight="600" fill="#1b4fc4" text-anchor="middle">diff</text>
+
+  <!-- conclusão -->
+  <rect x="28" y="252" width="704" height="86" rx="10" fill="#fdecea"/>
+  <text class="t bd" x="48" y="278" font-size="13" fill="#a32019">bruno → isca confirmada</text>
+  <text class="t sm" x="48" y="300" fill="#a32019">Seguiu primeiro · troca em 4s (follow-back reflexo) · removeu o follow entre 10/07 e 19/08 · você ainda segue.</text>
+  <text class="t sm" x="48" y="320" fill="#a32019">Nenhuma dessas quatro afirmações é derivável do Snapshot B sozinho.</text>
+
+  <!-- rodapé -->
+  <text class="t sm" x="28" y="368" font-weight="600">1 snapshot → modo suspeita</text>
+  <text class="t sm" x="200" y="368">quem não retribui, com risco estimado</text>
+
+  <text class="t sm" x="28" y="392" font-weight="600">2+ snapshots → modo prova</text>
+  <text class="t sm" x="200" y="392">quem saiu, quando, quem veio primeiro e quanto reteve</text>
+
+  <text class="t sm" x="28" y="416" fill="#70707a">A interface anuncia em qual dos dois modos está. Afirmar mais que isso seria inventar.</text>
+</svg>
