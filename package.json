@@ -1,16 +1,17 @@
 {
   "name": "verifica-seguidores",
-  "version": "2.0.0",
+  "version": "2.2.0",
   "description": "Detecta follow-back bait no Instagram a partir do seu próprio export da Meta. Roda 100% local, sem login e sem acessar o Instagram.",
   "private": true,
   "license": "MIT",
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "scripts": {
     "start": "node server.js",
     "build": "node build.js",
-    "build:release": "node build.js --release --saida public/index.html"
+    "build:release": "node build.js --release --saida public/index.html",
+    "test": "node --test"
   },
   "keywords": [
     "instagram",

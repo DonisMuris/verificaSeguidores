@@ -1,0 +1,42 @@
+# O projeto não tem dependências, então não há `npm install`: o CI é só Node,
+# checkout e dois comandos. Rodar em várias versões protege o piso declarado no
+# `engines` do package.json.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['20.x', '22.x', '24.x']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Testes
+        run: npm test
+
+      - name: Build de release
+        run: npm run build:release
+
+      # O arquivo autossuficiente é versionado, então ele pode divergir do src/
+      # se alguém esquecer de rodar o build antes de commitar. Aqui isso vira
+      # erro em vez de virar bug silencioso para quem baixa o repositório.
+      - name: VerificaSeguidores.html está atualizado?
+        run: |
+          npm run build
+          if ! git diff --quiet -- VerificaSeguidores.html; then
+            echo "::error::VerificaSeguidores.html está desatualizado. Rode 'npm run build' e commite."
+            git diff --stat -- VerificaSeguidores.html
+            exit 1
+          fi
