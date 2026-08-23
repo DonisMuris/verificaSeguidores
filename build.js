@@ -22,6 +22,7 @@ const MODULOS = [
     'src/icones.js',
     'src/tema.js',
     'src/parser.js',
+    'src/zip.js',
     'src/analysis.js',
     'src/storage-local.js',
     'src/triagem.js',

@@ -3,8 +3,8 @@ import { el } from './dom-utils.js';
 import { icone, iniciais } from './icones.js';
 
 export const dom = {
-    followersInput: document.getElementById('followersInput'),
-    followingInput: document.getElementById('followingInput'),
+    arquivosInput: document.getElementById('arquivosInput'),
+    dropzone: document.getElementById('dropzone'),
     btnSalvarSnapshot: document.getElementById('btnSalvarSnapshot'),
     dataSnapshot: document.getElementById('dataSnapshot'),
     origemData: document.getElementById('origem-data'),
@@ -20,13 +20,15 @@ export const dom = {
     statusFollowers: document.getElementById('status-followers'),
     statusFollowing: document.getElementById('status-following'),
     statsBar: document.getElementById('stats-bar'),
-    abas: document.getElementById('abas'),
-    listTitle: document.getElementById('list-title'),
+    abaDescricao: document.getElementById('aba-descricao'),
+    contexto: document.getElementById('contexto'),
     avisoProva: document.getElementById('aviso-prova'),
     linhaDoTempo: document.getElementById('linha-do-tempo'),
+    guia: document.getElementById('guia'),
     marcaIcone: document.getElementById('marca-icone'),
     seloModo: document.getElementById('selo-modo'),
     iconeBusca: document.getElementById('icone-busca'),
+    iconeSolta: document.getElementById('icone-solta'),
     iconeRestaurar: document.getElementById('icone-restaurar')
 };
 
@@ -39,74 +41,149 @@ const CLASSE_BADGE = {
     [VEREDITO.SO_TE_SEGUE]: 'badge badge-ok'
 };
 
-/** Rótulo curto para o segmentado; `titulo` carrega a explicação completa. */
+const pct = (v) => `${Math.round((v ?? 0) * 100)}%`;
+const num = (v) => (v ?? 0).toLocaleString('pt-BR');
+
+/**
+ * As quatro perguntas que o usuário realmente faz, nesta ordem.
+ *
+ * Antes as abas eram nomeadas pelo vocabulário do motor ("Iscas", "Confirmadas",
+ * "Não seguem", "Te seguem") — duas delas quase idênticas na leitura rápida, e a
+ * diferença entre "não seguem" e "te seguem" era uma palavra. Aqui cada aba diz
+ * a direção da relação por extenso, e `descricao` repete a regra logo abaixo.
+ *
+ * "Largaram depois que segui" é subconjunto de "não me seguem de volta"; a
+ * descrição avisa disso em vez de deixar o usuário achar que os números não fecham.
+ */
 export const ABAS = [
-    { id: 'RANKING', rotulo: 'Iscas', titulo: 'Ranking de risco', filtro: (p) => p.score > 0 },
-    { id: VEREDITO.BAIT_PROVADO, rotulo: 'Confirmadas', titulo: 'Isca confirmada entre dois snapshots', filtro: (p) => p.veredito === VEREDITO.BAIT_PROVADO },
-    { id: VEREDITO.SUMIU, rotulo: 'Te largaram', titulo: 'Te seguiam antes e não seguem mais', filtro: (p) => p.veredito === VEREDITO.SUMIU },
-    { id: 'NAO_RETRIBUEM', rotulo: 'Não seguem', titulo: 'Você segue e não há retorno', filtro: (p) => p.veredito === VEREDITO.NUNCA_RETRIBUIU || p.veredito === VEREDITO.BAIT_SUSPEITO },
-    { id: VEREDITO.SO_TE_SEGUE, rotulo: 'Te seguem', titulo: 'Te seguem sem retribuição sua', filtro: (p) => p.veredito === VEREDITO.SO_TE_SEGUE }
+    {
+        id: 'NAO_ME_SEGUEM',
+        rotulo: 'Não me seguem de volta',
+        filtro: (p) => p.voceSegueAgora && !p.teSegueAgora,
+        metrica: (resumo, total) => ({
+            nota: resumo.seguindo ? `de ${num(resumo.seguindo)} que você segue` : null,
+            notaPerigo: true,
+            proporcao: resumo.seguindo ? total / resumo.seguindo : 0,
+            perigo: true
+        }),
+        descricao: () =>
+            'Você segue estes perfis e não recebe follow de volta. É daqui que sai a limpeza da sua lista.'
+    },
+    {
+        id: 'LARGARAM',
+        rotulo: 'Largaram depois que eu segui',
+        filtro: (p) =>
+            p.veredito === VEREDITO.BAIT_PROVADO ||
+            p.veredito === VEREDITO.SUMIU ||
+            p.veredito === VEREDITO.BAIT_SUSPEITO,
+        metrica: (resumo) => ({
+            nota: resumo.temProva ? 'confirmado' : 'suspeita',
+            notaPerigo: resumo.temProva
+        }),
+        descricao: (resumo) =>
+            resumo.temProva
+                ? 'Estavam nos seus seguidores num export anterior e sumiram no seguinte — enquanto você continua seguindo. Isto é comparação entre snapshots, não estimativa.'
+                : 'Suspeitas, não prova: são follows recentes seus que nunca voltaram. Quem te larga some da lista sem deixar rastro, então só um segundo export mostra quem realmente removeu o follow.',
+        rodape: 'Estes perfis também aparecem em "Não me seguem de volta".'
+    },
+    {
+        id: 'NAO_SIGO',
+        rotulo: 'Eu não sigo de volta',
+        filtro: (p) => p.veredito === VEREDITO.SO_TE_SEGUE,
+        metrica: (resumo) => ({ nota: `de ${num(resumo.seguidores)} seguidores` }),
+        descricao: () => 'Seguem você e você ainda não retribuiu.'
+    },
+    {
+        id: 'MUTUOS',
+        rotulo: 'Seguem-se mutuamente',
+        filtro: (p) => p.veredito === VEREDITO.MUTUO,
+        metrica: (resumo) => ({
+            nota: `${pct(resumo.taxaReciprocidade)} de reciprocidade`,
+            proporcao: resumo.taxaReciprocidade
+        }),
+        descricao: () => 'Vocês dois se seguem. Nada a fazer aqui — está listado só para fechar a conta.'
+    }
 ];
+
+export const ABA_PADRAO = ABAS[0].id;
+
+export const acharAba = (id) => ABAS.find((a) => a.id === id) ?? ABAS[0];
 
 /** Faixa de risco, usada por avatar, medidor e badge. */
 const nivelRisco = (score) => (score >= 70 ? 'alto' : score >= 30 ? 'medio' : 'baixo');
 
+const contarAba = (perfis, aba) => perfis.filter((p) => !p.resolvido && aba.filtro(p)).length;
+
 export const UIService = {
     itemsPerPage: 24,
 
-    /** Cartão de métrica: rótulo, número, nota e barra opcional de proporção. */
-    criarCartao({ rotulo, numero, nota, notaPerigo, proporcao, perigo }) {
-        const box = el('div', 'stat-box');
-        box.append(el('div', 'label', rotulo));
-
-        const valor = el('div', 'valor');
-        valor.append(el('span', 'number', String(numero)));
-        if (nota) valor.append(el('span', `nota ${notaPerigo ? 'perigo' : ''}`, nota));
-        box.append(valor);
-
-        if (proporcao != null) {
-            const trilho = el('div', 'trilho');
-            const preenchido = el('i', perigo ? 'perigo' : null);
-            preenchido.style.width = `${Math.min(100, Math.round(proporcao * 100))}%`;
-            trilho.append(preenchido);
-            box.append(trilho);
-        }
-        return box;
-    },
-
-    renderizarResumo(resumo) {
+    /**
+     * Cartões de métrica E navegação ao mesmo tempo.
+     *
+     * Antes eram dois controles empilhados: uma barra de números e, logo abaixo,
+     * um segmentado de abas que filtrava por esses mesmos números. Unir os dois
+     * elimina a tradução mental entre "N não retribuem" e a aba que os mostra.
+     */
+    renderizarNavegacao(perfis, resumo, abaAtiva, onTrocarAba) {
         dom.statsBar.replaceChildren();
         this.renderizarSeloModo(resumo);
         if (!resumo) return;
 
-        const pctNaoRetribuem = resumo.seguindo ? resumo.naoRetribuem / resumo.seguindo : 0;
+        for (const aba of ABAS) {
+            const total = contarAba(perfis, aba);
+            const m = aba.metrica?.(resumo, total) ?? {};
+            const ativo = aba.id === abaAtiva;
 
-        dom.statsBar.append(
-            this.criarCartao({
-                rotulo: 'Não retribuem',
-                numero: resumo.naoRetribuem.toLocaleString('pt-BR'),
-                nota: `${Math.round(pctNaoRetribuem * 100)}%`,
-                notaPerigo: true,
-                proporcao: pctNaoRetribuem,
-                perigo: true
-            }),
-            this.criarCartao({
-                rotulo: 'Reciprocidade',
-                numero: `${Math.round(resumo.taxaReciprocidade * 100)}%`,
-                nota: `${resumo.mutuos.toLocaleString('pt-BR')} mútuos`,
-                proporcao: resumo.taxaReciprocidade
-            }),
-            this.criarCartao({
-                rotulo: 'Seguidores',
-                numero: resumo.seguidores.toLocaleString('pt-BR'),
-                nota: `${resumo.seguindo.toLocaleString('pt-BR')} seguindo`
-            }),
-            this.criarCartao({
-                rotulo: resumo.temProva ? 'Iscas confirmadas' : 'Iscas prováveis',
-                numero: resumo.temProva ? resumo.baitProvado : resumo.baitSuspeito,
-                nota: resumo.temProva ? 'provado' : 'estimado',
-                notaPerigo: resumo.temProva
-            })
+            const btn = el('button', `card-nav ${ativo ? 'ativo' : ''}`);
+            btn.setAttribute('aria-pressed', String(ativo));
+            btn.append(el('span', 'card-nav-rotulo', aba.rotulo));
+
+            const valor = el('span', 'card-nav-valor');
+            valor.append(el('span', 'number', num(total)));
+            if (m.nota) valor.append(el('span', `nota ${m.notaPerigo ? 'perigo' : ''}`, m.nota));
+            btn.append(valor);
+
+            if (m.proporcao != null) {
+                const trilho = el('span', 'trilho');
+                const preenchido = el('i', m.perigo ? 'perigo' : null);
+                preenchido.style.width = `${Math.min(100, Math.round(m.proporcao * 100))}%`;
+                trilho.append(preenchido);
+                btn.append(trilho);
+            }
+
+            btn.addEventListener('click', () => onTrocarAba(aba.id));
+            dom.statsBar.append(btn);
+        }
+    },
+
+    /** Uma frase abaixo dos cartões dizendo exatamente o que a aba ativa lista. */
+    renderizarDescricaoAba(aba, resumo, total) {
+        if (!dom.abaDescricao) return;
+        dom.abaDescricao.replaceChildren();
+        if (!resumo) return;
+
+        dom.abaDescricao.append(
+            el('strong', null, `${num(total)} ${total === 1 ? 'perfil' : 'perfis'}. `),
+            el('span', null, aba.descricao?.(resumo) ?? '')
+        );
+        if (aba.rodape) dom.abaDescricao.append(' ', el('em', null, aba.rodape));
+    },
+
+    /** Números de fundo que não são navegação: contexto, não decisão. */
+    renderizarContexto(resumo) {
+        if (!dom.contexto) return;
+        dom.contexto.replaceChildren();
+        if (!resumo) return;
+
+        const item = (valor, rotulo) => {
+            const s = el('span');
+            s.append(el('b', null, valor), ` ${rotulo}`);
+            return s;
+        };
+        dom.contexto.append(
+            item(num(resumo.seguidores), 'seguidores'),
+            item(num(resumo.seguindo), 'seguindo'),
+            item(formatarData(resumo.ultimoSnapshot), 'é a data deste export')
         );
     },
 
@@ -127,8 +204,8 @@ export const UIService = {
 
     /**
      * O aviso mais importante da interface: com um snapshot só, o app não tem como
-     * provar bait. Ser honesto sobre isso é o que separa esta ferramenta dos apps
-     * que inventam números.
+     * provar quem removeu o follow. Ser honesto sobre isso é o que separa esta
+     * ferramenta dos apps que inventam números.
      */
     renderizarAvisoProva(resumo) {
         dom.avisoProva.replaceChildren();
@@ -140,17 +217,17 @@ export const UIService = {
 
         if (resumo.temProva) {
             texto.append(
-                el('strong', null, `${resumo.snapshots} snapshots comparados`),
+                el('strong', null, `${resumo.snapshots} exports comparados`),
                 el('span', null,
                     `Janela de ${formatarData(resumo.primeiroSnapshot)} a ${formatarData(resumo.ultimoSnapshot)}. ` +
-                    'As iscas confirmadas são provadas pela diferença entre snapshots, não estimadas.')
+                    'Quem largou você é dado apurado nessa diferença, não estimativa.')
             );
         } else {
             texto.append(
-                el('strong', null, 'Falta um segundo export para provar'),
+                el('strong', null, 'Falta um segundo export para provar quem te largou'),
                 el('span', null,
-                    'Quem te larga some do arquivo de seguidores e leva a prova junto. ' +
-                    'Com dois snapshots o app confirma em vez de estimar.')
+                    'Quem te larga some do arquivo de seguidores e leva a prova junto. Salve este export como ' +
+                    'snapshot, peça outro daqui a algumas semanas e o app passa a confirmar em vez de estimar.')
             );
         }
         caixa.append(texto);
@@ -159,7 +236,7 @@ export const UIService = {
 
     renderizarLinhaDoTempo(snapshots) {
         dom.linhaDoTempo.replaceChildren();
-        if (!snapshots.length) return;
+        if (snapshots.length < 1) return;
 
         const trilha = el('div', 'timeline');
         snapshots.forEach((s, i) => {
@@ -170,25 +247,17 @@ export const UIService = {
             trilha.append(ponto);
         });
         dom.linhaDoTempo.append(
-            el('div', 'timeline-title', `Snapshots salvos (${snapshots.length})`),
+            el('div', 'timeline-title', `Exports guardados (${snapshots.length})`),
             trilha
         );
     },
 
-    renderizarAbas(perfis, abaAtiva, onTrocarAba) {
-        dom.abas.replaceChildren();
-        for (const aba of ABAS) {
-            const total = perfis.filter((p) => aba.filtro(p) && !p.resolvido).length;
-            const btn = el('button', `aba ${aba.id === abaAtiva ? 'ativa' : ''}`);
-            btn.title = aba.titulo ?? aba.rotulo;
-            btn.append(el('span', null, aba.rotulo), el('span', 'aba-contagem', String(total)));
-            btn.addEventListener('click', () => onTrocarAba(aba.id));
-            dom.abas.append(btn);
-        }
-    },
-
-    atualizarStatusUpload(elemento, tamanho, origem = 'Carregado') {
-        elemento.textContent = `${origem} (${tamanho})`;
+    atualizarStatusUpload(elemento, rotulo, tamanho, origem) {
+        if (!elemento) return;
+        elemento.replaceChildren(
+            icone('check', 13),
+            el('span', null, `${rotulo}: ${num(tamanho)}${origem ? ` · ${origem}` : ''}`)
+        );
         // Cor vem da CSS, não daqui: um hex cravado no JS ignoraria o tema.
         elemento.classList.add('carregado');
     },
@@ -203,16 +272,17 @@ export const UIService = {
     montarIconesFixos() {
         dom.marcaIcone?.replaceChildren(icone('marca', 17));
         dom.iconeBusca?.replaceChildren(icone('busca', 15));
+        dom.iconeSolta?.replaceChildren(icone('pacote', 20));
         dom.iconeRestaurar?.replaceChildren(icone('subir', 15));
         dom.btnExportarBackup?.replaceChildren(icone('baixar', 15));
         dom.btnTriagem?.prepend(icone('triagem', 15));
     },
 
-    renderizarGrade(lista, currentPage, onResolver) {
+    renderizarGrade(lista, currentPage, aba, onResolver) {
         dom.usersGrid.replaceChildren();
 
         if (!lista.length) {
-            dom.usersGrid.append(el('div', 'status-message', 'Nenhum perfil nesta categoria.'));
+            dom.usersGrid.append(this.vazio(aba));
             return;
         }
 
@@ -220,6 +290,49 @@ export const UIService = {
         for (const p of lista.slice(inicio, inicio + this.itemsPerPage)) {
             dom.usersGrid.append(this.criarCard(p, onResolver));
         }
+    },
+
+    /** Lista vazia não é erro: cada aba tem um motivo diferente para estar vazia. */
+    vazio(aba) {
+        const MENSAGENS = {
+            NAO_ME_SEGUEM: ['Todo mundo retribui', 'Nenhum perfil que você segue está sem follow de volta.'],
+            LARGARAM: ['Ninguém removeu o follow', 'Nenhum perfil sumiu da sua lista de seguidores depois que você retribuiu.'],
+            NAO_SIGO: ['Você retribuiu todo mundo', 'Nenhum seguidor está esperando follow de volta.'],
+            MUTUOS: ['Nenhuma relação mútua', 'Ninguém que você segue segue você de volta.']
+        };
+        const [titulo, texto] = MENSAGENS[aba?.id] ?? ['Nada por aqui', 'Nenhum perfil nesta categoria.'];
+        const caixa = el('div', 'status-message');
+        caixa.append(el('strong', null, titulo), el('span', null, texto));
+        return caixa;
+    },
+
+    /**
+     * Linha de contexto do perfil. Escrita por veredito, não por campo: numa aba
+     * de "eu não sigo de volta" a data que importa é quando ELE te seguiu, e o
+     * texto genérico de antes ("você seguiu em…") simplesmente não se aplicava.
+     */
+    linhasMeta(p) {
+        const linhas = [];
+
+        if (p.veredito === VEREDITO.SO_TE_SEGUE) {
+            if (p.seguiuVoceEm != null) linhas.push(`te segue desde ${formatarData(p.seguiuVoceEm)}`);
+            return linhas;
+        }
+
+        if (p.veredito === VEREDITO.MUTUO) {
+            if (p.voceSeguiuEm != null) linhas.push(`você seguiu ${formatarData(p.voceSeguiuEm)}`);
+            if (p.trocaInstantanea) linhas.push('troca instantânea');
+            return linhas;
+        }
+
+        if (p.voceSeguiuEm != null) linhas.push(`você seguiu ${formatarData(p.voceSeguiuEm)}`);
+        if (p.perdidoEntre) {
+            linhas.push(`sumiu entre ${formatarData(p.perdidoEntre[0])} e ${formatarData(p.perdidoEntre[1])}`);
+        }
+        if (p.retencaoMaxSeg != null) linhas.push(`durou ~${formatarDuracao(p.retencaoMaxSeg)}`);
+        if (p.quemVeioPrimeiro === 'ELES') linhas.push('ele seguiu primeiro');
+        if (p.quemVeioPrimeiro === 'SIMULTANEO') linhas.push('troca instantânea');
+        return linhas;
     },
 
     criarCard(p, onResolver) {
@@ -241,10 +354,7 @@ export const UIService = {
         topo.append(link, el('span', CLASSE_BADGE[p.veredito] ?? 'badge', ROTULO_VEREDITO[p.veredito]));
 
         const meta = el('div', 'card-meta');
-        if (p.retencaoMaxSeg != null) meta.append(el('span', null, `reteve ~${formatarDuracao(p.retencaoMaxSeg)}`));
-        if (p.quemVeioPrimeiro === 'ELES') meta.append(el('span', null, 'veio primeiro'));
-        if (p.quemVeioPrimeiro === 'SIMULTANEO') meta.append(el('span', null, 'troca instantânea'));
-        if (p.voceSeguiuEm != null) meta.append(el('span', null, `você seguiu ${formatarData(p.voceSeguiuEm)}`));
+        for (const texto of this.linhasMeta(p)) meta.append(el('span', null, texto));
         info.append(topo, meta);
 
         card.append(avatar, info);
@@ -283,11 +393,13 @@ export const UIService = {
         });
         acoes.append(btnCopiar);
 
-        if (p.voceSegueAgora) {
-            const btnResolver = el('button', 'btn-icone perigo');
-            btnResolver.title = 'Marcar que parei de seguir';
-            btnResolver.setAttribute('aria-label', `Marcar ${p.user} como resolvido`);
-            btnResolver.append(icone('remover', 15));
+        // Mútuo não tem pendência: sem botão, o card fica só informativo.
+        if (p.veredito !== VEREDITO.MUTUO) {
+            const pendente = p.voceSegueAgora && !p.teSegueAgora;
+            const btnResolver = el('button', `btn-icone ${pendente ? 'perigo' : ''}`);
+            btnResolver.title = pendente ? 'Já parei de seguir' : 'Já resolvi este';
+            btnResolver.setAttribute('aria-label', `Tirar ${p.user} da lista`);
+            btnResolver.append(icone(pendente ? 'remover' : 'check', 15));
             btnResolver.addEventListener('click', () => onResolver(p.user, btnResolver));
             acoes.append(btnResolver);
         }
@@ -307,7 +419,7 @@ export const UIService = {
             btn.disabled = desativado;
             btn.addEventListener('click', () => {
                 onPageChange(destino);
-                dom.listTitle.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                dom.statsBar.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
             dom.paginationControls.append(btn);
             return btn;
@@ -337,7 +449,8 @@ export const UIService = {
         const t = el('div', `toast toast-${tipo}`);
         t.append(icone(tipo === 'erro' ? 'alerta' : tipo === 'ok' ? 'checkCirculo' : 'info', 16), el('span', null, mensagem));
         document.body.append(t);
-        setTimeout(() => t.classList.add('sai'), 2600);
-        setTimeout(() => t.remove(), 3000);
+        const vida = tipo === 'erro' ? 6000 : 2600;
+        setTimeout(() => t.classList.add('sai'), vida);
+        setTimeout(() => t.remove(), vida + 400);
     }
 };

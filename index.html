@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="app-token" content="__TOKEN__">
-    <title>Verifica Seguidores — detector de follow-back bait</title>
+    <title>Verifica Seguidores — quem não te segue de volta</title>
     <script>
         // Roda antes de qualquer pintura: sem isto, abrir no modo escuro pisca
         // branco por um quadro. Fica solto no head de proposito.
@@ -92,6 +92,11 @@
         .icone { flex-shrink: 0; }
         :focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; border-radius: 4px; }
 
+        /* Enquanto não há dados, tudo que depende de análise fica fora do caminho:
+           a tela inteira é o passo "traga seus arquivos". */
+        body[data-estado="vazio"] .so-com-dados { display: none; }
+        body[data-estado="pronto"] .so-vazio { display: none; }
+
         /* ---------------------------------------------------- barra do topo */
 
         .barra-topo {
@@ -126,27 +131,63 @@
         .btn-icone.perigo:hover { background: var(--risco-bg); color: var(--risco-tx); border-color: var(--risco-bg); }
         .btn-icone.ok { background: var(--ok-bg); color: var(--ok-tx); border-color: var(--ok-bg); }
 
+        /* ---------------------------------------------------- abertura */
+
+        .intro h1 { font-size: 22px; font-weight: 600; letter-spacing: -.02em; }
+        .intro p { font-size: 13.5px; color: var(--tinta-2); margin: 6px 0 18px; max-width: 58ch; }
+
+        .passos { list-style: none; display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+        .passos li {
+            display: flex; align-items: center; gap: 8px; flex: 1; min-width: 190px;
+            background: var(--superf-1); border-radius: var(--r-md);
+            padding: 10px 13px; font-size: 12.5px; color: var(--tinta-2);
+        }
+        .passos li b {
+            width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
+            background: var(--acento); color: #fff; font-size: 11px; font-weight: 600;
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+
         /* ---------------------------------------------------- entrada de arquivos */
 
-        .header h1 { font-size: 21px; font-weight: 600; letter-spacing: -.02em; }
-        .header p { font-size: 13.5px; color: var(--tinta-2); margin: 6px 0 20px; max-width: 56ch; }
-
-        .upload-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; margin-bottom: 12px; }
-        .file-label {
-            display: flex; flex-direction: column; gap: 2px; cursor: pointer;
-            background: var(--superf-1); border: 1px solid transparent; border-radius: var(--r-md);
-            padding: 14px 16px; transition: border-color .12s, background .12s;
+        .dropzone {
+            display: flex; align-items: center; gap: 14px; cursor: pointer;
+            border: 1px dashed var(--linha); border-radius: var(--r-lg);
+            background: var(--superf-1); padding: 20px 20px;
+            transition: border-color .12s, background .12s;
         }
-        .file-label:hover { border-color: var(--linha); background: var(--hover); }
-        .file-label strong { font-size: 13.5px; font-weight: 500; }
-        .file-label small { font-size: 12px; color: var(--tinta-3); }
-        .file-label .status { font-size: 12px; color: var(--tinta-3); margin-top: 5px; }
-        .file-label .status.carregado { color: var(--ok-tx); font-weight: 500; }
-        .file-label input { display: none; }
+        .dropzone:hover { border-color: var(--acento); background: var(--hover); }
+        .dropzone.arrastando { border-color: var(--acento); background: var(--acento-bg); }
+        .dropzone input { display: none; }
+        .dropzone-icone {
+            width: 40px; height: 40px; border-radius: var(--r-md); flex-shrink: 0;
+            background: var(--papel); border: 1px solid var(--linha); color: var(--acento);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .dropzone-texto { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+        .dropzone-texto strong { font-size: 14px; font-weight: 600; }
+        .dropzone-texto small { font-size: 12.5px; color: var(--tinta-3); line-height: 1.5; }
+        .dropzone-acao {
+            flex-shrink: 0; background: var(--acento); color: #fff;
+            padding: 8px 15px; border-radius: var(--r-sm); font-size: 13px; font-weight: 500;
+        }
+        /* Com dados na tela, a zona de upload vira uma faixa discreta de "atualizar". */
+        body[data-estado="pronto"] .dropzone { padding: 12px 14px; }
+        body[data-estado="pronto"] .dropzone-icone { width: 32px; height: 32px; }
+        body[data-estado="pronto"] .dropzone-texto strong { font-size: 13px; }
+
+        .chips { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 10px; }
+        .chip {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 12px; color: var(--tinta-3);
+            background: var(--superf-1); border-radius: 20px; padding: 4px 12px;
+        }
+        .chip.carregado { background: var(--ok-bg); color: var(--ok-tx); font-weight: 500; }
 
         .linha-salvar {
             display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap;
-            background: var(--superf-1); border-radius: var(--r-md); padding: 14px 16px; margin-bottom: 24px;
+            background: var(--superf-1); border-radius: var(--r-md);
+            padding: 14px 16px; margin: 10px 0 22px;
         }
         .linha-salvar label { display: flex; flex-direction: column; gap: 4px; font-size: 11px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; color: var(--tinta-3); }
         .linha-salvar input[type=date] {
@@ -156,6 +197,7 @@
         .linha-salvar input[type=date]:focus { outline: 0; border-color: var(--acento); }
         [data-tema="escuro"] input[type=date]::-webkit-calendar-picker-indicator { filter: invert(1) opacity(.6); }
         .linha-salvar small { font-size: 11px; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--tinta-3); }
+        .linha-salvar-nota { flex-basis: 100%; font-size: 12px; color: var(--tinta-3); line-height: 1.5; }
 
         .btn-primario {
             display: inline-flex; align-items: center; gap: 8px;
@@ -166,24 +208,49 @@
         .btn-primario:hover:not(:disabled) { filter: brightness(1.08); }
         .btn-primario:disabled { background: var(--superf-1); color: var(--tinta-3); border: 1px solid var(--linha); cursor: not-allowed; }
 
-        /* ---------------------------------------------------- cartões de métrica */
+        /* ---------------------------------------------------- resumo de contexto */
 
-        .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 14px; }
-        .stat-box { background: var(--superf-1); border-radius: var(--r-md); padding: 14px 16px; }
-        .stat-box .label { font-size: 12px; color: var(--tinta-2); margin-bottom: 5px; }
-        .stat-box .valor { display: flex; align-items: baseline; gap: 8px; }
-        .stat-box .number { font-size: 25px; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
-        .stat-box .nota { font-size: 12px; color: var(--tinta-3); }
-        .stat-box .nota.perigo { color: var(--risco-tx); }
-        .trilho { height: 4px; border-radius: 2px; background: var(--linha); margin-top: 10px; overflow: hidden; }
+        .contexto { display: flex; gap: 0 8px; flex-wrap: wrap; font-size: 12.5px; color: var(--tinta-3); margin-bottom: 14px; }
+        .contexto span:not(:last-child)::after { content: " ·"; }
+        .contexto b { color: var(--tinta-2); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+        /* ---------------------------------------------------- cartões-navegação
+
+           Os cartões de métrica SÃO as abas. Antes havia dois controles
+           concorrentes — um mostrava o número, o outro filtrava por ele — e o
+           usuário tinha de descobrir sozinho que falavam da mesma coisa.
+           ---------------------------------------------------------------- */
+
+        .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(178px, 1fr)); gap: 10px; margin-bottom: 12px; }
+        .card-nav {
+            display: flex; flex-direction: column; text-align: left;
+            background: var(--superf-1); border: 1px solid transparent;
+            border-radius: var(--r-md); padding: 13px 15px;
+            transition: border-color .12s, background .12s;
+        }
+        .card-nav:hover { border-color: var(--linha); background: var(--hover); }
+        .card-nav.ativo { background: var(--papel); border-color: var(--acento); box-shadow: 0 0 0 1px var(--acento); }
+        .card-nav-rotulo { font-size: 12px; color: var(--tinta-2); line-height: 1.35; min-height: 2.7em; }
+        .card-nav.ativo .card-nav-rotulo { color: var(--tinta); font-weight: 500; }
+        .card-nav-valor { display: flex; align-items: baseline; gap: 7px; }
+        .card-nav .number { font-size: 24px; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+        .card-nav .nota { font-size: 11.5px; color: var(--tinta-3); }
+        .card-nav .nota.perigo { color: var(--risco-tx); }
+        .trilho { height: 4px; border-radius: 2px; background: var(--linha); margin-top: 9px; overflow: hidden; }
         .trilho > i { display: block; height: 100%; border-radius: 2px; background: var(--acento); }
         .trilho > i.perigo { background: var(--risco); }
+
+        .aba-descricao {
+            font-size: 12.5px; color: var(--tinta-2); line-height: 1.6;
+            max-width: 72ch; margin-bottom: 14px;
+        }
+        .aba-descricao em { color: var(--tinta-3); font-style: normal; }
 
         /* ---------------------------------------------------- banner */
 
         .aviso {
             display: flex; gap: 12px; align-items: flex-start;
-            border-radius: var(--r-md); padding: 14px 16px; margin-bottom: 20px;
+            border-radius: var(--r-md); padding: 14px 16px; margin-bottom: 16px;
             background: var(--alerta-bg); color: var(--alerta-tx);
         }
         .aviso-ok { background: var(--ok-bg); color: var(--ok-tx); }
@@ -192,30 +259,13 @@
         .aviso span { font-size: 12.5px; line-height: 1.6; opacity: .92; }
 
         .timeline-title { font-size: 11px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; color: var(--tinta-3); margin-bottom: 8px; }
-        .timeline { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 22px; }
+        .timeline { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
         .timeline-item {
             display: inline-flex; align-items: center; gap: 6px;
             font-size: 12px; color: var(--tinta-2);
             background: var(--superf-1); border-radius: 20px; padding: 4px 11px;
         }
         .timeline-item.atual { background: var(--acento-bg); color: var(--acento-tx); font-weight: 500; }
-
-        /* ---------------------------------------------------- controle segmentado */
-
-        .abas {
-            display: inline-flex; gap: 2px; padding: 3px; flex-wrap: wrap;
-            background: var(--superf-1); border-radius: var(--r-md); margin-bottom: 14px; max-width: 100%;
-        }
-        .aba {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 7px 13px; border-radius: var(--r-sm);
-            font-size: 13px; color: var(--tinta-2); white-space: nowrap;
-            transition: background .12s, color .12s;
-        }
-        .aba:hover { color: var(--tinta); }
-        .aba.ativa { background: var(--papel); color: var(--tinta); font-weight: 500; box-shadow: var(--sombra); }
-        .aba-contagem { font-size: 11.5px; color: var(--tinta-3); font-variant-numeric: tabular-nums; }
-        .aba.ativa .aba-contagem { color: var(--tinta-2); }
 
         /* ---------------------------------------------------- painel da lista */
 
@@ -239,8 +289,6 @@
         .btn-triagem:hover:not(:disabled) { filter: brightness(1.08); }
         .btn-triagem:disabled { background: var(--superf-1); color: var(--tinta-3); cursor: not-allowed; }
 
-        .list-section-title { display: none; }
-
         .users-grid {
             display: block; border: 1px solid var(--linha);
             border-radius: 0 0 var(--r-lg) var(--r-lg); background: var(--superf-2); overflow: hidden;
@@ -250,6 +298,7 @@
             padding: 11px 14px; border-top: 1px solid var(--linha);
             transition: background .12s;
         }
+        .user-card:first-child { border-top: 0; }
         .user-card:hover { background: var(--hover); }
 
         .avatar {
@@ -273,7 +322,6 @@
 
         .card-meta { display: flex; flex-wrap: wrap; gap: 0 7px; font-size: 12px; color: var(--tinta-3); margin-top: 1px; }
         .card-meta span:not(:last-child)::after { content: " ·"; }
-        .card-motivos { display: none; }
 
         .medidor { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; width: 38px; }
         .medidor-valor { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--tinta-2); }
@@ -296,7 +344,8 @@
         .pagination-button.active { background: var(--acento); color: #fff; font-weight: 500; }
         .pagination-button:disabled { opacity: .35; cursor: not-allowed; }
         .reticencias { color: var(--tinta-3); padding: 0 2px; }
-        .status-message { padding: 52px 20px; text-align: center; color: var(--tinta-3); font-size: 13.5px; }
+        .status-message { padding: 46px 24px; text-align: center; color: var(--tinta-3); font-size: 13.5px; line-height: 1.7; }
+        .status-message strong { display: block; color: var(--tinta-2); font-weight: 600; margin-bottom: 3px; }
 
         /* ---------------------------------------------------- guia */
 
@@ -308,15 +357,35 @@
         .guia > summary::-webkit-details-marker { display: none; }
         .guia > summary::after { content: "+"; color: var(--tinta-3); font-weight: 400; }
         .guia[open] > summary::after { content: "\2013"; }
-        .guia-corpo { padding: 0 16px 20px; font-size: 13px; line-height: 1.7; color: var(--tinta-2); max-width: 64ch; }
-        .guia-corpo p { margin-bottom: 10px; }
+        .guia-corpo { padding: 0 16px 20px; font-size: 13px; line-height: 1.7; color: var(--tinta-2); max-width: 66ch; }
+        .guia-passo { display: block; font-size: 13.5px; font-weight: 600; color: var(--tinta); margin: 18px 0 6px; }
+        .guia-passo:first-child { margin-top: 0; }
+        .guia-corpo p { margin-bottom: 8px; }
         .guia-corpo strong { color: var(--tinta); font-weight: 600; }
         .guia-corpo code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--tinta); }
-        .guia-corpo table { width: 100%; border-collapse: collapse; margin: 12px 0 16px; font-size: 12.5px; }
-        .guia-corpo th, .guia-corpo td { text-align: left; padding: 7px 12px 7px 0; border-bottom: 1px solid var(--linha); vertical-align: top; }
-        .guia-corpo th { font-weight: 500; font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--tinta-3); }
-        .guia-corpo .destaque { background: var(--alerta-bg); color: var(--alerta-tx); border-radius: var(--r-sm); padding: 11px 14px; margin: 14px 0; }
+        .guia-corpo ul { list-style: none; margin: 6px 0 10px; }
+        .guia-corpo li { padding-left: 14px; text-indent: -14px; margin-bottom: 3px; }
+        .guia-corpo li::before { content: "— "; color: var(--tinta-3); }
+        .guia-corpo .destaque { background: var(--alerta-bg); color: var(--alerta-tx); border-radius: var(--r-sm); padding: 11px 14px; margin: 12px 0; font-size: 12.5px; }
         .guia-corpo .caminho { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; line-height: 1.9; color: var(--tinta); background: var(--papel); border: 1px solid var(--linha); padding: 13px 15px; border-radius: var(--r-sm); margin: 10px 0; }
+
+        /* ---------------------------------------------------- rodapé */
+
+        .rodape { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--linha); }
+        .rodape-destaque { font-size: 12.5px; color: var(--tinta-2); line-height: 1.7; max-width: 68ch; }
+        .rodape-destaque strong { color: var(--tinta); }
+        .rodape-detalhes { margin-top: 12px; }
+        .rodape-detalhes > summary {
+            font-size: 12.5px; color: var(--tinta-3); cursor: pointer;
+            list-style: none; display: inline-flex; align-items: center; gap: 6px;
+        }
+        .rodape-detalhes > summary::-webkit-details-marker { display: none; }
+        .rodape-detalhes > summary::after { content: "+"; }
+        .rodape-detalhes[open] > summary::after { content: "\2013"; }
+        .rodape-detalhes > summary:hover { color: var(--tinta-2); }
+        .rodape-detalhes ul { list-style: none; margin-top: 12px; max-width: 68ch; }
+        .rodape-detalhes li { font-size: 12.5px; color: var(--tinta-3); line-height: 1.7; margin-bottom: 10px; }
+        .rodape-detalhes li strong { color: var(--tinta-2); font-weight: 600; }
 
         /* ---------------------------------------------------- triagem */
 
@@ -388,9 +457,9 @@
 
         .toast {
             position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-            display: flex; align-items: center; gap: 9px;
+            display: flex; align-items: center; gap: 9px; max-width: min(92vw, 520px);
             background: var(--tinta); color: var(--papel); padding: 11px 18px;
-            border-radius: var(--r-md); font-size: 13px; z-index: 200;
+            border-radius: var(--r-md); font-size: 13px; z-index: 200; line-height: 1.5;
             box-shadow: 0 8px 24px rgba(16,16,24,.18);
             transition: opacity .25s, transform .25s;
         }
@@ -401,7 +470,8 @@
         @media (max-width: 640px) {
             body { padding: 0 14px 80px; }
             .stats-bar { grid-template-columns: 1fr 1fr; }
-            .abas { display: flex; overflow-x: auto; }
+            .dropzone { flex-wrap: wrap; }
+            .dropzone-acao { width: 100%; text-align: center; }
             .medidor { display: none; }
             .triagem-dica { display: none; }
         }
@@ -409,7 +479,7 @@
         @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
     </style>
 </head>
-<body>
+<body data-estado="vazio">
     <div class="container">
         <header class="barra-topo">
             <div class="marca">
@@ -422,111 +492,126 @@
             </div>
         </header>
 
-        <div class="main-card">
-            <div class="header">
-                <h1>Quem te usou como isca</h1>
-                <p>
-                    Perfis que te seguiram, esperaram você seguir de volta e removeram o follow.
-                    Tudo roda no seu computador, a partir do seu próprio export da Meta.
-                </p>
-                <div class="upload-grid">
-                    <label class="file-label">
-                        <strong>Seguidores</strong>
-                        <small>followers_1.json (pode selecionar _2, _3… juntos)</small>
-                        <span id="status-followers" class="status">Aguardando arquivo</span>
-                        <input type="file" id="followersInput" accept=".json" multiple>
-                    </label>
-                    <label class="file-label">
-                        <strong>Seguindo</strong>
-                        <small>following.json</small>
-                        <span id="status-following" class="status">Aguardando arquivo</span>
-                        <input type="file" id="followingInput" accept=".json">
-                    </label>
-                </div>
-                <div class="linha-salvar">
-                    <label for="dataSnapshot">
-                        Data do export
-                        <input type="date" id="dataSnapshot" disabled>
-                        <small id="origem-data">carregue os arquivos</small>
-                    </label>
-                    <button id="btnSalvarSnapshot" class="btn-primario" disabled>
-                        Salvar como snapshot
-                    </button>
-                </div>
-            </div>
-            <div class="stats-bar" id="stats-bar"></div>
+        <section class="intro">
+            <h1>Quem não te segue de volta</h1>
+            <p>
+                Compara sua lista de seguidores com a de quem você segue e separa em
+                três respostas simples. Roda inteiro no seu computador, a partir do
+                export que o próprio Instagram te dá — sem login e sem enviar nada.
+            </p>
+            <ol class="passos so-vazio">
+                <li><b>1</b> Peça o export ao Instagram</li>
+                <li><b>2</b> Arraste o .zip aqui</li>
+                <li><b>3</b> Veja quem não retribui</li>
+            </ol>
+        </section>
+
+        <label class="dropzone" id="dropzone">
+            <input type="file" id="arquivosInput" accept=".zip,.json,application/json,application/zip" multiple>
+            <span class="dropzone-icone" id="icone-solta"></span>
+            <span class="dropzone-texto">
+                <strong>Arraste aqui o .zip que o Instagram enviou</strong>
+                <small>
+                    Ou clique para escolher. Aceita o .zip inteiro — não precisa
+                    descompactar nem procurar arquivo dentro de pasta.
+                </small>
+            </span>
+            <span class="dropzone-acao">Escolher arquivo</span>
+        </label>
+
+        <div class="chips" id="chips-arquivos">
+            <span class="chip" id="status-followers">Seguidores — aguardando</span>
+            <span class="chip" id="status-following">Seguindo — aguardando</span>
         </div>
 
-        <div id="aviso-prova"></div>
-        <div id="linha-do-tempo"></div>
+        <div class="linha-salvar">
+            <label for="dataSnapshot">
+                Data do export
+                <input type="date" id="dataSnapshot" disabled>
+                <small id="origem-data">carregue os arquivos</small>
+            </label>
+            <button id="btnSalvarSnapshot" class="btn-primario" disabled>
+                Salvar como snapshot
+            </button>
+            <p class="linha-salvar-nota">
+                Guardar este export é o que permite comparar com o próximo. É dessa
+                comparação que sai a resposta de quem removeu o follow depois que você retribuiu.
+            </p>
+        </div>
 
         <details class="guia" id="guia">
-            <summary>Onde baixar os arquivos no Instagram (passo a passo)</summary>
+            <summary>Como pegar seus dados no Instagram</summary>
             <div class="guia-corpo">
-                <p><strong>1. Peça o export para a Meta</strong></p>
+                <span class="guia-passo">1. Peça o export</span>
                 <p>No app do Instagram ou em <code>accountscenter.instagram.com</code>:</p>
                 <div class="caminho">
                     Perfil → Menu ☰ → <strong>Central de Contas</strong><br>
                     → Suas informações e permissões<br>
-                    → <strong>Exportar suas informações</strong> (antigo "Baixar suas informações")<br>
+                    → <strong>Baixar suas informações</strong><br>
                     → Criar exportação → <strong>Exportar para o dispositivo</strong>
                 </div>
-                <table>
-                    <tr><th>Opção</th><th>O que escolher</th></tr>
-                    <tr><td>Quais informações</td><td>Selecionar tipos → marque só <strong>Seguidores e seguindo</strong></td></tr>
-                    <tr><td>Intervalo de datas</td><td>Todo o período</td></tr>
-                    <tr><td>Formato</td><td><strong>JSON</strong> — obrigatório</td></tr>
-                    <tr><td>Qualidade de mídia</td><td>Irrelevante (não baixa fotos)</td></tr>
-                </table>
+                <p>Nas opções, escolha:</p>
+                <ul>
+                    <li>Informações: <strong>apenas "Seguidores e seguindo"</strong></li>
+                    <li>Intervalo de datas: <strong>Todo o período</strong></li>
+                    <li>Formato: <strong>JSON</strong></li>
+                </ul>
                 <div class="destaque">
-                    Se escolher <strong>HTML</strong> em vez de JSON, o app não consegue ler.
-                    Marcando só "Seguidores e seguindo", o arquivo sai em minutos em vez de horas.
+                    Os dois que mais dão errado: escolher <strong>HTML</strong> em vez de JSON
+                    (o app não lê) e escolher um <strong>intervalo curto</strong> de datas, que
+                    corta seguidores antigos e faz eles parecerem que te largaram.
+                    Marcar só "Seguidores e seguindo" também faz o arquivo sair em minutos,
+                    não em horas.
                 </div>
 
-                <p style="margin-top:16px"><strong>2. Descompacte o .zip e ache os arquivos</strong></p>
-                <p>O Instagram avisa quando ficar pronto. Baixe o <code>.zip</code> e descompacte. Dentro dele:</p>
-                <div class="caminho">
-                    seu-export/<br>
-                    └── connections/<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;└── followers_and_following/<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── <strong>followers_1.json</strong> ← carregue em "Seguidores"<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── <strong>following.json</strong> ← carregue em "Seguindo"
-                </div>
-
-                <p style="margin-top:16px"><strong>3. Carregue aqui</strong></p>
+                <span class="guia-passo">2. Baixe o .zip quando o aviso chegar</span>
                 <p>
-                    <strong>Não precisa mover nada de pasta.</strong> Clique nos campos acima e
-                    selecione os arquivos onde eles estiverem — Downloads, Área de Trabalho, tanto faz.
-                    O app só lê o conteúdo; nada é copiado ou enviado para lugar nenhum.
-                </p>
-                <p>
-                    Se houver <code>followers_2.json</code>, <code>followers_3.json</code>…, selecione
-                    <strong>todos de uma vez</strong> no campo "Seguidores" (segure Ctrl ao clicar).
-                    Carregar só o primeiro faz a conta sair errada.
+                    O Instagram avisa por notificação ou e-mail quando o arquivo fica pronto —
+                    costuma levar de alguns minutos a algumas horas. Baixe o <code>.zip</code> e
+                    pode deixar do jeito que está.
                 </p>
 
-                <div class="destaque" style="margin-top:16px">
-                    <strong>Repita daqui a alguns dias.</strong> Com um export só, o app apenas suspeita.
-                    Com dois em datas diferentes, ele prova quem te largou — porque quem some da lista
-                    não deixa rastro em um arquivo isolado.
+                <span class="guia-passo">3. Arraste o .zip para o campo acima</span>
+                <p>
+                    Não precisa descompactar: o app encontra sozinho os arquivos de seguidores
+                    e de seguindo lá dentro. Se preferir descompactar, os arquivos estão em
+                    <code>connections/followers_and_following/</code> — envie
+                    <code>followers_1.json</code> (e os <code>_2</code>, <code>_3</code>… se
+                    existirem) junto com <code>following.json</code>, todos de uma vez.
+                </p>
+                <p>
+                    Nada é copiado nem enviado para servidor nenhum: o navegador lê o conteúdo
+                    e a análise acontece aí mesmo, na sua máquina.
+                </p>
+
+                <div class="destaque">
+                    <strong>Repita daqui a algumas semanas.</strong> Com um export só, o app
+                    consegue dizer quem não te segue de volta — mas quem te larga simplesmente
+                    some da lista e não deixa rastro. Guardando dois exports em datas
+                    diferentes, a diferença entre eles mostra exatamente quem removeu o follow.
                 </div>
             </div>
         </details>
 
-        <div class="abas" id="abas"></div>
+        <div class="contexto so-com-dados" id="contexto"></div>
+        <div class="so-com-dados" id="aviso-prova"></div>
+        <div class="so-com-dados" id="linha-do-tempo"></div>
 
-        <div class="toolbar">
+        <div class="stats-bar so-com-dados" id="stats-bar"></div>
+        <p class="aba-descricao so-com-dados" id="aba-descricao"></p>
+
+        <div class="toolbar so-com-dados">
             <span class="campo-busca">
                 <span id="icone-busca"></span>
                 <input type="text" id="searchInput" class="search-input" placeholder="Buscar perfil" disabled>
             </span>
             <select id="ordenacao" title="Ordenar por">
                 <option value="score">Maior risco</option>
-                <option value="recente">Follow mais recente</option>
-                <option value="antigo">Follow mais antigo</option>
+                <option value="recente">Mais recente</option>
+                <option value="antigo">Mais antigo</option>
                 <option value="alfabetica">A–Z</option>
             </select>
-            <button id="btnTriagem" class="btn-triagem" title="Revisar um por um, com teclado">Triagem</button>
+            <button id="btnTriagem" class="btn-triagem" title="Revisar um por um, com teclado">Revisar um a um</button>
             <button id="btnExportarBackup" class="btn-icone" title="Backup dos snapshots" aria-label="Backup"></button>
             <label class="btn-icone" title="Restaurar backup" style="cursor:pointer">
                 <span id="icone-restaurar"></span>
@@ -535,11 +620,50 @@
             <button id="btnResetHistory" class="btn-icone perigo" title="Limpar histórico" aria-label="Limpar histórico" style="display:none;"></button>
         </div>
 
-        <div class="list-section-title" id="list-title">Carregue os arquivos para começar</div>
-        <div class="users-grid" id="users-grid">
-            <div class="status-message">Nenhum dado carregado ainda.</div>
-        </div>
-        <div class="pagination-container" id="pagination-controls"></div>
+        <div class="users-grid so-com-dados" id="users-grid"></div>
+        <div class="pagination-container so-com-dados" id="pagination-controls"></div>
+
+        <footer class="rodape">
+            <p class="rodape-destaque">
+                <strong>Nada sai do seu computador.</strong> A análise acontece inteiramente
+                dentro do seu navegador. Seus arquivos não são enviados, copiados nem
+                guardados em servidor nenhum. Este site não usa cookies, não tem analytics
+                e não coleta nada sobre você.
+            </p>
+            <details class="rodape-detalhes">
+                <summary>Privacidade, em detalhe</summary>
+                <ul>
+                    <li>
+                        <strong>Onde ficam seus dados.</strong> No armazenamento do próprio
+                        navegador, na sua máquina. Limpar os dados de navegação apaga tudo —
+                        use o botão de backup se quiser guardar o histórico.
+                    </li>
+                    <li>
+                        <strong>Isto é verificável, não é só uma promessa.</strong> A política
+                        de segurança deste site bloqueia qualquer conexão de rede partindo
+                        da página. Abra a aba Rede do seu navegador e confira: depois de
+                        carregar, o site não fala com ninguém — nem comigo.
+                    </li>
+                    <li>
+                        <strong>A lista contém dados de outras pessoas.</strong> São os @ de
+                        quem segue você e de quem você segue, e eles não escolheram estar
+                        nisso. Por rodar só na sua máquina, ninguém além de você vê. Não
+                        redistribua a lista.
+                    </li>
+                    <li>
+                        <strong>Hospedagem.</strong> O site é servido pela Cloudflare, que
+                        registra endereço de IP e horário de acesso para operar a rede, como
+                        qualquer site da internet. Nada do seu export passa por lá.
+                    </li>
+                    <li>
+                        <strong>Sem vínculo com a Meta.</strong> Este projeto não é afiliado,
+                        patrocinado nem endossado pelo Instagram ou pela Meta. Ele nunca se
+                        conecta ao Instagram: apenas lê o arquivo que a própria Meta entrega
+                        a você quando você pede seus dados.
+                    </li>
+                </ul>
+            </details>
+        </footer>
     </div>
 
     <script type="module" src="src/app.js"></script>

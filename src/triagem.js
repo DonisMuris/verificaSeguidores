@@ -4,7 +4,7 @@ import { icone, iniciais } from './icones.js';
 /**
  * Modo triagem: um perfil por vez, com teclado.
  *
- * O problema que resolve: revisar 235 perfis numa grade obriga a abrir cada
+ * O problema que resolve: revisar centenas de perfis numa grade obriga a abrir cada
  * link, voltar, procurar onde parou e repetir. Aqui a lista vira uma fila —
  * você decide, ela avança sozinha, e dá para voltar atrás.
  *

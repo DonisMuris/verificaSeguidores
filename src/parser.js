@@ -106,7 +106,7 @@ export const ParserService = {
 
     /**
      * recently_unfollowed_profiles.json = perfis que VOCÊ deixou de seguir.
-     * (Verificado no seu export: 244 de 247 já não estão mais no seu following.)
+     * (Verificado contra um export real: quase todos já não estão mais no following.)
      * Serve para preencher o histórico automaticamente em vez de você marcar
      * "parei de seguir" na mão.
      */
@@ -117,6 +117,33 @@ export const ParserService = {
     /** Solicitações de follow — recebidas (conta privada) ou enviadas por você. */
     extrairSolicitacoes(json) {
         return paraMap(desembrulhar(json).map(lerItemLabelValues));
+    },
+
+    /**
+     * De qual lista este JSON veio — ou `null` se não for nenhuma das duas.
+     *
+     * É o que permite ao usuário soltar tudo de uma vez em vez de acertar qual
+     * arquivo vai em qual campo. O conteúdo manda quando dá: `following.json`
+     * chega embrulhado em `{ relationships_following: [...] }`, e isso identifica
+     * a lista mesmo se o arquivo tiver sido renomeado.
+     *
+     * `followers_N.json`, porém, vem como array puro. E não dá para decidir pelo
+     * conteúdo: `close_friends.json` é um array de itens exatamente com o mesmo
+     * formato. Para array sem embrulho, portanto, o nome é obrigatório — chutar
+     * "deve ser seguidores" misturaria a lista de melhores amigos na análise.
+     */
+    classificar(json, nome = '') {
+        if (json && !Array.isArray(json) && typeof json === 'object') {
+            if (Array.isArray(json.relationships_followers)) return 'followers';
+            if (Array.isArray(json.relationships_following)) return 'following';
+            return null;
+        }
+        if (!Array.isArray(json)) return null;
+
+        const base = String(nome).toLowerCase().split('/').pop() ?? '';
+        if (/^following(_\d+)?\.json$/.test(base)) return 'following';
+        if (/^followers(_\d+)?\.json$/.test(base)) return 'followers';
+        return null;
     },
 
     /** Lê e faz o parse de um File do input, com mensagem de erro legível. */
@@ -131,14 +158,10 @@ export const ParserService = {
         }
     },
 
-    /** Lê vários arquivos de uma vez (ex.: followers_1..N). */
-    async lerArquivosAsync(fileList) {
-        return Promise.all(Array.from(fileList).map((f) => this.lerArquivoAsync(f)));
-    },
-
     /**
      * Data de modificação dos arquivos, em segundos. É o carimbo que a Meta
      * deixou ao gerar o export — a fonte mais confiável para datar o snapshot.
+     * Para um `.zip` baixado, é a hora do download, que é uma boa aproximação.
      */
     dataDeModificacao(fileList) {
         const datas = Array.from(fileList)

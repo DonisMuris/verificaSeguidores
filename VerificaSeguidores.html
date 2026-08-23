@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <!-- Arquivo gerado por build.js. Não edite aqui: edite src/ e rode "node build.js". -->
-    <title>Verifica Seguidores — detector de follow-back bait</title>
+    <title>Verifica Seguidores — quem não te segue de volta</title>
     <script>
         // Roda antes de qualquer pintura: sem isto, abrir no modo escuro pisca
         // branco por um quadro. Fica solto no head de proposito.
@@ -92,6 +93,11 @@
         .icone { flex-shrink: 0; }
         :focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; border-radius: 4px; }
 
+        /* Enquanto não há dados, tudo que depende de análise fica fora do caminho:
+           a tela inteira é o passo "traga seus arquivos". */
+        body[data-estado="vazio"] .so-com-dados { display: none; }
+        body[data-estado="pronto"] .so-vazio { display: none; }
+
         /* ---------------------------------------------------- barra do topo */
 
         .barra-topo {
@@ -126,27 +132,63 @@
         .btn-icone.perigo:hover { background: var(--risco-bg); color: var(--risco-tx); border-color: var(--risco-bg); }
         .btn-icone.ok { background: var(--ok-bg); color: var(--ok-tx); border-color: var(--ok-bg); }
 
+        /* ---------------------------------------------------- abertura */
+
+        .intro h1 { font-size: 22px; font-weight: 600; letter-spacing: -.02em; }
+        .intro p { font-size: 13.5px; color: var(--tinta-2); margin: 6px 0 18px; max-width: 58ch; }
+
+        .passos { list-style: none; display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+        .passos li {
+            display: flex; align-items: center; gap: 8px; flex: 1; min-width: 190px;
+            background: var(--superf-1); border-radius: var(--r-md);
+            padding: 10px 13px; font-size: 12.5px; color: var(--tinta-2);
+        }
+        .passos li b {
+            width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
+            background: var(--acento); color: #fff; font-size: 11px; font-weight: 600;
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+
         /* ---------------------------------------------------- entrada de arquivos */
 
-        .header h1 { font-size: 21px; font-weight: 600; letter-spacing: -.02em; }
-        .header p { font-size: 13.5px; color: var(--tinta-2); margin: 6px 0 20px; max-width: 56ch; }
-
-        .upload-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; margin-bottom: 12px; }
-        .file-label {
-            display: flex; flex-direction: column; gap: 2px; cursor: pointer;
-            background: var(--superf-1); border: 1px solid transparent; border-radius: var(--r-md);
-            padding: 14px 16px; transition: border-color .12s, background .12s;
+        .dropzone {
+            display: flex; align-items: center; gap: 14px; cursor: pointer;
+            border: 1px dashed var(--linha); border-radius: var(--r-lg);
+            background: var(--superf-1); padding: 20px 20px;
+            transition: border-color .12s, background .12s;
         }
-        .file-label:hover { border-color: var(--linha); background: var(--hover); }
-        .file-label strong { font-size: 13.5px; font-weight: 500; }
-        .file-label small { font-size: 12px; color: var(--tinta-3); }
-        .file-label .status { font-size: 12px; color: var(--tinta-3); margin-top: 5px; }
-        .file-label .status.carregado { color: var(--ok-tx); font-weight: 500; }
-        .file-label input { display: none; }
+        .dropzone:hover { border-color: var(--acento); background: var(--hover); }
+        .dropzone.arrastando { border-color: var(--acento); background: var(--acento-bg); }
+        .dropzone input { display: none; }
+        .dropzone-icone {
+            width: 40px; height: 40px; border-radius: var(--r-md); flex-shrink: 0;
+            background: var(--papel); border: 1px solid var(--linha); color: var(--acento);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .dropzone-texto { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+        .dropzone-texto strong { font-size: 14px; font-weight: 600; }
+        .dropzone-texto small { font-size: 12.5px; color: var(--tinta-3); line-height: 1.5; }
+        .dropzone-acao {
+            flex-shrink: 0; background: var(--acento); color: #fff;
+            padding: 8px 15px; border-radius: var(--r-sm); font-size: 13px; font-weight: 500;
+        }
+        /* Com dados na tela, a zona de upload vira uma faixa discreta de "atualizar". */
+        body[data-estado="pronto"] .dropzone { padding: 12px 14px; }
+        body[data-estado="pronto"] .dropzone-icone { width: 32px; height: 32px; }
+        body[data-estado="pronto"] .dropzone-texto strong { font-size: 13px; }
+
+        .chips { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 10px; }
+        .chip {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 12px; color: var(--tinta-3);
+            background: var(--superf-1); border-radius: 20px; padding: 4px 12px;
+        }
+        .chip.carregado { background: var(--ok-bg); color: var(--ok-tx); font-weight: 500; }
 
         .linha-salvar {
             display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap;
-            background: var(--superf-1); border-radius: var(--r-md); padding: 14px 16px; margin-bottom: 24px;
+            background: var(--superf-1); border-radius: var(--r-md);
+            padding: 14px 16px; margin: 10px 0 22px;
         }
         .linha-salvar label { display: flex; flex-direction: column; gap: 4px; font-size: 11px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; color: var(--tinta-3); }
         .linha-salvar input[type=date] {
@@ -156,6 +198,7 @@
         .linha-salvar input[type=date]:focus { outline: 0; border-color: var(--acento); }
         [data-tema="escuro"] input[type=date]::-webkit-calendar-picker-indicator { filter: invert(1) opacity(.6); }
         .linha-salvar small { font-size: 11px; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--tinta-3); }
+        .linha-salvar-nota { flex-basis: 100%; font-size: 12px; color: var(--tinta-3); line-height: 1.5; }
 
         .btn-primario {
             display: inline-flex; align-items: center; gap: 8px;
@@ -166,24 +209,49 @@
         .btn-primario:hover:not(:disabled) { filter: brightness(1.08); }
         .btn-primario:disabled { background: var(--superf-1); color: var(--tinta-3); border: 1px solid var(--linha); cursor: not-allowed; }
 
-        /* ---------------------------------------------------- cartões de métrica */
+        /* ---------------------------------------------------- resumo de contexto */
 
-        .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 14px; }
-        .stat-box { background: var(--superf-1); border-radius: var(--r-md); padding: 14px 16px; }
-        .stat-box .label { font-size: 12px; color: var(--tinta-2); margin-bottom: 5px; }
-        .stat-box .valor { display: flex; align-items: baseline; gap: 8px; }
-        .stat-box .number { font-size: 25px; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
-        .stat-box .nota { font-size: 12px; color: var(--tinta-3); }
-        .stat-box .nota.perigo { color: var(--risco-tx); }
-        .trilho { height: 4px; border-radius: 2px; background: var(--linha); margin-top: 10px; overflow: hidden; }
+        .contexto { display: flex; gap: 0 8px; flex-wrap: wrap; font-size: 12.5px; color: var(--tinta-3); margin-bottom: 14px; }
+        .contexto span:not(:last-child)::after { content: " ·"; }
+        .contexto b { color: var(--tinta-2); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+        /* ---------------------------------------------------- cartões-navegação
+
+           Os cartões de métrica SÃO as abas. Antes havia dois controles
+           concorrentes — um mostrava o número, o outro filtrava por ele — e o
+           usuário tinha de descobrir sozinho que falavam da mesma coisa.
+           ---------------------------------------------------------------- */
+
+        .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(178px, 1fr)); gap: 10px; margin-bottom: 12px; }
+        .card-nav {
+            display: flex; flex-direction: column; text-align: left;
+            background: var(--superf-1); border: 1px solid transparent;
+            border-radius: var(--r-md); padding: 13px 15px;
+            transition: border-color .12s, background .12s;
+        }
+        .card-nav:hover { border-color: var(--linha); background: var(--hover); }
+        .card-nav.ativo { background: var(--papel); border-color: var(--acento); box-shadow: 0 0 0 1px var(--acento); }
+        .card-nav-rotulo { font-size: 12px; color: var(--tinta-2); line-height: 1.35; min-height: 2.7em; }
+        .card-nav.ativo .card-nav-rotulo { color: var(--tinta); font-weight: 500; }
+        .card-nav-valor { display: flex; align-items: baseline; gap: 7px; }
+        .card-nav .number { font-size: 24px; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+        .card-nav .nota { font-size: 11.5px; color: var(--tinta-3); }
+        .card-nav .nota.perigo { color: var(--risco-tx); }
+        .trilho { height: 4px; border-radius: 2px; background: var(--linha); margin-top: 9px; overflow: hidden; }
         .trilho > i { display: block; height: 100%; border-radius: 2px; background: var(--acento); }
         .trilho > i.perigo { background: var(--risco); }
+
+        .aba-descricao {
+            font-size: 12.5px; color: var(--tinta-2); line-height: 1.6;
+            max-width: 72ch; margin-bottom: 14px;
+        }
+        .aba-descricao em { color: var(--tinta-3); font-style: normal; }
 
         /* ---------------------------------------------------- banner */
 
         .aviso {
             display: flex; gap: 12px; align-items: flex-start;
-            border-radius: var(--r-md); padding: 14px 16px; margin-bottom: 20px;
+            border-radius: var(--r-md); padding: 14px 16px; margin-bottom: 16px;
             background: var(--alerta-bg); color: var(--alerta-tx);
         }
         .aviso-ok { background: var(--ok-bg); color: var(--ok-tx); }
@@ -192,30 +260,13 @@
         .aviso span { font-size: 12.5px; line-height: 1.6; opacity: .92; }
 
         .timeline-title { font-size: 11px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; color: var(--tinta-3); margin-bottom: 8px; }
-        .timeline { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 22px; }
+        .timeline { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
         .timeline-item {
             display: inline-flex; align-items: center; gap: 6px;
             font-size: 12px; color: var(--tinta-2);
             background: var(--superf-1); border-radius: 20px; padding: 4px 11px;
         }
         .timeline-item.atual { background: var(--acento-bg); color: var(--acento-tx); font-weight: 500; }
-
-        /* ---------------------------------------------------- controle segmentado */
-
-        .abas {
-            display: inline-flex; gap: 2px; padding: 3px; flex-wrap: wrap;
-            background: var(--superf-1); border-radius: var(--r-md); margin-bottom: 14px; max-width: 100%;
-        }
-        .aba {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 7px 13px; border-radius: var(--r-sm);
-            font-size: 13px; color: var(--tinta-2); white-space: nowrap;
-            transition: background .12s, color .12s;
-        }
-        .aba:hover { color: var(--tinta); }
-        .aba.ativa { background: var(--papel); color: var(--tinta); font-weight: 500; box-shadow: var(--sombra); }
-        .aba-contagem { font-size: 11.5px; color: var(--tinta-3); font-variant-numeric: tabular-nums; }
-        .aba.ativa .aba-contagem { color: var(--tinta-2); }
 
         /* ---------------------------------------------------- painel da lista */
 
@@ -239,8 +290,6 @@
         .btn-triagem:hover:not(:disabled) { filter: brightness(1.08); }
         .btn-triagem:disabled { background: var(--superf-1); color: var(--tinta-3); cursor: not-allowed; }
 
-        .list-section-title { display: none; }
-
         .users-grid {
             display: block; border: 1px solid var(--linha);
             border-radius: 0 0 var(--r-lg) var(--r-lg); background: var(--superf-2); overflow: hidden;
@@ -250,6 +299,7 @@
             padding: 11px 14px; border-top: 1px solid var(--linha);
             transition: background .12s;
         }
+        .user-card:first-child { border-top: 0; }
         .user-card:hover { background: var(--hover); }
 
         .avatar {
@@ -273,7 +323,6 @@
 
         .card-meta { display: flex; flex-wrap: wrap; gap: 0 7px; font-size: 12px; color: var(--tinta-3); margin-top: 1px; }
         .card-meta span:not(:last-child)::after { content: " ·"; }
-        .card-motivos { display: none; }
 
         .medidor { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; width: 38px; }
         .medidor-valor { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--tinta-2); }
@@ -296,7 +345,8 @@
         .pagination-button.active { background: var(--acento); color: #fff; font-weight: 500; }
         .pagination-button:disabled { opacity: .35; cursor: not-allowed; }
         .reticencias { color: var(--tinta-3); padding: 0 2px; }
-        .status-message { padding: 52px 20px; text-align: center; color: var(--tinta-3); font-size: 13.5px; }
+        .status-message { padding: 46px 24px; text-align: center; color: var(--tinta-3); font-size: 13.5px; line-height: 1.7; }
+        .status-message strong { display: block; color: var(--tinta-2); font-weight: 600; margin-bottom: 3px; }
 
         /* ---------------------------------------------------- guia */
 
@@ -308,15 +358,35 @@
         .guia > summary::-webkit-details-marker { display: none; }
         .guia > summary::after { content: "+"; color: var(--tinta-3); font-weight: 400; }
         .guia[open] > summary::after { content: "\2013"; }
-        .guia-corpo { padding: 0 16px 20px; font-size: 13px; line-height: 1.7; color: var(--tinta-2); max-width: 64ch; }
-        .guia-corpo p { margin-bottom: 10px; }
+        .guia-corpo { padding: 0 16px 20px; font-size: 13px; line-height: 1.7; color: var(--tinta-2); max-width: 66ch; }
+        .guia-passo { display: block; font-size: 13.5px; font-weight: 600; color: var(--tinta); margin: 18px 0 6px; }
+        .guia-passo:first-child { margin-top: 0; }
+        .guia-corpo p { margin-bottom: 8px; }
         .guia-corpo strong { color: var(--tinta); font-weight: 600; }
         .guia-corpo code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--tinta); }
-        .guia-corpo table { width: 100%; border-collapse: collapse; margin: 12px 0 16px; font-size: 12.5px; }
-        .guia-corpo th, .guia-corpo td { text-align: left; padding: 7px 12px 7px 0; border-bottom: 1px solid var(--linha); vertical-align: top; }
-        .guia-corpo th { font-weight: 500; font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--tinta-3); }
-        .guia-corpo .destaque { background: var(--alerta-bg); color: var(--alerta-tx); border-radius: var(--r-sm); padding: 11px 14px; margin: 14px 0; }
+        .guia-corpo ul { list-style: none; margin: 6px 0 10px; }
+        .guia-corpo li { padding-left: 14px; text-indent: -14px; margin-bottom: 3px; }
+        .guia-corpo li::before { content: "— "; color: var(--tinta-3); }
+        .guia-corpo .destaque { background: var(--alerta-bg); color: var(--alerta-tx); border-radius: var(--r-sm); padding: 11px 14px; margin: 12px 0; font-size: 12.5px; }
         .guia-corpo .caminho { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; line-height: 1.9; color: var(--tinta); background: var(--papel); border: 1px solid var(--linha); padding: 13px 15px; border-radius: var(--r-sm); margin: 10px 0; }
+
+        /* ---------------------------------------------------- rodapé */
+
+        .rodape { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--linha); }
+        .rodape-destaque { font-size: 12.5px; color: var(--tinta-2); line-height: 1.7; max-width: 68ch; }
+        .rodape-destaque strong { color: var(--tinta); }
+        .rodape-detalhes { margin-top: 12px; }
+        .rodape-detalhes > summary {
+            font-size: 12.5px; color: var(--tinta-3); cursor: pointer;
+            list-style: none; display: inline-flex; align-items: center; gap: 6px;
+        }
+        .rodape-detalhes > summary::-webkit-details-marker { display: none; }
+        .rodape-detalhes > summary::after { content: "+"; }
+        .rodape-detalhes[open] > summary::after { content: "\2013"; }
+        .rodape-detalhes > summary:hover { color: var(--tinta-2); }
+        .rodape-detalhes ul { list-style: none; margin-top: 12px; max-width: 68ch; }
+        .rodape-detalhes li { font-size: 12.5px; color: var(--tinta-3); line-height: 1.7; margin-bottom: 10px; }
+        .rodape-detalhes li strong { color: var(--tinta-2); font-weight: 600; }
 
         /* ---------------------------------------------------- triagem */
 
@@ -388,9 +458,9 @@
 
         .toast {
             position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-            display: flex; align-items: center; gap: 9px;
+            display: flex; align-items: center; gap: 9px; max-width: min(92vw, 520px);
             background: var(--tinta); color: var(--papel); padding: 11px 18px;
-            border-radius: var(--r-md); font-size: 13px; z-index: 200;
+            border-radius: var(--r-md); font-size: 13px; z-index: 200; line-height: 1.5;
             box-shadow: 0 8px 24px rgba(16,16,24,.18);
             transition: opacity .25s, transform .25s;
         }
@@ -401,7 +471,8 @@
         @media (max-width: 640px) {
             body { padding: 0 14px 80px; }
             .stats-bar { grid-template-columns: 1fr 1fr; }
-            .abas { display: flex; overflow-x: auto; }
+            .dropzone { flex-wrap: wrap; }
+            .dropzone-acao { width: 100%; text-align: center; }
             .medidor { display: none; }
             .triagem-dica { display: none; }
         }
@@ -409,7 +480,7 @@
         @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
     </style>
 </head>
-<body>
+<body data-estado="vazio">
     <div class="container">
         <header class="barra-topo">
             <div class="marca">
@@ -422,111 +493,126 @@
             </div>
         </header>
 
-        <div class="main-card">
-            <div class="header">
-                <h1>Quem te usou como isca</h1>
-                <p>
-                    Perfis que te seguiram, esperaram você seguir de volta e removeram o follow.
-                    Tudo roda no seu computador, a partir do seu próprio export da Meta.
-                </p>
-                <div class="upload-grid">
-                    <label class="file-label">
-                        <strong>Seguidores</strong>
-                        <small>followers_1.json (pode selecionar _2, _3… juntos)</small>
-                        <span id="status-followers" class="status">Aguardando arquivo</span>
-                        <input type="file" id="followersInput" accept=".json" multiple>
-                    </label>
-                    <label class="file-label">
-                        <strong>Seguindo</strong>
-                        <small>following.json</small>
-                        <span id="status-following" class="status">Aguardando arquivo</span>
-                        <input type="file" id="followingInput" accept=".json">
-                    </label>
-                </div>
-                <div class="linha-salvar">
-                    <label for="dataSnapshot">
-                        Data do export
-                        <input type="date" id="dataSnapshot" disabled>
-                        <small id="origem-data">carregue os arquivos</small>
-                    </label>
-                    <button id="btnSalvarSnapshot" class="btn-primario" disabled>
-                        Salvar como snapshot
-                    </button>
-                </div>
-            </div>
-            <div class="stats-bar" id="stats-bar"></div>
+        <section class="intro">
+            <h1>Quem não te segue de volta</h1>
+            <p>
+                Compara sua lista de seguidores com a de quem você segue e separa em
+                três respostas simples. Roda inteiro no seu computador, a partir do
+                export que o próprio Instagram te dá — sem login e sem enviar nada.
+            </p>
+            <ol class="passos so-vazio">
+                <li><b>1</b> Peça o export ao Instagram</li>
+                <li><b>2</b> Arraste o .zip aqui</li>
+                <li><b>3</b> Veja quem não retribui</li>
+            </ol>
+        </section>
+
+        <label class="dropzone" id="dropzone">
+            <input type="file" id="arquivosInput" accept=".zip,.json,application/json,application/zip" multiple>
+            <span class="dropzone-icone" id="icone-solta"></span>
+            <span class="dropzone-texto">
+                <strong>Arraste aqui o .zip que o Instagram enviou</strong>
+                <small>
+                    Ou clique para escolher. Aceita o .zip inteiro — não precisa
+                    descompactar nem procurar arquivo dentro de pasta.
+                </small>
+            </span>
+            <span class="dropzone-acao">Escolher arquivo</span>
+        </label>
+
+        <div class="chips" id="chips-arquivos">
+            <span class="chip" id="status-followers">Seguidores — aguardando</span>
+            <span class="chip" id="status-following">Seguindo — aguardando</span>
         </div>
 
-        <div id="aviso-prova"></div>
-        <div id="linha-do-tempo"></div>
+        <div class="linha-salvar">
+            <label for="dataSnapshot">
+                Data do export
+                <input type="date" id="dataSnapshot" disabled>
+                <small id="origem-data">carregue os arquivos</small>
+            </label>
+            <button id="btnSalvarSnapshot" class="btn-primario" disabled>
+                Salvar como snapshot
+            </button>
+            <p class="linha-salvar-nota">
+                Guardar este export é o que permite comparar com o próximo. É dessa
+                comparação que sai a resposta de quem removeu o follow depois que você retribuiu.
+            </p>
+        </div>
 
         <details class="guia" id="guia">
-            <summary>Onde baixar os arquivos no Instagram (passo a passo)</summary>
+            <summary>Como pegar seus dados no Instagram</summary>
             <div class="guia-corpo">
-                <p><strong>1. Peça o export para a Meta</strong></p>
+                <span class="guia-passo">1. Peça o export</span>
                 <p>No app do Instagram ou em <code>accountscenter.instagram.com</code>:</p>
                 <div class="caminho">
                     Perfil → Menu ☰ → <strong>Central de Contas</strong><br>
                     → Suas informações e permissões<br>
-                    → <strong>Exportar suas informações</strong> (antigo "Baixar suas informações")<br>
+                    → <strong>Baixar suas informações</strong><br>
                     → Criar exportação → <strong>Exportar para o dispositivo</strong>
                 </div>
-                <table>
-                    <tr><th>Opção</th><th>O que escolher</th></tr>
-                    <tr><td>Quais informações</td><td>Selecionar tipos → marque só <strong>Seguidores e seguindo</strong></td></tr>
-                    <tr><td>Intervalo de datas</td><td>Todo o período</td></tr>
-                    <tr><td>Formato</td><td><strong>JSON</strong> — obrigatório</td></tr>
-                    <tr><td>Qualidade de mídia</td><td>Irrelevante (não baixa fotos)</td></tr>
-                </table>
+                <p>Nas opções, escolha:</p>
+                <ul>
+                    <li>Informações: <strong>apenas "Seguidores e seguindo"</strong></li>
+                    <li>Intervalo de datas: <strong>Todo o período</strong></li>
+                    <li>Formato: <strong>JSON</strong></li>
+                </ul>
                 <div class="destaque">
-                    Se escolher <strong>HTML</strong> em vez de JSON, o app não consegue ler.
-                    Marcando só "Seguidores e seguindo", o arquivo sai em minutos em vez de horas.
+                    Os dois que mais dão errado: escolher <strong>HTML</strong> em vez de JSON
+                    (o app não lê) e escolher um <strong>intervalo curto</strong> de datas, que
+                    corta seguidores antigos e faz eles parecerem que te largaram.
+                    Marcar só "Seguidores e seguindo" também faz o arquivo sair em minutos,
+                    não em horas.
                 </div>
 
-                <p style="margin-top:16px"><strong>2. Descompacte o .zip e ache os arquivos</strong></p>
-                <p>O Instagram avisa quando ficar pronto. Baixe o <code>.zip</code> e descompacte. Dentro dele:</p>
-                <div class="caminho">
-                    seu-export/<br>
-                    └── connections/<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;└── followers_and_following/<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── <strong>followers_1.json</strong> ← carregue em "Seguidores"<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── <strong>following.json</strong> ← carregue em "Seguindo"
-                </div>
-
-                <p style="margin-top:16px"><strong>3. Carregue aqui</strong></p>
+                <span class="guia-passo">2. Baixe o .zip quando o aviso chegar</span>
                 <p>
-                    <strong>Não precisa mover nada de pasta.</strong> Clique nos campos acima e
-                    selecione os arquivos onde eles estiverem — Downloads, Área de Trabalho, tanto faz.
-                    O app só lê o conteúdo; nada é copiado ou enviado para lugar nenhum.
-                </p>
-                <p>
-                    Se houver <code>followers_2.json</code>, <code>followers_3.json</code>…, selecione
-                    <strong>todos de uma vez</strong> no campo "Seguidores" (segure Ctrl ao clicar).
-                    Carregar só o primeiro faz a conta sair errada.
+                    O Instagram avisa por notificação ou e-mail quando o arquivo fica pronto —
+                    costuma levar de alguns minutos a algumas horas. Baixe o <code>.zip</code> e
+                    pode deixar do jeito que está.
                 </p>
 
-                <div class="destaque" style="margin-top:16px">
-                    <strong>Repita daqui a alguns dias.</strong> Com um export só, o app apenas suspeita.
-                    Com dois em datas diferentes, ele prova quem te largou — porque quem some da lista
-                    não deixa rastro em um arquivo isolado.
+                <span class="guia-passo">3. Arraste o .zip para o campo acima</span>
+                <p>
+                    Não precisa descompactar: o app encontra sozinho os arquivos de seguidores
+                    e de seguindo lá dentro. Se preferir descompactar, os arquivos estão em
+                    <code>connections/followers_and_following/</code> — envie
+                    <code>followers_1.json</code> (e os <code>_2</code>, <code>_3</code>… se
+                    existirem) junto com <code>following.json</code>, todos de uma vez.
+                </p>
+                <p>
+                    Nada é copiado nem enviado para servidor nenhum: o navegador lê o conteúdo
+                    e a análise acontece aí mesmo, na sua máquina.
+                </p>
+
+                <div class="destaque">
+                    <strong>Repita daqui a algumas semanas.</strong> Com um export só, o app
+                    consegue dizer quem não te segue de volta — mas quem te larga simplesmente
+                    some da lista e não deixa rastro. Guardando dois exports em datas
+                    diferentes, a diferença entre eles mostra exatamente quem removeu o follow.
                 </div>
             </div>
         </details>
 
-        <div class="abas" id="abas"></div>
+        <div class="contexto so-com-dados" id="contexto"></div>
+        <div class="so-com-dados" id="aviso-prova"></div>
+        <div class="so-com-dados" id="linha-do-tempo"></div>
 
-        <div class="toolbar">
+        <div class="stats-bar so-com-dados" id="stats-bar"></div>
+        <p class="aba-descricao so-com-dados" id="aba-descricao"></p>
+
+        <div class="toolbar so-com-dados">
             <span class="campo-busca">
                 <span id="icone-busca"></span>
                 <input type="text" id="searchInput" class="search-input" placeholder="Buscar perfil" disabled>
             </span>
             <select id="ordenacao" title="Ordenar por">
                 <option value="score">Maior risco</option>
-                <option value="recente">Follow mais recente</option>
-                <option value="antigo">Follow mais antigo</option>
+                <option value="recente">Mais recente</option>
+                <option value="antigo">Mais antigo</option>
                 <option value="alfabetica">A–Z</option>
             </select>
-            <button id="btnTriagem" class="btn-triagem" title="Revisar um por um, com teclado">Triagem</button>
+            <button id="btnTriagem" class="btn-triagem" title="Revisar um por um, com teclado">Revisar um a um</button>
             <button id="btnExportarBackup" class="btn-icone" title="Backup dos snapshots" aria-label="Backup"></button>
             <label class="btn-icone" title="Restaurar backup" style="cursor:pointer">
                 <span id="icone-restaurar"></span>
@@ -535,11 +621,50 @@
             <button id="btnResetHistory" class="btn-icone perigo" title="Limpar histórico" aria-label="Limpar histórico" style="display:none;"></button>
         </div>
 
-        <div class="list-section-title" id="list-title">Carregue os arquivos para começar</div>
-        <div class="users-grid" id="users-grid">
-            <div class="status-message">Nenhum dado carregado ainda.</div>
-        </div>
-        <div class="pagination-container" id="pagination-controls"></div>
+        <div class="users-grid so-com-dados" id="users-grid"></div>
+        <div class="pagination-container so-com-dados" id="pagination-controls"></div>
+
+        <footer class="rodape">
+            <p class="rodape-destaque">
+                <strong>Nada sai do seu computador.</strong> A análise acontece inteiramente
+                dentro do seu navegador. Seus arquivos não são enviados, copiados nem
+                guardados em servidor nenhum. Este site não usa cookies, não tem analytics
+                e não coleta nada sobre você.
+            </p>
+            <details class="rodape-detalhes">
+                <summary>Privacidade, em detalhe</summary>
+                <ul>
+                    <li>
+                        <strong>Onde ficam seus dados.</strong> No armazenamento do próprio
+                        navegador, na sua máquina. Limpar os dados de navegação apaga tudo —
+                        use o botão de backup se quiser guardar o histórico.
+                    </li>
+                    <li>
+                        <strong>Isto é verificável, não é só uma promessa.</strong> A política
+                        de segurança deste site bloqueia qualquer conexão de rede partindo
+                        da página. Abra a aba Rede do seu navegador e confira: depois de
+                        carregar, o site não fala com ninguém — nem comigo.
+                    </li>
+                    <li>
+                        <strong>A lista contém dados de outras pessoas.</strong> São os @ de
+                        quem segue você e de quem você segue, e eles não escolheram estar
+                        nisso. Por rodar só na sua máquina, ninguém além de você vê. Não
+                        redistribua a lista.
+                    </li>
+                    <li>
+                        <strong>Hospedagem.</strong> O site é servido pela Cloudflare, que
+                        registra endereço de IP e horário de acesso para operar a rede, como
+                        qualquer site da internet. Nada do seu export passa por lá.
+                    </li>
+                    <li>
+                        <strong>Sem vínculo com a Meta.</strong> Este projeto não é afiliado,
+                        patrocinado nem endossado pelo Instagram ou pela Meta. Ele nunca se
+                        conecta ao Instagram: apenas lê o arquivo que a própria Meta entrega
+                        a você quando você pede seus dados.
+                    </li>
+                </ul>
+            </details>
+        </footer>
     </div>
 
     <script>
@@ -594,7 +719,8 @@ const TRACOS = {
     subir: 'M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 9l5-5 5 5M12 4v12',
     limpar: 'M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3',
     arquivo: 'M14 3v4a1 1 0 0 0 1 1h4M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z',
-    calendario: 'M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zM16 3v4M8 3v4M4 11h16'
+    calendario: 'M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zM16 3v4M8 3v4M4 11h16',
+    pacote: 'M12 3l8 4.5v9L12 21l-8-4.5v-9zM4 7.5l8 4.5 8-4.5M12 12v9'
 };
 
 const NS = 'http://www.w3.org/2000/svg';
@@ -811,7 +937,7 @@ const ParserService = {
 
     /**
      * recently_unfollowed_profiles.json = perfis que VOCÊ deixou de seguir.
-     * (Verificado no seu export: 244 de 247 já não estão mais no seu following.)
+     * (Verificado contra um export real: quase todos já não estão mais no following.)
      * Serve para preencher o histórico automaticamente em vez de você marcar
      * "parei de seguir" na mão.
      */
@@ -822,6 +948,33 @@ const ParserService = {
     /** Solicitações de follow — recebidas (conta privada) ou enviadas por você. */
     extrairSolicitacoes(json) {
         return paraMap(desembrulhar(json).map(lerItemLabelValues));
+    },
+
+    /**
+     * De qual lista este JSON veio — ou `null` se não for nenhuma das duas.
+     *
+     * É o que permite ao usuário soltar tudo de uma vez em vez de acertar qual
+     * arquivo vai em qual campo. O conteúdo manda quando dá: `following.json`
+     * chega embrulhado em `{ relationships_following: [...] }`, e isso identifica
+     * a lista mesmo se o arquivo tiver sido renomeado.
+     *
+     * `followers_N.json`, porém, vem como array puro. E não dá para decidir pelo
+     * conteúdo: `close_friends.json` é um array de itens exatamente com o mesmo
+     * formato. Para array sem embrulho, portanto, o nome é obrigatório — chutar
+     * "deve ser seguidores" misturaria a lista de melhores amigos na análise.
+     */
+    classificar(json, nome = '') {
+        if (json && !Array.isArray(json) && typeof json === 'object') {
+            if (Array.isArray(json.relationships_followers)) return 'followers';
+            if (Array.isArray(json.relationships_following)) return 'following';
+            return null;
+        }
+        if (!Array.isArray(json)) return null;
+
+        const base = String(nome).toLowerCase().split('/').pop() ?? '';
+        if (/^following(_\d+)?\.json$/.test(base)) return 'following';
+        if (/^followers(_\d+)?\.json$/.test(base)) return 'followers';
+        return null;
     },
 
     /** Lê e faz o parse de um File do input, com mensagem de erro legível. */
@@ -836,20 +989,169 @@ const ParserService = {
         }
     },
 
-    /** Lê vários arquivos de uma vez (ex.: followers_1..N). */
-    async lerArquivosAsync(fileList) {
-        return Promise.all(Array.from(fileList).map((f) => this.lerArquivoAsync(f)));
-    },
-
     /**
      * Data de modificação dos arquivos, em segundos. É o carimbo que a Meta
      * deixou ao gerar o export — a fonte mais confiável para datar o snapshot.
+     * Para um `.zip` baixado, é a hora do download, que é uma boa aproximação.
      */
     dataDeModificacao(fileList) {
         const datas = Array.from(fileList)
             .map((f) => f.lastModified)
             .filter((t) => Number.isFinite(t) && t > 0);
         return datas.length ? Math.floor(Math.max(...datas) / 1000) : null;
+    }
+};
+
+/* ================= src/zip.js ================= */
+/**
+ * Leitura do .zip do export da Meta — sem nenhuma dependência externa.
+ *
+ * Por que isto existe: a parte mais cara do onboarding não é a análise, é pedir
+ * ao usuário que descompacte o export e cace dois arquivos dentro de
+ * `connections/followers_and_following/`. Aceitar o .zip inteiro elimina o passo
+ * onde a maioria desiste.
+ *
+ * Por que não usar uma lib (fflate, jszip): o app precisa continuar rodando com
+ * duplo clique, offline, sem CDN e sem `npm install`. O navegador já traz um
+ * inflate nativo em `DecompressionStream('deflate-raw')`; o que falta é só ler o
+ * índice do ZIP, que são ~60 linhas de leitura de bytes.
+ *
+ * Lemos o diretório central (não os headers locais em sequência) porque só nos
+ * interessam 2 ou 3 entradas de um arquivo com centenas — descompactar tudo para
+ * achá-las desperdiçaria memória à toa.
+ */
+
+const ASSINATURA_EOCD = 0x06054b50;
+const ASSINATURA_CENTRAL = 0x02014b50;
+/** O comentário final do ZIP cabe em 64 KB; o EOCD está dentro dessa cauda. */
+const CAUDA_EOCD = 66_000;
+
+const zipSuportado = typeof DecompressionStream === 'function';
+
+/** Localiza o End of Central Directory varrendo a cauda de trás para frente. */
+const acharEOCD = (dv) => {
+    const inicio = Math.max(0, dv.byteLength - CAUDA_EOCD);
+    for (let i = dv.byteLength - 22; i >= inicio; i--) {
+        if (dv.getUint32(i, true) === ASSINATURA_EOCD) return i;
+    }
+    return -1;
+};
+
+/** Nomes no ZIP vêm em UTF-8 (bit 11) ou CP437; na prática ambos batem em ASCII. */
+const decodificarNome = (bytes) => new TextDecoder('utf-8').decode(bytes);
+
+/**
+ * Entradas do diretório central. Devolve só o necessário para achar e extrair:
+ * nome, método de compressão, tamanho e onde começa o header local.
+ */
+const lerEntradasCentrais = (dv, bytes, inicio, total) => {
+    const entradas = [];
+    let p = inicio;
+
+    for (let i = 0; i < total && p + 46 <= dv.byteLength; i++) {
+        if (dv.getUint32(p, true) !== ASSINATURA_CENTRAL) break;
+
+        const metodo = dv.getUint16(p + 10, true);
+        const tamanhoComprimido = dv.getUint32(p + 20, true);
+        const tamNome = dv.getUint16(p + 28, true);
+        const tamExtra = dv.getUint16(p + 30, true);
+        const tamComentario = dv.getUint16(p + 32, true);
+        const offsetLocal = dv.getUint32(p + 42, true);
+        const nome = decodificarNome(bytes.subarray(p + 46, p + 46 + tamNome));
+
+        entradas.push({ nome, metodo, tamanhoComprimido, offsetLocal });
+        p += 46 + tamNome + tamExtra + tamComentario;
+    }
+    return entradas;
+};
+
+/**
+ * O tamanho do nome/extra no header LOCAL pode diferir do central — é o erro
+ * clássico de quem lê ZIP. Sempre reler daqui antes de fatiar os dados.
+ */
+const dadosDaEntrada = (dv, bytes, entrada) => {
+    const p = entrada.offsetLocal;
+    const tamNome = dv.getUint16(p + 26, true);
+    const tamExtra = dv.getUint16(p + 28, true);
+    const inicio = p + 30 + tamNome + tamExtra;
+    return bytes.subarray(inicio, inicio + entrada.tamanhoComprimido);
+};
+
+const inflarDeflateBruto = async (comprimido) => {
+    const fluxo = new Blob([comprimido]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+    return new Uint8Array(await new Response(fluxo).arrayBuffer());
+};
+
+/** Só interessam os dois arquivos de relacionamento, onde quer que estejam. */
+const RELEVANTE = /^(followers(_\d+)?|following(_\d+)?)\.json$/i;
+const nomeBase = (caminho) => caminho.split(/[\/]/).pop() ?? '';
+
+const ZipService = {
+    suportado: zipSuportado,
+
+    ehZip(file) {
+        return /\.zip$/i.test(file?.name ?? '') || file?.type === 'application/zip';
+    },
+
+    /**
+     * Extrai do .zip apenas followers_N.json e following.json, já parseados.
+     * @returns {Promise<Array<{nome: string, json: any}>>}
+     */
+    async extrairExportInstagram(file) {
+        if (!zipSuportado) {
+            throw new Error(
+                'Seu navegador não sabe abrir .zip. Descompacte o arquivo e envie os .json avulsos.'
+            );
+        }
+
+        const buffer = await file.arrayBuffer();
+        const bytes = new Uint8Array(buffer);
+        const dv = new DataView(buffer);
+
+        const eocd = acharEOCD(dv);
+        if (eocd < 0) throw new Error(`"${file.name}" não parece um .zip válido.`);
+
+        const totalEntradas = dv.getUint16(eocd + 10, true);
+        const inicioCentral = dv.getUint32(eocd + 16, true);
+
+        // 0xFFFFFFFF é o marcador de ZIP64 — exports de "seguidores e seguindo"
+        // têm poucos MB e nunca chegam lá, então avisar é melhor que fingir.
+        if (inicioCentral === 0xffffffff || totalEntradas === 0xffff) {
+            throw new Error('Este .zip é grande demais (ZIP64). Descompacte e envie os .json.');
+        }
+
+        const alvos = lerEntradasCentrais(dv, bytes, inicioCentral, totalEntradas).filter((e) =>
+            RELEVANTE.test(nomeBase(e.nome))
+        );
+
+        if (!alvos.length) {
+            throw new Error(
+                `Não achei followers/following dentro de "${file.name}". ` +
+                    'Confira se você marcou "Seguidores e seguindo" e o formato JSON.'
+            );
+        }
+
+        const achados = [];
+        for (const entrada of alvos) {
+            const cru = dadosDaEntrada(dv, bytes, entrada);
+            let conteudo;
+            if (entrada.metodo === 0) conteudo = cru;
+            else if (entrada.metodo === 8) conteudo = await inflarDeflateBruto(cru);
+            else continue; // método exótico: ignora em vez de derrubar o lote
+
+            const texto = new TextDecoder('utf-8').decode(conteudo);
+            try {
+                achados.push({ nome: nomeBase(entrada.nome), json: JSON.parse(texto) });
+            } catch {
+                throw new Error(
+                    `"${nomeBase(entrada.nome)}" dentro do .zip não é JSON. ` +
+                        'Refaça o export escolhendo o formato JSON, não HTML.'
+                );
+            }
+        }
+
+        if (!achados.length) throw new Error(`Não consegui descompactar "${file.name}".`);
+        return achados;
     }
 };
 
@@ -1194,7 +1496,10 @@ const formatarDuracao = (seg) => {
     if (seg < 3600) return `${Math.round(seg / 60)}min`;
     if (seg < DIA) return `${Math.round(seg / 3600)}h`;
     if (seg < 30 * DIA) return `${Math.round(seg / DIA)}d`;
-    if (seg < 365 * DIA) return `${Math.round(seg / (30 * DIA))} meses`;
+    if (seg < 365 * DIA) {
+        const meses = Math.round(seg / (30 * DIA));
+        return `${meses} ${meses === 1 ? 'mês' : 'meses'}`;
+    }
     return `${(seg / (365 * DIA)).toFixed(1)} anos`;
 };
 
@@ -1368,7 +1673,7 @@ const StorageService = {
 /**
  * Modo triagem: um perfil por vez, com teclado.
  *
- * O problema que resolve: revisar 235 perfis numa grade obriga a abrir cada
+ * O problema que resolve: revisar centenas de perfis numa grade obriga a abrir cada
  * link, voltar, procurar onde parou e repetir. Aqui a lista vira uma fila —
  * você decide, ela avança sozinha, e dá para voltar atrás.
  *
@@ -1603,8 +1908,8 @@ const TriagemService = {
 
 /* ================= src/ui.js ================= */
 const dom = {
-    followersInput: document.getElementById('followersInput'),
-    followingInput: document.getElementById('followingInput'),
+    arquivosInput: document.getElementById('arquivosInput'),
+    dropzone: document.getElementById('dropzone'),
     btnSalvarSnapshot: document.getElementById('btnSalvarSnapshot'),
     dataSnapshot: document.getElementById('dataSnapshot'),
     origemData: document.getElementById('origem-data'),
@@ -1620,13 +1925,15 @@ const dom = {
     statusFollowers: document.getElementById('status-followers'),
     statusFollowing: document.getElementById('status-following'),
     statsBar: document.getElementById('stats-bar'),
-    abas: document.getElementById('abas'),
-    listTitle: document.getElementById('list-title'),
+    abaDescricao: document.getElementById('aba-descricao'),
+    contexto: document.getElementById('contexto'),
     avisoProva: document.getElementById('aviso-prova'),
     linhaDoTempo: document.getElementById('linha-do-tempo'),
+    guia: document.getElementById('guia'),
     marcaIcone: document.getElementById('marca-icone'),
     seloModo: document.getElementById('selo-modo'),
     iconeBusca: document.getElementById('icone-busca'),
+    iconeSolta: document.getElementById('icone-solta'),
     iconeRestaurar: document.getElementById('icone-restaurar')
 };
 
@@ -1639,74 +1946,149 @@ const CLASSE_BADGE = {
     [VEREDITO.SO_TE_SEGUE]: 'badge badge-ok'
 };
 
-/** Rótulo curto para o segmentado; `titulo` carrega a explicação completa. */
+const pct = (v) => `${Math.round((v ?? 0) * 100)}%`;
+const num = (v) => (v ?? 0).toLocaleString('pt-BR');
+
+/**
+ * As quatro perguntas que o usuário realmente faz, nesta ordem.
+ *
+ * Antes as abas eram nomeadas pelo vocabulário do motor ("Iscas", "Confirmadas",
+ * "Não seguem", "Te seguem") — duas delas quase idênticas na leitura rápida, e a
+ * diferença entre "não seguem" e "te seguem" era uma palavra. Aqui cada aba diz
+ * a direção da relação por extenso, e `descricao` repete a regra logo abaixo.
+ *
+ * "Largaram depois que segui" é subconjunto de "não me seguem de volta"; a
+ * descrição avisa disso em vez de deixar o usuário achar que os números não fecham.
+ */
 const ABAS = [
-    { id: 'RANKING', rotulo: 'Iscas', titulo: 'Ranking de risco', filtro: (p) => p.score > 0 },
-    { id: VEREDITO.BAIT_PROVADO, rotulo: 'Confirmadas', titulo: 'Isca confirmada entre dois snapshots', filtro: (p) => p.veredito === VEREDITO.BAIT_PROVADO },
-    { id: VEREDITO.SUMIU, rotulo: 'Te largaram', titulo: 'Te seguiam antes e não seguem mais', filtro: (p) => p.veredito === VEREDITO.SUMIU },
-    { id: 'NAO_RETRIBUEM', rotulo: 'Não seguem', titulo: 'Você segue e não há retorno', filtro: (p) => p.veredito === VEREDITO.NUNCA_RETRIBUIU || p.veredito === VEREDITO.BAIT_SUSPEITO },
-    { id: VEREDITO.SO_TE_SEGUE, rotulo: 'Te seguem', titulo: 'Te seguem sem retribuição sua', filtro: (p) => p.veredito === VEREDITO.SO_TE_SEGUE }
+    {
+        id: 'NAO_ME_SEGUEM',
+        rotulo: 'Não me seguem de volta',
+        filtro: (p) => p.voceSegueAgora && !p.teSegueAgora,
+        metrica: (resumo, total) => ({
+            nota: resumo.seguindo ? `de ${num(resumo.seguindo)} que você segue` : null,
+            notaPerigo: true,
+            proporcao: resumo.seguindo ? total / resumo.seguindo : 0,
+            perigo: true
+        }),
+        descricao: () =>
+            'Você segue estes perfis e não recebe follow de volta. É daqui que sai a limpeza da sua lista.'
+    },
+    {
+        id: 'LARGARAM',
+        rotulo: 'Largaram depois que eu segui',
+        filtro: (p) =>
+            p.veredito === VEREDITO.BAIT_PROVADO ||
+            p.veredito === VEREDITO.SUMIU ||
+            p.veredito === VEREDITO.BAIT_SUSPEITO,
+        metrica: (resumo) => ({
+            nota: resumo.temProva ? 'confirmado' : 'suspeita',
+            notaPerigo: resumo.temProva
+        }),
+        descricao: (resumo) =>
+            resumo.temProva
+                ? 'Estavam nos seus seguidores num export anterior e sumiram no seguinte — enquanto você continua seguindo. Isto é comparação entre snapshots, não estimativa.'
+                : 'Suspeitas, não prova: são follows recentes seus que nunca voltaram. Quem te larga some da lista sem deixar rastro, então só um segundo export mostra quem realmente removeu o follow.',
+        rodape: 'Estes perfis também aparecem em "Não me seguem de volta".'
+    },
+    {
+        id: 'NAO_SIGO',
+        rotulo: 'Eu não sigo de volta',
+        filtro: (p) => p.veredito === VEREDITO.SO_TE_SEGUE,
+        metrica: (resumo) => ({ nota: `de ${num(resumo.seguidores)} seguidores` }),
+        descricao: () => 'Seguem você e você ainda não retribuiu.'
+    },
+    {
+        id: 'MUTUOS',
+        rotulo: 'Seguem-se mutuamente',
+        filtro: (p) => p.veredito === VEREDITO.MUTUO,
+        metrica: (resumo) => ({
+            nota: `${pct(resumo.taxaReciprocidade)} de reciprocidade`,
+            proporcao: resumo.taxaReciprocidade
+        }),
+        descricao: () => 'Vocês dois se seguem. Nada a fazer aqui — está listado só para fechar a conta.'
+    }
 ];
+
+const ABA_PADRAO = ABAS[0].id;
+
+const acharAba = (id) => ABAS.find((a) => a.id === id) ?? ABAS[0];
 
 /** Faixa de risco, usada por avatar, medidor e badge. */
 const nivelRisco = (score) => (score >= 70 ? 'alto' : score >= 30 ? 'medio' : 'baixo');
 
+const contarAba = (perfis, aba) => perfis.filter((p) => !p.resolvido && aba.filtro(p)).length;
+
 const UIService = {
     itemsPerPage: 24,
 
-    /** Cartão de métrica: rótulo, número, nota e barra opcional de proporção. */
-    criarCartao({ rotulo, numero, nota, notaPerigo, proporcao, perigo }) {
-        const box = el('div', 'stat-box');
-        box.append(el('div', 'label', rotulo));
-
-        const valor = el('div', 'valor');
-        valor.append(el('span', 'number', String(numero)));
-        if (nota) valor.append(el('span', `nota ${notaPerigo ? 'perigo' : ''}`, nota));
-        box.append(valor);
-
-        if (proporcao != null) {
-            const trilho = el('div', 'trilho');
-            const preenchido = el('i', perigo ? 'perigo' : null);
-            preenchido.style.width = `${Math.min(100, Math.round(proporcao * 100))}%`;
-            trilho.append(preenchido);
-            box.append(trilho);
-        }
-        return box;
-    },
-
-    renderizarResumo(resumo) {
+    /**
+     * Cartões de métrica E navegação ao mesmo tempo.
+     *
+     * Antes eram dois controles empilhados: uma barra de números e, logo abaixo,
+     * um segmentado de abas que filtrava por esses mesmos números. Unir os dois
+     * elimina a tradução mental entre "N não retribuem" e a aba que os mostra.
+     */
+    renderizarNavegacao(perfis, resumo, abaAtiva, onTrocarAba) {
         dom.statsBar.replaceChildren();
         this.renderizarSeloModo(resumo);
         if (!resumo) return;
 
-        const pctNaoRetribuem = resumo.seguindo ? resumo.naoRetribuem / resumo.seguindo : 0;
+        for (const aba of ABAS) {
+            const total = contarAba(perfis, aba);
+            const m = aba.metrica?.(resumo, total) ?? {};
+            const ativo = aba.id === abaAtiva;
 
-        dom.statsBar.append(
-            this.criarCartao({
-                rotulo: 'Não retribuem',
-                numero: resumo.naoRetribuem.toLocaleString('pt-BR'),
-                nota: `${Math.round(pctNaoRetribuem * 100)}%`,
-                notaPerigo: true,
-                proporcao: pctNaoRetribuem,
-                perigo: true
-            }),
-            this.criarCartao({
-                rotulo: 'Reciprocidade',
-                numero: `${Math.round(resumo.taxaReciprocidade * 100)}%`,
-                nota: `${resumo.mutuos.toLocaleString('pt-BR')} mútuos`,
-                proporcao: resumo.taxaReciprocidade
-            }),
-            this.criarCartao({
-                rotulo: 'Seguidores',
-                numero: resumo.seguidores.toLocaleString('pt-BR'),
-                nota: `${resumo.seguindo.toLocaleString('pt-BR')} seguindo`
-            }),
-            this.criarCartao({
-                rotulo: resumo.temProva ? 'Iscas confirmadas' : 'Iscas prováveis',
-                numero: resumo.temProva ? resumo.baitProvado : resumo.baitSuspeito,
-                nota: resumo.temProva ? 'provado' : 'estimado',
-                notaPerigo: resumo.temProva
-            })
+            const btn = el('button', `card-nav ${ativo ? 'ativo' : ''}`);
+            btn.setAttribute('aria-pressed', String(ativo));
+            btn.append(el('span', 'card-nav-rotulo', aba.rotulo));
+
+            const valor = el('span', 'card-nav-valor');
+            valor.append(el('span', 'number', num(total)));
+            if (m.nota) valor.append(el('span', `nota ${m.notaPerigo ? 'perigo' : ''}`, m.nota));
+            btn.append(valor);
+
+            if (m.proporcao != null) {
+                const trilho = el('span', 'trilho');
+                const preenchido = el('i', m.perigo ? 'perigo' : null);
+                preenchido.style.width = `${Math.min(100, Math.round(m.proporcao * 100))}%`;
+                trilho.append(preenchido);
+                btn.append(trilho);
+            }
+
+            btn.addEventListener('click', () => onTrocarAba(aba.id));
+            dom.statsBar.append(btn);
+        }
+    },
+
+    /** Uma frase abaixo dos cartões dizendo exatamente o que a aba ativa lista. */
+    renderizarDescricaoAba(aba, resumo, total) {
+        if (!dom.abaDescricao) return;
+        dom.abaDescricao.replaceChildren();
+        if (!resumo) return;
+
+        dom.abaDescricao.append(
+            el('strong', null, `${num(total)} ${total === 1 ? 'perfil' : 'perfis'}. `),
+            el('span', null, aba.descricao?.(resumo) ?? '')
+        );
+        if (aba.rodape) dom.abaDescricao.append(' ', el('em', null, aba.rodape));
+    },
+
+    /** Números de fundo que não são navegação: contexto, não decisão. */
+    renderizarContexto(resumo) {
+        if (!dom.contexto) return;
+        dom.contexto.replaceChildren();
+        if (!resumo) return;
+
+        const item = (valor, rotulo) => {
+            const s = el('span');
+            s.append(el('b', null, valor), ` ${rotulo}`);
+            return s;
+        };
+        dom.contexto.append(
+            item(num(resumo.seguidores), 'seguidores'),
+            item(num(resumo.seguindo), 'seguindo'),
+            item(formatarData(resumo.ultimoSnapshot), 'é a data deste export')
         );
     },
 
@@ -1727,8 +2109,8 @@ const UIService = {
 
     /**
      * O aviso mais importante da interface: com um snapshot só, o app não tem como
-     * provar bait. Ser honesto sobre isso é o que separa esta ferramenta dos apps
-     * que inventam números.
+     * provar quem removeu o follow. Ser honesto sobre isso é o que separa esta
+     * ferramenta dos apps que inventam números.
      */
     renderizarAvisoProva(resumo) {
         dom.avisoProva.replaceChildren();
@@ -1740,17 +2122,17 @@ const UIService = {
 
         if (resumo.temProva) {
             texto.append(
-                el('strong', null, `${resumo.snapshots} snapshots comparados`),
+                el('strong', null, `${resumo.snapshots} exports comparados`),
                 el('span', null,
                     `Janela de ${formatarData(resumo.primeiroSnapshot)} a ${formatarData(resumo.ultimoSnapshot)}. ` +
-                    'As iscas confirmadas são provadas pela diferença entre snapshots, não estimadas.')
+                    'Quem largou você é dado apurado nessa diferença, não estimativa.')
             );
         } else {
             texto.append(
-                el('strong', null, 'Falta um segundo export para provar'),
+                el('strong', null, 'Falta um segundo export para provar quem te largou'),
                 el('span', null,
-                    'Quem te larga some do arquivo de seguidores e leva a prova junto. ' +
-                    'Com dois snapshots o app confirma em vez de estimar.')
+                    'Quem te larga some do arquivo de seguidores e leva a prova junto. Salve este export como ' +
+                    'snapshot, peça outro daqui a algumas semanas e o app passa a confirmar em vez de estimar.')
             );
         }
         caixa.append(texto);
@@ -1759,7 +2141,7 @@ const UIService = {
 
     renderizarLinhaDoTempo(snapshots) {
         dom.linhaDoTempo.replaceChildren();
-        if (!snapshots.length) return;
+        if (snapshots.length < 1) return;
 
         const trilha = el('div', 'timeline');
         snapshots.forEach((s, i) => {
@@ -1770,25 +2152,17 @@ const UIService = {
             trilha.append(ponto);
         });
         dom.linhaDoTempo.append(
-            el('div', 'timeline-title', `Snapshots salvos (${snapshots.length})`),
+            el('div', 'timeline-title', `Exports guardados (${snapshots.length})`),
             trilha
         );
     },
 
-    renderizarAbas(perfis, abaAtiva, onTrocarAba) {
-        dom.abas.replaceChildren();
-        for (const aba of ABAS) {
-            const total = perfis.filter((p) => aba.filtro(p) && !p.resolvido).length;
-            const btn = el('button', `aba ${aba.id === abaAtiva ? 'ativa' : ''}`);
-            btn.title = aba.titulo ?? aba.rotulo;
-            btn.append(el('span', null, aba.rotulo), el('span', 'aba-contagem', String(total)));
-            btn.addEventListener('click', () => onTrocarAba(aba.id));
-            dom.abas.append(btn);
-        }
-    },
-
-    atualizarStatusUpload(elemento, tamanho, origem = 'Carregado') {
-        elemento.textContent = `${origem} (${tamanho})`;
+    atualizarStatusUpload(elemento, rotulo, tamanho, origem) {
+        if (!elemento) return;
+        elemento.replaceChildren(
+            icone('check', 13),
+            el('span', null, `${rotulo}: ${num(tamanho)}${origem ? ` · ${origem}` : ''}`)
+        );
         // Cor vem da CSS, não daqui: um hex cravado no JS ignoraria o tema.
         elemento.classList.add('carregado');
     },
@@ -1803,16 +2177,17 @@ const UIService = {
     montarIconesFixos() {
         dom.marcaIcone?.replaceChildren(icone('marca', 17));
         dom.iconeBusca?.replaceChildren(icone('busca', 15));
+        dom.iconeSolta?.replaceChildren(icone('pacote', 20));
         dom.iconeRestaurar?.replaceChildren(icone('subir', 15));
         dom.btnExportarBackup?.replaceChildren(icone('baixar', 15));
         dom.btnTriagem?.prepend(icone('triagem', 15));
     },
 
-    renderizarGrade(lista, currentPage, onResolver) {
+    renderizarGrade(lista, currentPage, aba, onResolver) {
         dom.usersGrid.replaceChildren();
 
         if (!lista.length) {
-            dom.usersGrid.append(el('div', 'status-message', 'Nenhum perfil nesta categoria.'));
+            dom.usersGrid.append(this.vazio(aba));
             return;
         }
 
@@ -1820,6 +2195,49 @@ const UIService = {
         for (const p of lista.slice(inicio, inicio + this.itemsPerPage)) {
             dom.usersGrid.append(this.criarCard(p, onResolver));
         }
+    },
+
+    /** Lista vazia não é erro: cada aba tem um motivo diferente para estar vazia. */
+    vazio(aba) {
+        const MENSAGENS = {
+            NAO_ME_SEGUEM: ['Todo mundo retribui', 'Nenhum perfil que você segue está sem follow de volta.'],
+            LARGARAM: ['Ninguém removeu o follow', 'Nenhum perfil sumiu da sua lista de seguidores depois que você retribuiu.'],
+            NAO_SIGO: ['Você retribuiu todo mundo', 'Nenhum seguidor está esperando follow de volta.'],
+            MUTUOS: ['Nenhuma relação mútua', 'Ninguém que você segue segue você de volta.']
+        };
+        const [titulo, texto] = MENSAGENS[aba?.id] ?? ['Nada por aqui', 'Nenhum perfil nesta categoria.'];
+        const caixa = el('div', 'status-message');
+        caixa.append(el('strong', null, titulo), el('span', null, texto));
+        return caixa;
+    },
+
+    /**
+     * Linha de contexto do perfil. Escrita por veredito, não por campo: numa aba
+     * de "eu não sigo de volta" a data que importa é quando ELE te seguiu, e o
+     * texto genérico de antes ("você seguiu em…") simplesmente não se aplicava.
+     */
+    linhasMeta(p) {
+        const linhas = [];
+
+        if (p.veredito === VEREDITO.SO_TE_SEGUE) {
+            if (p.seguiuVoceEm != null) linhas.push(`te segue desde ${formatarData(p.seguiuVoceEm)}`);
+            return linhas;
+        }
+
+        if (p.veredito === VEREDITO.MUTUO) {
+            if (p.voceSeguiuEm != null) linhas.push(`você seguiu ${formatarData(p.voceSeguiuEm)}`);
+            if (p.trocaInstantanea) linhas.push('troca instantânea');
+            return linhas;
+        }
+
+        if (p.voceSeguiuEm != null) linhas.push(`você seguiu ${formatarData(p.voceSeguiuEm)}`);
+        if (p.perdidoEntre) {
+            linhas.push(`sumiu entre ${formatarData(p.perdidoEntre[0])} e ${formatarData(p.perdidoEntre[1])}`);
+        }
+        if (p.retencaoMaxSeg != null) linhas.push(`durou ~${formatarDuracao(p.retencaoMaxSeg)}`);
+        if (p.quemVeioPrimeiro === 'ELES') linhas.push('ele seguiu primeiro');
+        if (p.quemVeioPrimeiro === 'SIMULTANEO') linhas.push('troca instantânea');
+        return linhas;
     },
 
     criarCard(p, onResolver) {
@@ -1841,10 +2259,7 @@ const UIService = {
         topo.append(link, el('span', CLASSE_BADGE[p.veredito] ?? 'badge', ROTULO_VEREDITO[p.veredito]));
 
         const meta = el('div', 'card-meta');
-        if (p.retencaoMaxSeg != null) meta.append(el('span', null, `reteve ~${formatarDuracao(p.retencaoMaxSeg)}`));
-        if (p.quemVeioPrimeiro === 'ELES') meta.append(el('span', null, 'veio primeiro'));
-        if (p.quemVeioPrimeiro === 'SIMULTANEO') meta.append(el('span', null, 'troca instantânea'));
-        if (p.voceSeguiuEm != null) meta.append(el('span', null, `você seguiu ${formatarData(p.voceSeguiuEm)}`));
+        for (const texto of this.linhasMeta(p)) meta.append(el('span', null, texto));
         info.append(topo, meta);
 
         card.append(avatar, info);
@@ -1883,11 +2298,13 @@ const UIService = {
         });
         acoes.append(btnCopiar);
 
-        if (p.voceSegueAgora) {
-            const btnResolver = el('button', 'btn-icone perigo');
-            btnResolver.title = 'Marcar que parei de seguir';
-            btnResolver.setAttribute('aria-label', `Marcar ${p.user} como resolvido`);
-            btnResolver.append(icone('remover', 15));
+        // Mútuo não tem pendência: sem botão, o card fica só informativo.
+        if (p.veredito !== VEREDITO.MUTUO) {
+            const pendente = p.voceSegueAgora && !p.teSegueAgora;
+            const btnResolver = el('button', `btn-icone ${pendente ? 'perigo' : ''}`);
+            btnResolver.title = pendente ? 'Já parei de seguir' : 'Já resolvi este';
+            btnResolver.setAttribute('aria-label', `Tirar ${p.user} da lista`);
+            btnResolver.append(icone(pendente ? 'remover' : 'check', 15));
             btnResolver.addEventListener('click', () => onResolver(p.user, btnResolver));
             acoes.append(btnResolver);
         }
@@ -1907,7 +2324,7 @@ const UIService = {
             btn.disabled = desativado;
             btn.addEventListener('click', () => {
                 onPageChange(destino);
-                dom.listTitle.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                dom.statsBar.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
             dom.paginationControls.append(btn);
             return btn;
@@ -1937,8 +2354,9 @@ const UIService = {
         const t = el('div', `toast toast-${tipo}`);
         t.append(icone(tipo === 'erro' ? 'alerta' : tipo === 'ok' ? 'checkCirculo' : 'info', 16), el('span', null, mensagem));
         document.body.append(t);
-        setTimeout(() => t.classList.add('sai'), 2600);
-        setTimeout(() => t.remove(), 3000);
+        const vida = tipo === 'erro' ? 6000 : 2600;
+        setTimeout(() => t.classList.add('sai'), vida);
+        setTimeout(() => t.remove(), vida + 400);
     }
 };
 
@@ -1948,24 +2366,41 @@ const AppState = {
     following: new Map(),   // username -> quando VOCÊ seguiu
     snapshots: [],
     historico: new Set(),
-    carregadoDeArquivo: false,
+    origemListas: { followers: null, following: null },  // 'arquivo' | 'snapshot'
     mtimeArquivos: null,      // File.lastModified dos JSONs carregados
     dataManual: null,         // data que o usuário digitou, se houver
     exportParcial: null,      // export recortado por intervalo de datas
     perfis: [],
     resumo: null,
-    aba: 'RANKING',
+    aba: ABA_PADRAO,
     pagina: 1
 };
 
+/**
+ * A data que importa muda por aba: em "eu não sigo de volta" não existe
+ * `voceSeguiuEm`, e ordenar por ele deixava a lista inteira empatada em zero.
+ */
+const carimboRelevante = (p) => p.voceSeguiuEm ?? p.seguiuVoceEm ?? 0;
+
 const ORDENADORES = {
-    score: (a, b) => b.score - a.score,
-    recente: (a, b) => (b.voceSeguiuEm ?? 0) - (a.voceSeguiuEm ?? 0),
-    antigo: (a, b) => (a.voceSeguiuEm ?? Infinity) - (b.voceSeguiuEm ?? Infinity),
+    score: (a, b) => b.score - a.score || carimboRelevante(b) - carimboRelevante(a),
+    recente: (a, b) => carimboRelevante(b) - carimboRelevante(a),
+    antigo: (a, b) => (carimboRelevante(a) || Infinity) - (carimboRelevante(b) || Infinity),
     alfabetica: (a, b) => a.user.localeCompare(b.user)
 };
 
 const temDadosCarregados = () => AppState.followers.size > 0 && AppState.following.size > 0;
+
+/**
+ * As duas listas na tela vieram do MESMO export recém-carregado?
+ *
+ * Meia carga é armadilha: com seguidores novos e um "seguindo" reidratado do
+ * snapshot anterior, a análise sai plausível e errada, e o snapshot gravado
+ * carregaria duas datas diferentes. Nesse estado o app mostra o que dá, mas não
+ * deixa salvar nem trata os dados como um export novo.
+ */
+const exportNovoNaTela = () =>
+    AppState.origemListas.followers === 'arquivo' && AppState.origemListas.following === 'arquivo';
 
 const SEG_DIA = 86400;
 const paraInputDate = (ts) => new Date(ts * 1000).toISOString().slice(0, 10);
@@ -1992,7 +2427,7 @@ const reanalisar = () => {
     // arquivo. Quando os dados vêm de um snapshot já salvo, incluí-los de novo
     // duplicaria a mesma leitura e podia derrubar um snapshot real da análise.
     const provisorio =
-        AppState.carregadoDeArquivo && temDadosCarregados()
+        exportNovoNaTela() && temDadosCarregados()
             ? [criarSnapshot(AppState.followers, AppState.following, dataDoExport().takenAt)]
             : [];
     const salvosAnteriores = AppState.snapshots.filter(
@@ -2003,15 +2438,19 @@ const reanalisar = () => {
     AppState.perfis = perfis;
     AppState.resumo = resumo;
 
-    UIService.renderizarResumo(resumo);
+    // Enquanto não há análise, a tela inteira é o passo "traga seus arquivos".
+    document.body.dataset.estado = resumo ? 'pronto' : 'vazio';
+    if (!resumo) dom.guia?.setAttribute('open', '');
+
+    UIService.renderizarContexto(resumo);
     UIService.renderizarAvisoProva(resumo);
     UIService.renderizarLinhaDoTempo(AppState.snapshots);
-    UIService.renderizarAbas(perfis, AppState.aba, trocarAba);
+    UIService.renderizarNavegacao(perfis, resumo, AppState.aba, trocarAba);
     renderizarLista();
 };
 
 const listaVisivel = () => {
-    const aba = ABAS.find((a) => a.id === AppState.aba) ?? ABAS[0];
+    const aba = acharAba(AppState.aba);
     const busca = dom.searchInput.value.trim().toLowerCase();
     return AppState.perfis
         .filter((p) => !p.resolvido && aba.filtro(p) && (!busca || p.user.includes(busca)))
@@ -2019,13 +2458,14 @@ const listaVisivel = () => {
 };
 
 const renderizarLista = () => {
+    const aba = acharAba(AppState.aba);
     const lista = listaVisivel();
-    const aba = ABAS.find((a) => a.id === AppState.aba) ?? ABAS[0];
-    dom.listTitle.textContent = `${aba.rotulo} — ${lista.length} perfis`;
+
     dom.searchInput.disabled = !AppState.perfis.length;
     if (dom.btnTriagem) dom.btnTriagem.disabled = !lista.length;
 
-    UIService.renderizarGrade(lista, AppState.pagina, resolverPerfil);
+    UIService.renderizarDescricaoAba(aba, AppState.resumo, lista.length);
+    UIService.renderizarGrade(lista, AppState.pagina, aba, resolverPerfil);
     UIService.renderizarControlesPaginacao(lista.length, AppState.pagina, (novaPagina) => {
         AppState.pagina = novaPagina;
         renderizarLista();
@@ -2035,7 +2475,7 @@ const renderizarLista = () => {
 const trocarAba = (id) => {
     AppState.aba = id;
     AppState.pagina = 1;
-    UIService.renderizarAbas(AppState.perfis, AppState.aba, trocarAba);
+    UIService.renderizarNavegacao(AppState.perfis, AppState.resumo, AppState.aba, trocarAba);
     renderizarLista();
 };
 
@@ -2049,7 +2489,7 @@ const resolverPerfil = async (user, botao) => {
     const alvo = AppState.perfis.find((p) => p.user === user);
     if (alvo) alvo.resolvido = true;
 
-    UIService.renderizarAbas(AppState.perfis, AppState.aba, trocarAba);
+    UIService.renderizarNavegacao(AppState.perfis, AppState.resumo, AppState.aba, trocarAba);
     renderizarLista();
 
     try {
@@ -2059,39 +2499,102 @@ const resolverPerfil = async (user, botao) => {
         AppState.historico.delete(user);
         if (alvo) alvo.resolvido = false;
         UIService.toast(`Não deu para salvar: ${erro.message}`, 'erro');
-        UIService.renderizarAbas(AppState.perfis, AppState.aba, trocarAba);
+        UIService.renderizarNavegacao(AppState.perfis, AppState.resumo, AppState.aba, trocarAba);
         renderizarLista();
     }
 };
 
 // -------------------------------------------------------------- entrada de arquivos
 
-const carregarArquivos = async (fileList, tipo) => {
-    if (!fileList?.length) return;
+/**
+ * Entrada única: .zip do export, .json avulsos, ou os dois misturados.
+ *
+ * Antes havia dois campos rotulados e o usuário tinha de acertar qual arquivo ia
+ * em qual — errar aí produzia uma análise invertida sem nenhum aviso. Agora o
+ * roteamento é feito pelo conteúdo (ver ParserService.classificar), então soltar
+ * tudo de uma vez, em qualquer ordem, dá no mesmo.
+ */
+const receberArquivos = async (fileList) => {
+    const arquivos = Array.from(fileList ?? []);
+    if (!arquivos.length) return;
+
     try {
-        const jsons = await ParserService.lerArquivosAsync(fileList);
-        AppState.carregadoDeArquivo = true;
+        const lotes = { followers: [], following: [] };
+        const mtime = ParserService.dataDeModificacao(arquivos);
+
+        for (const file of arquivos) {
+            const conteudos = ZipService.ehZip(file)
+                ? await ZipService.extrairExportInstagram(file)
+                : [{ nome: file.name, json: await ParserService.lerArquivoAsync(file) }];
+
+            for (const { nome, json } of conteudos) {
+                const tipo = ParserService.classificar(json, nome);
+                if (tipo) lotes[tipo].push(json);
+            }
+        }
+
+        if (!lotes.followers.length && !lotes.following.length) {
+            throw new Error(
+                'Não reconheci nenhuma lista de seguidores ou de seguindo aqui. ' +
+                    'Veja o passo a passo: o export precisa ser em JSON, com "Seguidores e seguindo" marcado.'
+            );
+        }
+
         AppState.dataManual = null;
-        const mtime = ParserService.dataDeModificacao(fileList);
         if (mtime) AppState.mtimeArquivos = Math.max(AppState.mtimeArquivos ?? 0, mtime);
-        if (tipo === 'followers') {
-            AppState.followers = ParserService.extrairSeguidores(...jsons);
+
+        if (lotes.followers.length) {
+            AppState.followers = ParserService.extrairSeguidores(...lotes.followers);
+            AppState.origemListas.followers = 'arquivo';
             UIService.atualizarStatusUpload(
                 dom.statusFollowers,
+                'Seguidores',
                 AppState.followers.size,
-                fileList.length > 1 ? `${fileList.length} arquivos` : 'Carregado'
+                lotes.followers.length > 1 ? `${lotes.followers.length} arquivos` : null
             );
-        } else {
-            AppState.following = ParserService.extrairSeguindo(...jsons);
-            UIService.atualizarStatusUpload(dom.statusFollowing, AppState.following.size);
         }
-        dom.btnSalvarSnapshot.disabled = !temDadosCarregados();
+        if (lotes.following.length) {
+            AppState.following = ParserService.extrairSeguindo(...lotes.following);
+            AppState.origemListas.following = 'arquivo';
+            UIService.atualizarStatusUpload(dom.statusFollowing, 'Seguindo', AppState.following.size);
+        }
+
         atualizarCampoData();
         avaliarIntegridade();
         reanalisar();
+        avisarSobreOQueFalta(lotes);
     } catch (erro) {
         UIService.toast(erro.message, 'erro');
     }
+};
+
+/**
+ * Meia carga é pior que nenhuma: misturar seguidores novos com um "seguindo"
+ * antigo produz uma análise plausível e errada. Vale um aviso explícito.
+ */
+const avisarSobreOQueFalta = (lotes) => {
+    const faltando = !lotes.followers.length
+        ? { arquivo: 'followers_1.json', rotulo: 'seguidores' }
+        : !lotes.following.length
+          ? { arquivo: 'following.json', rotulo: 'quem você segue' }
+          : null;
+
+    if (!faltando) {
+        UIService.toast('Arquivos lidos. Salve como snapshot para comparar depois.', 'ok');
+        return;
+    }
+
+    const outraOrigem = !lotes.followers.length
+        ? AppState.origemListas.followers
+        : AppState.origemListas.following;
+
+    UIService.toast(
+        outraOrigem === 'snapshot'
+            ? `Falta a lista de ${faltando.rotulo} (${faltando.arquivo}) deste export — ` +
+                  'a que está na tela veio do snapshot anterior e vai misturar as duas datas.'
+            : `Falta a lista de ${faltando.rotulo} (${faltando.arquivo}).`,
+        'erro'
+    );
 };
 
 /**
@@ -2122,17 +2625,36 @@ const ROTULO_ORIGEM = {
     manual: 'definida por você'
 };
 
-/** Mostra a data que será gravada, para o usuário conferir e corrigir. */
+/**
+ * Mostra a data que será gravada, para o usuário conferir e corrigir — e decide
+ * se há o que salvar.
+ *
+ * Só dá para salvar o que acabou de vir de arquivo. Quando os dados na tela são
+ * a reidratação do último snapshot, o botão ficava aceso oferecendo regravar o
+ * que já está gravado, com uma data deduzida do conteúdo (mais antiga que a real,
+ * porque o mtime do arquivo já se perdeu) — ou seja, sujando o histórico.
+ */
 const atualizarCampoData = () => {
-    if (!temDadosCarregados()) {
-        dom.dataSnapshot.disabled = true;
+    const podeSalvar = temDadosCarregados() && exportNovoNaTela();
+    dom.dataSnapshot.disabled = !podeSalvar;
+    dom.btnSalvarSnapshot.disabled = !podeSalvar;
+
+    if (!podeSalvar) {
+        const metadeVeioDeArquivo =
+            AppState.origemListas.followers === 'arquivo' ||
+            AppState.origemListas.following === 'arquivo';
+
         dom.dataSnapshot.value = '';
-        dom.origemData.textContent = 'carregue os arquivos';
+        dom.origemData.textContent = !temDadosCarregados()
+            ? 'carregue os arquivos'
+            : metadeVeioDeArquivo
+              ? 'falta a outra metade deste export'
+              : 'este export já está guardado';
         dom.btnSalvarSnapshot.textContent = 'Salvar como snapshot';
         return;
     }
+
     const { takenAt, origem } = dataDoExport();
-    dom.dataSnapshot.disabled = false;
     dom.dataSnapshot.value = paraInputDate(takenAt);
     dom.dataSnapshot.max = paraInputDate(Math.floor(Date.now() / 1000));
     dom.origemData.textContent = ROTULO_ORIGEM[origem];
@@ -2183,7 +2705,8 @@ const salvarSnapshot = async () => {
         }
 
         AppState.snapshots = await StorageService.carregarSnapshots();
-        AppState.carregadoDeArquivo = false;
+        // Guardado: daqui em diante estes dados SÃO o snapshot, não um export solto.
+        AppState.origemListas = { followers: 'snapshot', following: 'snapshot' };
         UIService.toast(
             r.substituido
                 ? `Snapshot de ${formatarData(takenAt)} atualizado.`
@@ -2194,7 +2717,7 @@ const salvarSnapshot = async () => {
     } catch (erro) {
         UIService.toast(`Falha ao salvar snapshot: ${erro.message}`, 'erro');
     } finally {
-        dom.btnSalvarSnapshot.disabled = !temDadosCarregados();
+        atualizarCampoData();
     }
 };
 
@@ -2206,8 +2729,43 @@ dom.dataSnapshot?.addEventListener('change', () => {
 
 // -------------------------------------------------------------- listeners
 
-dom.followersInput.addEventListener('change', (e) => carregarArquivos(e.target.files, 'followers'));
-dom.followingInput.addEventListener('change', (e) => carregarArquivos(e.target.files, 'following'));
+dom.arquivosInput?.addEventListener('change', (e) => {
+    receberArquivos(e.target.files);
+    // Zerar permite recarregar o MESMO arquivo depois de refazer o export.
+    e.target.value = '';
+});
+
+/**
+ * Soltar em qualquer lugar da página vale, não só dentro do retângulo tracejado:
+ * mirar a caixa certa é justamente o tipo de precisão que faz alguém desistir.
+ * O contador existe porque `dragleave` dispara ao cruzar cada elemento filho.
+ */
+let profundidadeArrasto = 0;
+const marcarArrasto = (ativo) => dom.dropzone?.classList.toggle('arrastando', ativo);
+
+document.addEventListener('dragenter', (e) => {
+    if (!e.dataTransfer?.types?.includes('Files')) return;
+    e.preventDefault();
+    profundidadeArrasto += 1;
+    marcarArrasto(true);
+});
+document.addEventListener('dragover', (e) => {
+    if (!e.dataTransfer?.types?.includes('Files')) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+});
+document.addEventListener('dragleave', () => {
+    profundidadeArrasto = Math.max(0, profundidadeArrasto - 1);
+    if (!profundidadeArrasto) marcarArrasto(false);
+});
+document.addEventListener('drop', (e) => {
+    if (!e.dataTransfer?.files?.length) return;
+    e.preventDefault();
+    profundidadeArrasto = 0;
+    marcarArrasto(false);
+    receberArquivos(e.dataTransfer.files);
+});
+
 dom.btnSalvarSnapshot.addEventListener('click', salvarSnapshot);
 dom.ordenacao.addEventListener('change', () => {
     AppState.pagina = 1;
@@ -2226,7 +2784,7 @@ dom.searchInput.addEventListener('input', () => {
 dom.btnTriagem?.addEventListener('click', () => {
     const lista = listaVisivel();
     if (!lista.length) {
-        UIService.toast('Nenhum perfil nesta aba para revisar.', 'info');
+        UIService.toast('Nenhum perfil nesta lista para revisar.', 'info');
         return;
     }
     // Pré-formata o que a triagem exibe, para ela não depender do motor.
@@ -2240,7 +2798,7 @@ dom.btnTriagem?.addEventListener('click', () => {
         rotulos: ROTULO_VEREDITO,
         onResolver: (user) => resolverPerfil(user),
         onFechar: (marcados) => {
-            UIService.renderizarAbas(AppState.perfis, AppState.aba, trocarAba);
+            UIService.renderizarNavegacao(AppState.perfis, AppState.resumo, AppState.aba, trocarAba);
             renderizarLista();
             if (marcados) UIService.toast(`${marcados} perfil(is) marcados na triagem.`, 'ok');
         }
@@ -2272,15 +2830,7 @@ dom.inputImportarBackup?.addEventListener('change', async (e) => {
         AppState.snapshots = await StorageService.carregarSnapshots();
         AppState.historico = await StorageService.carregarHistorico();
         UIService.atualizarBotaoReset(AppState.historico.size);
-
-        const ultimo = AppState.snapshots.at(-1);
-        if (ultimo) {
-            AppState.followers = new Map(Object.entries(ultimo.followers ?? {}));
-            AppState.following = new Map(Object.entries(ultimo.following ?? {}));
-            UIService.atualizarStatusUpload(dom.statusFollowers, AppState.followers.size, 'Do backup');
-            UIService.atualizarStatusUpload(dom.statusFollowing, AppState.following.size, 'Do backup');
-            dom.btnSalvarSnapshot.disabled = false;
-        }
+        reidratarUltimoSnapshot('Do backup');
         UIService.toast(`Backup restaurado. ${total} snapshot(s) disponíveis.`, 'ok');
         reanalisar();
     } catch (erro) {
@@ -2305,6 +2855,20 @@ dom.btnResetHistory.addEventListener('click', async () => {
 
 // -------------------------------------------------------------- inicialização
 
+/** Abre a tela já com dados: o último export guardado vale mais que uma tela vazia. */
+const reidratarUltimoSnapshot = (origem) => {
+    const ultimo = AppState.snapshots.at(-1);
+    if (!ultimo) return false;
+
+    AppState.followers = new Map(Object.entries(ultimo.followers ?? {}));
+    AppState.following = new Map(Object.entries(ultimo.following ?? {}));
+    AppState.origemListas = { followers: 'snapshot', following: 'snapshot' };
+    UIService.atualizarStatusUpload(dom.statusFollowers, 'Seguidores', AppState.followers.size, origem);
+    UIService.atualizarStatusUpload(dom.statusFollowing, 'Seguindo', AppState.following.size, origem);
+    atualizarCampoData();
+    return true;
+};
+
 const inicializar = async () => {
     UIService.montarIconesFixos();
     TemaService.iniciar(dom.btnTema);
@@ -2317,20 +2881,7 @@ const inicializar = async () => {
     AppState.historico = historico;
     AppState.snapshots = snapshots;
     UIService.atualizarBotaoReset(historico.size);
-
-    // Reidrata o último snapshot salvo para a tela já abrir com dados.
-    const ultimo = snapshots.at(-1);
-    if (ultimo) {
-        AppState.followers = new Map(Object.entries(ultimo.followers ?? {}));
-        AppState.following = new Map(Object.entries(ultimo.following ?? {}));
-        UIService.atualizarStatusUpload(dom.statusFollowers, AppState.followers.size, 'Do snapshot');
-        UIService.atualizarStatusUpload(dom.statusFollowing, AppState.following.size, 'Do snapshot');
-        dom.btnSalvarSnapshot.disabled = false;
-        atualizarCampoData();
-    } else {
-        dom.statusFollowers.textContent = 'Aguardando arquivo…';
-        dom.statusFollowing.textContent = 'Aguardando arquivo…';
-    }
+    reidratarUltimoSnapshot('do último snapshot');
 
     // Navegador bloqueando o armazenamento local: o app funciona, mas esquece tudo ao fechar.
     if (StorageService.persistente === false) {

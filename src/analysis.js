@@ -338,7 +338,10 @@ export const formatarDuracao = (seg) => {
     if (seg < 3600) return `${Math.round(seg / 60)}min`;
     if (seg < DIA) return `${Math.round(seg / 3600)}h`;
     if (seg < 30 * DIA) return `${Math.round(seg / DIA)}d`;
-    if (seg < 365 * DIA) return `${Math.round(seg / (30 * DIA))} meses`;
+    if (seg < 365 * DIA) {
+        const meses = Math.round(seg / (30 * DIA));
+        return `${meses} ${meses === 1 ? 'mês' : 'meses'}`;
+    }
     return `${(seg / (365 * DIA)).toFixed(1)} anos`;
 };
 
